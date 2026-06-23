@@ -745,6 +745,43 @@ export const server = {
         return { success: true };
       },
     }),
+    delete: defineAction({
+      accept: "json",
+      input: z.object({
+        squadId: z.string().uuid(),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para eliminar el escuadrón",
+          });
+        }
+
+        const { error } = await supabase
+          .from("squads")
+          .delete()
+          .eq("id", input.squadId)
+          .eq("owner_id", user.id);
+
+        if (error) {
+          console.error("Error deleting squad:", error);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Error al eliminar el escuadrón: ${error.message}`,
+          });
+        }
+
+        const activeSquadId = context.cookies.get("active_squad_id")?.value;
+        if (activeSquadId === input.squadId) {
+          context.cookies.delete("active_squad_id", { path: "/" });
+        }
+
+        return { success: true };
+      },
+    }),
   },
   session: {
     create: defineAction({

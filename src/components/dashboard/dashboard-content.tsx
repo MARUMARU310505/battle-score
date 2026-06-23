@@ -19,6 +19,7 @@ interface Squad {
   id: string;
   members: Member[];
   name: string;
+  owner_id?: string;
 }
 
 interface Session {
@@ -31,6 +32,7 @@ interface Session {
 interface DashboardContentProps {
   activeSession: Session | null;
   allSquads: Array<{ id: string; name: string }>;
+  currentUser?: { id: string; email?: string } | null;
   squad: Squad | null;
 }
 
@@ -38,6 +40,7 @@ export function DashboardContent({
   squad,
   activeSession,
   allSquads,
+  currentUser = null,
 }: DashboardContentProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
@@ -81,6 +84,7 @@ export function DashboardContent({
     <div className="flex min-h-[calc(100vh-4rem)] flex-1 flex-col bg-background md:flex-row">
       <SquadSidebar
         allSquads={allSquads}
+        currentUser={currentUser}
         onEditClick={() => setIsEditing(true)}
         onNewSquadClick={() => setIsCreatingNew(true)}
         squad={squad}

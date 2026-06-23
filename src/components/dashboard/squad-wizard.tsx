@@ -30,17 +30,18 @@ interface SquadWizardProps {
 const CLASSES = ["Asalto", "Soporte", "Recon", "Ingeniero"];
 
 function validateMembers(members: MemberInput[]): string | null {
-  for (let i = 0; i < members.length; i++) {
-    const m = members[i];
-    if (!m.gamertag.trim()) {
-      return `El Gamertag del Jugador #${i + 1} es requerido.`;
-    }
-    if (!m.real_name.trim()) {
-      return `El nombre real del Jugador #${i + 1} es requerido.`;
-    }
-    if (m.level < 1) {
-      return `El nivel del Jugador #${i + 1} debe ser mayor o igual a 1.`;
-    }
+  const m = members.find((x) => x.slot_number === 1);
+  if (!m) {
+    return "El integrante principal es requerido.";
+  }
+  if (!m.gamertag.trim()) {
+    return "El Gamertag del Jugador #1 (Líder) es requerido.";
+  }
+  if (!m.real_name.trim()) {
+    return "El nombre real del Jugador #1 (Líder) es requerido.";
+  }
+  if (m.level < 1) {
+    return "El nivel del Jugador #1 (Líder) debe ser mayor o igual a 1.";
   }
   return null;
 }
@@ -49,6 +50,7 @@ export function SquadWizard({
   initialSquad = null,
   onCancel,
 }: SquadWizardProps) {
+  const showOnlySlot1 = !initialSquad;
   const [step, setStep] = useState(1);
   const [squadName, setSquadName] = useState(initialSquad?.name || "");
   const [members, setMembers] = useState<MemberInput[]>(
@@ -128,6 +130,18 @@ export function SquadWizard({
       return;
     }
 
+    const membersToSubmit = members.map((m) => {
+      if (m.slot_number === 1) {
+        return m;
+      }
+      return {
+        ...m,
+        gamertag: m.gamertag.trim() || `Operador ${m.slot_number}`,
+        real_name: m.real_name.trim() || "Pendiente",
+        level: m.level || 1,
+      };
+    });
+
     setLoading(false);
     try {
       setLoading(true);
@@ -136,7 +150,7 @@ export function SquadWizard({
         const { error: actionError } = await actions.squad.update({
           squadId: initialSquad.id,
           name: squadName,
-          members,
+          members: membersToSubmit,
         });
         if (actionError) {
           throw actionError;
@@ -145,7 +159,7 @@ export function SquadWizard({
         // Create mode
         const { error: actionError } = await actions.squad.create({
           name: squadName,
-          members,
+          members: membersToSubmit,
         });
         if (actionError) {
           throw actionError;
@@ -221,105 +235,122 @@ export function SquadWizard({
       ) : (
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-6">
-            {members.map((member, index) => (
-              <div
-                className="space-y-4 rounded-md border border-border/60 bg-background/50 p-4"
-                key={member.slot_number}
-              >
-                <div className="flex items-center justify-between border-border/40 border-b pb-2">
-                  <span className="font-mono font-semibold text-muted-foreground text-xs uppercase">
-                    Operador #{member.slot_number} {index === 0 && "(Líder)"}
-                  </span>
-                </div>
+            {members
+              .filter((m) => !showOnlySlot1 || m.slot_number === 1)
+              .map((member) => {
+                const originalIndex = members.findIndex(
+                  (x) => x.slot_number === member.slot_number
+                );
+                const isLeader = member.slot_number === 1;
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div>
-                    <label
-                      className="mb-1 block font-medium text-muted-foreground text-xs"
-                      htmlFor={`gamertag-${member.slot_number}`}
-                    >
-                      Gamertag
-                    </label>
-                    <input
-                      className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
-                      id={`gamertag-${member.slot_number}`}
-                      onChange={(e) =>
-                        handleMemberChange(index, "gamertag", e.target.value)
-                      }
-                      placeholder="Ej. Ghost"
-                      type="text"
-                      value={member.gamertag}
-                    />
+                return (
+                  <div
+                    className="space-y-4 rounded-md border border-border/60 bg-background/50 p-4"
+                    key={member.slot_number}
+                  >
+                    <div className="flex items-center justify-between border-border/40 border-b pb-2">
+                      <span className="font-mono font-semibold text-muted-foreground text-xs uppercase">
+                        Operador #{member.slot_number} {isLeader && "(Líder)"}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div>
+                        <label
+                          className="mb-1 block font-medium text-muted-foreground text-xs"
+                          htmlFor={`gamertag-${member.slot_number}`}
+                        >
+                          Gamertag
+                        </label>
+                        <input
+                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
+                          id={`gamertag-${member.slot_number}`}
+                          onChange={(e) =>
+                            handleMemberChange(
+                              originalIndex,
+                              "gamertag",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Ej. Ghost"
+                          type="text"
+                          value={member.gamertag}
+                        />
+                      </div>
+                      <div>
+                        <label
+                          className="mb-1 block font-medium text-muted-foreground text-xs"
+                          htmlFor={`real_name-${member.slot_number}`}
+                        >
+                          Nombre Real
+                        </label>
+                        <input
+                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
+                          id={`real_name-${member.slot_number}`}
+                          onChange={(e) =>
+                            handleMemberChange(
+                              originalIndex,
+                              "real_name",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Ej. Alex"
+                          type="text"
+                          value={member.real_name}
+                        />
+                      </div>
+                      <div>
+                        <label
+                          className="mb-1 block font-medium text-muted-foreground text-xs"
+                          htmlFor={`level-${member.slot_number}`}
+                        >
+                          Nivel
+                        </label>
+                        <input
+                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          id={`level-${member.slot_number}`}
+                          min="1"
+                          onChange={(e) =>
+                            handleMemberChange(
+                              originalIndex,
+                              "level",
+                              Number.parseInt(e.target.value, 10) || 1
+                            )
+                          }
+                          type="number"
+                          value={member.level}
+                        />
+                      </div>
+                      <div>
+                        <label
+                          className="mb-1 block font-medium text-muted-foreground text-xs"
+                          htmlFor={`favorite_class-${member.slot_number}`}
+                        >
+                          Clase Favorita
+                        </label>
+                        <select
+                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          id={`favorite_class-${member.slot_number}`}
+                          onChange={(e) =>
+                            handleMemberChange(
+                              originalIndex,
+                              "favorite_class",
+                              e.target.value
+                            )
+                          }
+                          value={member.favorite_class}
+                        >
+                          {CLASSES.map((cls) => (
+                            <option key={cls} value={cls}>
+                              {cls}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label
-                      className="mb-1 block font-medium text-muted-foreground text-xs"
-                      htmlFor={`real_name-${member.slot_number}`}
-                    >
-                      Nombre Real
-                    </label>
-                    <input
-                      className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
-                      id={`real_name-${member.slot_number}`}
-                      onChange={(e) =>
-                        handleMemberChange(index, "real_name", e.target.value)
-                      }
-                      placeholder="Ej. Alex"
-                      type="text"
-                      value={member.real_name}
-                    />
-                  </div>
-                  <div>
-                    <label
-                      className="mb-1 block font-medium text-muted-foreground text-xs"
-                      htmlFor={`level-${member.slot_number}`}
-                    >
-                      Nivel
-                    </label>
-                    <input
-                      className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                      id={`level-${member.slot_number}`}
-                      min="1"
-                      onChange={(e) =>
-                        handleMemberChange(
-                          index,
-                          "level",
-                          Number.parseInt(e.target.value, 10) || 1
-                        )
-                      }
-                      type="number"
-                      value={member.level}
-                    />
-                  </div>
-                  <div>
-                    <label
-                      className="mb-1 block font-medium text-muted-foreground text-xs"
-                      htmlFor={`favorite_class-${member.slot_number}`}
-                    >
-                      Clase Favorita
-                    </label>
-                    <select
-                      className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                      id={`favorite_class-${member.slot_number}`}
-                      onChange={(e) =>
-                        handleMemberChange(
-                          index,
-                          "favorite_class",
-                          e.target.value
-                        )
-                      }
-                      value={member.favorite_class}
-                    >
-                      {CLASSES.map((cls) => (
-                        <option key={cls} value={cls}>
-                          {cls}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            ))}
+                );
+              })}
           </div>
 
           <div className="flex justify-between gap-3">

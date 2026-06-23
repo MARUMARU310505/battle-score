@@ -15,10 +15,12 @@ interface Squad {
   id: string;
   members: Member[];
   name: string;
+  owner_id?: string;
 }
 
 interface SquadSidebarProps {
   allSquads: Array<{ id: string; name: string }>;
+  currentUser?: { id: string; email?: string } | null;
   onEditClick: () => void;
   onNewSquadClick: () => void;
   squad: Squad;
@@ -36,34 +38,72 @@ export function SquadSidebar({
   onEditClick,
   allSquads,
   onNewSquadClick,
+  currentUser = null,
 }: SquadSidebarProps) {
+  const isOwner = squad.owner_id === currentUser?.id;
+  const myMember = squad.members.find((m) => m.user_id === currentUser?.id);
+
+  const handleDeleteSquad = async () => {
+    // biome-ignore lint/suspicious/noAlert: standard confirm dialog is appropriate for deletion safety
+    const confirmed = confirm(
+      "¿Estás seguro de que deseas eliminar este escuadrón? Esta acción es irreversible."
+    );
+    if (!confirmed) {
+      return;
+    }
+    try {
+      const { error } = await actions.squad.delete({ squadId: squad.id });
+      if (error) {
+        throw error;
+      }
+      window.location.href = "/dashboard";
+    } catch (err) {
+      console.error("Error deleting squad:", err);
+      // biome-ignore lint/suspicious/noAlert: alert for user feedback
+      alert("Error al eliminar el escuadrón.");
+    }
+  };
+
+  const handleLeaveSquad = async () => {
+    if (!myMember) {
+      return;
+    }
+    // biome-ignore lint/suspicious/noAlert: standard confirm dialog is appropriate for action verification
+    if (!confirm("¿Estás seguro de que deseas salir de este escuadrón?")) {
+      return;
+    }
+    try {
+      const { error } = await actions.squad.releaseSlot({
+        squadId: squad.id,
+        slotNumber: myMember.slot_number,
+      });
+      if (error) {
+        throw error;
+      }
+      window.location.href = "/dashboard";
+    } catch (err) {
+      console.error("Error leaving squad:", err);
+      // biome-ignore lint/suspicious/noAlert: alert for user feedback
+      alert("Error al salir del escuadrón.");
+    }
+  };
   return (
     <aside className="flex min-h-[calc(100vh-4rem)] w-full flex-col justify-between border-border border-r bg-card p-4 md:w-64">
       <div className="space-y-6">
         {/* Squad Selector */}
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label
-              className="font-mono font-semibold text-[10px] text-muted-foreground uppercase tracking-wider"
-              htmlFor="squad-switcher"
-            >
-              Escuadrón Activo
-            </label>
-            <a
-              className="font-mono font-semibold text-[10px] text-primary hover:underline"
-              href="/dashboard"
-            >
-              Ir al Hub
-            </a>
-          </div>
+          <label
+            className="font-mono font-semibold text-[10px] text-muted-foreground uppercase tracking-wider"
+            htmlFor="squad-switcher"
+          >
+            Escuadrón Activo
+          </label>
           <select
             className="w-full cursor-pointer rounded-md border border-border bg-background px-2.5 py-1.5 font-bold text-foreground text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
             id="squad-switcher"
             onChange={async (e) => {
               const val = e.target.value;
-              if (val === "hub") {
-                window.location.href = "/dashboard";
-              } else if (val === "new") {
+              if (val === "new") {
                 onNewSquadClick();
               } else {
                 await actions.squad.setActive({ squadId: val });
@@ -77,9 +117,6 @@ export function SquadSidebar({
                 {s.name}
               </option>
             ))}
-            <option className="font-semibold text-muted-foreground" value="hub">
-              🏠 Volver al Hub
-            </option>
             <option className="font-semibold text-primary" value="new">
               + Crear Escuadrón
             </option>
@@ -135,16 +172,39 @@ export function SquadSidebar({
         </div>
       </div>
 
-      {/* Edit squad button */}
-      <div className="mt-6 border-border border-t pt-4">
-        <Button
-          className="w-full"
-          onClick={onEditClick}
-          size="sm"
-          variant="outline"
-        >
-          Editar Escuadrón
-        </Button>
+      {/* Footer Actions */}
+      <div className="mt-6 space-y-2 border-border border-t pt-4">
+        {isOwner ? (
+          <>
+            <Button
+              className="w-full"
+              onClick={onEditClick}
+              size="sm"
+              variant="outline"
+            >
+              Editar Escuadrón
+            </Button>
+            <Button
+              className="w-full text-destructive hover:bg-destructive/10"
+              onClick={handleDeleteSquad}
+              size="sm"
+              variant="ghost"
+            >
+              Eliminar Escuadrón
+            </Button>
+          </>
+        ) : (
+          myMember && (
+            <Button
+              className="w-full text-destructive hover:bg-destructive/10"
+              onClick={handleLeaveSquad}
+              size="sm"
+              variant="ghost"
+            >
+              Salir del Escuadrón
+            </Button>
+          )
+        )}
       </div>
     </aside>
   );
