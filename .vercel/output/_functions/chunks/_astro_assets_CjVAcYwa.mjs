@@ -1,7 +1,7 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"bf5d2c91e2095a3a12afa72c4ef99b9ad62c6e5b"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="046477e4-3efa-476d-ad99-553de11ddcd1",e._sentryDebugIdIdentifier="sentry-dbid-046477e4-3efa-476d-ad99-553de11ddcd1");}catch(e){}}();import { A as AstroError, b3 as NoImageMetadata, b4 as FailedToFetchRemoteImageDimensions, b5 as RemoteImageNotAllowed, aT as joinPaths, b6 as ExpectedImage, b0 as isRemotePath, b7 as LocalImageUsedWrongly, b8 as MissingImageDimension, b9 as UnsupportedImageFormat, ba as IncompatibleDescriptorOptions, bb as UnsupportedImageConversion, bc as InvalidImageService, bd as ExpectedImageOptions, be as ExpectedNotESMImage, bf as ImageMissingAlt, T as maybeRenderHead, a4 as addAttribute, Q as renderTemplate, bg as FontFamilyNotFound, b1 as unescapeHTML, bh as MissingGetFontFileRequestUrl } from './params-and-props_D91wChjV.mjs';
-import { t as typeHandlers, a as types, i as isRemoteAllowed, s as spreadAttributes } from './entrypoint_Dt6MGiQ5.mjs';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"bef452b3ccc56d267223ad34e70c101dfed3c9a7"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="046477e4-3efa-476d-ad99-553de11ddcd1",e._sentryDebugIdIdentifier="sentry-dbid-046477e4-3efa-476d-ad99-553de11ddcd1");}catch(e){}}();import { A as AstroError, b3 as NoImageMetadata, b4 as FailedToFetchRemoteImageDimensions, b5 as RemoteImageNotAllowed, aT as joinPaths, b6 as ExpectedImage, b0 as isRemotePath, b7 as LocalImageUsedWrongly, b8 as MissingImageDimension, b9 as UnsupportedImageFormat, ba as IncompatibleDescriptorOptions, bb as UnsupportedImageConversion, bc as InvalidImageService, bd as ExpectedImageOptions, be as ExpectedNotESMImage, bf as ImageMissingAlt, T as maybeRenderHead, a4 as addAttribute, Q as renderTemplate, bg as FontFamilyNotFound, b1 as unescapeHTML, bh as MissingGetFontFileRequestUrl } from './params-and-props_fLCUvsuq.mjs';
+import { t as typeHandlers, a as types, i as isRemoteAllowed, s as spreadAttributes } from './entrypoint_CllwnPlb.mjs';
 import * as mime from 'mrmime';
-import { c as createComponent } from './astro-component_B2e-4z6a.mjs';
+import { c as createComponent } from './astro-component_P2jlS4QB.mjs';
 import 'clsx';
 import 'piccolore';
 
@@ -592,7 +592,7 @@ async function getConfiguredImageService() {
   if (!globalThis?.astroAsset?.imageService) {
     const { default: service } = await import(
       // @ts-expect-error
-      './sharp_DGdL3WyA.mjs'
+      './sharp_DpEe4T7j.mjs'
     ).catch((e) => {
       const error = new AstroError(InvalidImageService);
       error.cause = e;

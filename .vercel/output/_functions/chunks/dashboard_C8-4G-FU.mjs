@@ -1,14 +1,14 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"bf5d2c91e2095a3a12afa72c4ef99b9ad62c6e5b"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="4964bcf4-c009-438c-9890-d7f46bfe939c",e._sentryDebugIdIdentifier="sentry-dbid-4964bcf4-c009-438c-9890-d7f46bfe939c");}catch(e){}}();import './page-ssr_CXNdpZpl.mjs';
-import { c as createComponent } from './astro-component_B2e-4z6a.mjs';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"bef452b3ccc56d267223ad34e70c101dfed3c9a7"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="ff43452d-84e6-4b95-86d1-08294968689c",e._sentryDebugIdIdentifier="sentry-dbid-ff43452d-84e6-4b95-86d1-08294968689c");}catch(e){}}();import './page-ssr_C2I633KQ.mjs';
+import { c as createComponent } from './astro-component_P2jlS4QB.mjs';
 import 'piccolore';
-import { Q as renderTemplate, T as maybeRenderHead } from './params-and-props_D91wChjV.mjs';
-import { r as renderComponent } from './entrypoint_Dt6MGiQ5.mjs';
-import { a as actions } from './server_BLYpw72K.mjs';
+import { Q as renderTemplate, T as maybeRenderHead } from './params-and-props_fLCUvsuq.mjs';
+import { r as renderComponent } from './entrypoint_CllwnPlb.mjs';
+import { a as actions } from './server_22scp5ZU.mjs';
 import { jsx, jsxs } from 'react/jsx-runtime';
 import { Activity, Calendar, BarChart3, Sparkles, UserCheck, User, UserMinus, Play, Power, Trophy, HelpCircle } from 'lucide-react';
 import { useState } from 'react';
-import { B as Button, N as Nav } from './nav_BCPO8t3c.mjs';
-import { $ as $$BaseLayout } from './base-layout_CkZaE3xY.mjs';
+import { B as Button, N as Nav } from './nav_BpNBOeY2.mjs';
+import { $ as $$BaseLayout } from './base-layout_Bvwu81JX.mjs';
 
 const TABS = [
   { id: "active-session", label: "Sesión Activa", icon: Activity },
@@ -407,12 +407,44 @@ const CLASS_BADGES = {
   Recon: "👁️ Recon",
   Ingeniero: "🔧 Ingeniero"
 };
-function SquadSidebar({ squad, onEditClick }) {
+function SquadSidebar({
+  squad,
+  onEditClick,
+  allSquads,
+  onNewSquadClick
+}) {
   return /* @__PURE__ */ jsxs("aside", { className: "flex min-h-[calc(100vh-4rem)] w-full flex-col justify-between border-border border-r bg-card p-4 md:w-64", children: [
     /* @__PURE__ */ jsxs("div", { className: "space-y-6", children: [
-      /* @__PURE__ */ jsxs("div", { children: [
-        /* @__PURE__ */ jsx("h2", { className: "font-mono font-semibold text-muted-foreground text-xs uppercase tracking-wider", children: "Escuadrón" }),
-        /* @__PURE__ */ jsx("h1", { className: "mt-1 truncate font-bold text-foreground text-lg", children: squad.name })
+      /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+        /* @__PURE__ */ jsx(
+          "label",
+          {
+            className: "font-mono font-semibold text-[10px] text-muted-foreground uppercase tracking-wider",
+            htmlFor: "squad-switcher",
+            children: "Escuadrón Activo"
+          }
+        ),
+        /* @__PURE__ */ jsxs(
+          "select",
+          {
+            className: "w-full cursor-pointer rounded-md border border-border bg-background px-2.5 py-1.5 font-bold text-foreground text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-primary",
+            id: "squad-switcher",
+            onChange: async (e) => {
+              const val = e.target.value;
+              if (val === "new") {
+                onNewSquadClick();
+              } else {
+                await actions.squad.setActive({ squadId: val });
+                window.location.reload();
+              }
+            },
+            value: squad.id,
+            children: [
+              allSquads.map((s) => /* @__PURE__ */ jsx("option", { value: s.id, children: s.name }, s.id)),
+              /* @__PURE__ */ jsx("option", { className: "font-semibold text-primary", value: "new", children: "+ Crear Escuadrón" })
+            ]
+          }
+        )
       ] }),
       /* @__PURE__ */ jsx("div", { className: "space-y-3", children: squad.members.map((member) => /* @__PURE__ */ jsxs(
         "div",
@@ -746,9 +778,11 @@ function SquadWizard({
 
 function DashboardContent({
   squad,
-  activeSession
+  activeSession,
+  allSquads
 }) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [activeTab, setActiveTab] = useState("active-session");
   const [activePlayers, setActivePlayers] = useState(() => {
     if (!squad) {
@@ -763,8 +797,13 @@ function DashboardContent({
       active_class: member.favorite_class
     }));
   });
-  if (!squad) {
-    return /* @__PURE__ */ jsx("div", { className: "flex min-h-[calc(100vh-4rem)] flex-1 items-center justify-center bg-background p-8", children: /* @__PURE__ */ jsx(SquadWizard, {}) });
+  if (!squad || isCreatingNew) {
+    return /* @__PURE__ */ jsx("div", { className: "flex min-h-[calc(100vh-4rem)] flex-1 items-center justify-center bg-background p-8", children: /* @__PURE__ */ jsx(
+      SquadWizard,
+      {
+        onCancel: squad ? () => setIsCreatingNew(false) : void 0
+      }
+    ) });
   }
   if (isEditing) {
     return /* @__PURE__ */ jsx("div", { className: "flex min-h-[calc(100vh-4rem)] flex-1 items-center justify-center bg-background p-8", children: /* @__PURE__ */ jsx(
@@ -776,7 +815,15 @@ function DashboardContent({
     ) });
   }
   return /* @__PURE__ */ jsxs("div", { className: "flex min-h-[calc(100vh-4rem)] flex-1 flex-col bg-background md:flex-row", children: [
-    /* @__PURE__ */ jsx(SquadSidebar, { onEditClick: () => setIsEditing(true), squad }),
+    /* @__PURE__ */ jsx(
+      SquadSidebar,
+      {
+        allSquads,
+        onEditClick: () => setIsEditing(true),
+        onNewSquadClick: () => setIsCreatingNew(true),
+        squad
+      }
+    ),
     /* @__PURE__ */ jsxs("div", { className: "flex flex-1 flex-col", children: [
       /* @__PURE__ */ jsx(MainTabs, { activeTab, onTabChange: setActiveTab }),
       /* @__PURE__ */ jsxs("main", { className: "flex-1 p-6 md:p-8", children: [
@@ -834,19 +881,24 @@ const $$Dashboard = createComponent(async ($$result, $$props, $$slots) => {
   if (!user) {
     return Astro2.redirect("/");
   }
-  const { data: squad } = await Astro2.callAction(actions.squad.get, {});
+  const { data } = await Astro2.callAction(actions.squad.get, {});
+  const squad = data?.activeSquad || null;
+  const allSquads = data?.allSquads || [];
   let activeSession = null;
   if (squad) {
-    const { data } = await Astro2.callAction(actions.session.getActive, {
-      squadId: squad.id
-    });
-    activeSession = data;
+    const { data: sessionData } = await Astro2.callAction(
+      actions.session.getActive,
+      {
+        squadId: squad.id
+      }
+    );
+    activeSession = sessionData;
   }
   return renderTemplate`${renderComponent($$result, "BaseLayout", $$BaseLayout, { "metadata": {
     title: "Dashboard — Battle Score BR Analytics",
     description: "Panel principal de Battle Score BR Analytics",
     ignoreTitleTemplate: true
-  } }, { "default": async ($$result2) => renderTemplate` ${maybeRenderHead()}<div class="min-h-screen bg-background text-foreground flex flex-col"> ${renderComponent($$result2, "Nav", Nav, { "user": user, "client:load": true, "client:component-hydration": "load", "client:component-path": "@/components/landing/nav", "client:component-export": "Nav" })} ${renderComponent($$result2, "DashboardContent", DashboardContent, { "squad": squad, "activeSession": activeSession, "client:load": true, "client:component-hydration": "load", "client:component-path": "@/components/dashboard/dashboard-content", "client:component-export": "DashboardContent" })} </div> ` })}`;
+  } }, { "default": async ($$result2) => renderTemplate` ${maybeRenderHead()}<div class="min-h-screen bg-background text-foreground flex flex-col"> ${renderComponent($$result2, "Nav", Nav, { "user": user, "client:load": true, "client:component-hydration": "load", "client:component-path": "@/components/landing/nav", "client:component-export": "Nav" })} ${renderComponent($$result2, "DashboardContent", DashboardContent, { "squad": squad, "allSquads": allSquads, "activeSession": activeSession, "client:load": true, "client:component-hydration": "load", "client:component-path": "@/components/dashboard/dashboard-content", "client:component-export": "DashboardContent" })} </div> ` })}`;
 }, "/Users/mpacheco/Documents/projects/PROJECT-battle-score/battle-score/src/pages/dashboard.astro", void 0);
 
 const $$file = "/Users/mpacheco/Documents/projects/PROJECT-battle-score/battle-score/src/pages/dashboard.astro";

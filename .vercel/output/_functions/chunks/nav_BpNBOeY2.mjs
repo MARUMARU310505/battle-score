@@ -1,11 +1,11 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"bf5d2c91e2095a3a12afa72c4ef99b9ad62c6e5b"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="245b9c60-1caf-4c12-8af1-12de0eb468d8",e._sentryDebugIdIdentifier="sentry-dbid-245b9c60-1caf-4c12-8af1-12de0eb468d8");}catch(e){}}();import { jsx, jsxs } from 'react/jsx-runtime';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"bef452b3ccc56d267223ad34e70c101dfed3c9a7"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="245b9c60-1caf-4c12-8af1-12de0eb468d8",e._sentryDebugIdIdentifier="sentry-dbid-245b9c60-1caf-4c12-8af1-12de0eb468d8");}catch(e){}}();import { jsx, jsxs } from 'react/jsx-runtime';
 import { Moon, Sun } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button as Button$1 } from '@base-ui/react/button';
 import { cva } from 'class-variance-authority';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { a as createSupabaseBrowserClient } from './supabase_BqiIsE7q.mjs';
+import { a as createSupabaseBrowserClient } from './supabase_Dn8SrCZM.mjs';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));

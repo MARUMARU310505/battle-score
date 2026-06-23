@@ -30,14 +30,17 @@ interface Session {
 
 interface DashboardContentProps {
   activeSession: Session | null;
+  allSquads: Array<{ id: string; name: string }>;
   squad: Squad | null;
 }
 
 export function DashboardContent({
   squad,
   activeSession,
+  allSquads,
 }: DashboardContentProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("active-session");
   const [activePlayers, setActivePlayers] = useState<ActivePlayer[]>(() => {
     if (!squad) {
@@ -53,10 +56,12 @@ export function DashboardContent({
     }));
   });
 
-  if (!squad) {
+  if (!squad || isCreatingNew) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] flex-1 items-center justify-center bg-background p-8">
-        <SquadWizard />
+        <SquadWizard
+          onCancel={squad ? () => setIsCreatingNew(false) : undefined}
+        />
       </div>
     );
   }
@@ -74,7 +79,12 @@ export function DashboardContent({
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] flex-1 flex-col bg-background md:flex-row">
-      <SquadSidebar onEditClick={() => setIsEditing(true)} squad={squad} />
+      <SquadSidebar
+        allSquads={allSquads}
+        onEditClick={() => setIsEditing(true)}
+        onNewSquadClick={() => setIsCreatingNew(true)}
+        squad={squad}
+      />
 
       {/* Central content area with tab navigation */}
       <div className="flex flex-1 flex-col">

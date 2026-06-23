@@ -1,4 +1,4 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"bf5d2c91e2095a3a12afa72c4ef99b9ad62c6e5b"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="577e6fdf-8c0e-4329-a6eb-35ca6287526a",e._sentryDebugIdIdentifier="sentry-dbid-577e6fdf-8c0e-4329-a6eb-35ca6287526a");}catch(e){}}();import { createServerClient, createBrowserClient } from '@supabase/ssr';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"bef452b3ccc56d267223ad34e70c101dfed3c9a7"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="577e6fdf-8c0e-4329-a6eb-35ca6287526a",e._sentryDebugIdIdentifier="sentry-dbid-577e6fdf-8c0e-4329-a6eb-35ca6287526a");}catch(e){}}();import { createServerClient, createBrowserClient } from '@supabase/ssr';
 
 const REST_API_PATH_REGEX = /\/rest\/v1\/?$/;
 function createSupabaseBrowserClient() {

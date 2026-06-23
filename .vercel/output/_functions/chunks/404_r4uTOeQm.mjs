@@ -1,9 +1,9 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"bf5d2c91e2095a3a12afa72c4ef99b9ad62c6e5b"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="cbf277fd-40be-4171-a595-095e8e9ee91f",e._sentryDebugIdIdentifier="sentry-dbid-cbf277fd-40be-4171-a595-095e8e9ee91f");}catch(e){}}();import './page-ssr_CXNdpZpl.mjs';
-import { c as createComponent } from './astro-component_B2e-4z6a.mjs';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"bef452b3ccc56d267223ad34e70c101dfed3c9a7"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="cbf277fd-40be-4171-a595-095e8e9ee91f",e._sentryDebugIdIdentifier="sentry-dbid-cbf277fd-40be-4171-a595-095e8e9ee91f");}catch(e){}}();import './page-ssr_C2I633KQ.mjs';
+import { c as createComponent } from './astro-component_P2jlS4QB.mjs';
 import 'piccolore';
-import { Q as renderTemplate, T as maybeRenderHead, a4 as addAttribute } from './params-and-props_D91wChjV.mjs';
-import { r as renderComponent } from './entrypoint_Dt6MGiQ5.mjs';
-import { $ as $$BaseLayout } from './base-layout_CkZaE3xY.mjs';
+import { Q as renderTemplate, T as maybeRenderHead, a4 as addAttribute } from './params-and-props_fLCUvsuq.mjs';
+import { r as renderComponent } from './entrypoint_CllwnPlb.mjs';
+import { $ as $$BaseLayout } from './base-layout_Bvwu81JX.mjs';
 
 const $$404 = createComponent(($$result, $$props, $$slots) => {
   return renderTemplate`${renderComponent($$result, "BaseLayout", $$BaseLayout, {}, { "default": ($$result2) => renderTemplate` ${maybeRenderHead()}<main class="h-screen flex flex-col justify-center items-center gap-6"> <img class="max-w-[350px]" src="/images/404.svg" alt="404"${addAttribute(350, "width")}> <div class="flex flex-col gap-1 text-center"> <h1 class="text-4xl font-bold text-gray-700">

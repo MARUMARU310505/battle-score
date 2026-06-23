@@ -1,3 +1,4 @@
+import { actions } from "astro:actions";
 import { Button } from "@/components/ui/button";
 
 interface Member {
@@ -16,7 +17,9 @@ interface Squad {
 }
 
 interface SquadSidebarProps {
+  allSquads: Array<{ id: string; name: string }>;
   onEditClick: () => void;
+  onNewSquadClick: () => void;
   squad: Squad;
 }
 
@@ -27,18 +30,46 @@ const CLASS_BADGES: Record<string, string> = {
   Ingeniero: "🔧 Ingeniero",
 };
 
-export function SquadSidebar({ squad, onEditClick }: SquadSidebarProps) {
+export function SquadSidebar({
+  squad,
+  onEditClick,
+  allSquads,
+  onNewSquadClick,
+}: SquadSidebarProps) {
   return (
     <aside className="flex min-h-[calc(100vh-4rem)] w-full flex-col justify-between border-border border-r bg-card p-4 md:w-64">
       <div className="space-y-6">
-        {/* Squad Title */}
-        <div>
-          <h2 className="font-mono font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-            Escuadrón
-          </h2>
-          <h1 className="mt-1 truncate font-bold text-foreground text-lg">
-            {squad.name}
-          </h1>
+        {/* Squad Selector */}
+        <div className="space-y-1.5">
+          <label
+            className="font-mono font-semibold text-[10px] text-muted-foreground uppercase tracking-wider"
+            htmlFor="squad-switcher"
+          >
+            Escuadrón Activo
+          </label>
+          <select
+            className="w-full cursor-pointer rounded-md border border-border bg-background px-2.5 py-1.5 font-bold text-foreground text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
+            id="squad-switcher"
+            onChange={async (e) => {
+              const val = e.target.value;
+              if (val === "new") {
+                onNewSquadClick();
+              } else {
+                await actions.squad.setActive({ squadId: val });
+                window.location.reload();
+              }
+            }}
+            value={squad.id}
+          >
+            {allSquads.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+            <option className="font-semibold text-primary" value="new">
+              + Crear Escuadrón
+            </option>
+          </select>
         </div>
 
         {/* Member list */}

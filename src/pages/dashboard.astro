@@ -12,14 +12,19 @@ if (!user) {
 }
 
 // Fetch squad using Astro action
-const { data: squad } = await Astro.callAction(actions.squad.get, {});
+const { data } = await Astro.callAction(actions.squad.get, {});
+const squad = data?.activeSquad || null;
+const allSquads = data?.allSquads || [];
 
 let activeSession: Record<string, any> | null = null;
 if (squad) {
-  const { data } = await Astro.callAction(actions.session.getActive, {
-    squadId: squad.id,
-  });
-  activeSession = data;
+  const { data: sessionData } = await Astro.callAction(
+    actions.session.getActive,
+    {
+      squadId: squad.id,
+    }
+  );
+  activeSession = sessionData;
 }
 ---
 
@@ -32,6 +37,11 @@ if (squad) {
 >
   <div class="min-h-screen bg-background text-foreground flex flex-col">
     <Nav user={user} client:load />
-    <DashboardContent squad={squad} activeSession={activeSession} client:load />
+    <DashboardContent
+      squad={squad}
+      allSquads={allSquads}
+      activeSession={activeSession}
+      client:load
+    />
   </div>
 </BaseLayout>

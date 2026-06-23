@@ -194,6 +194,15 @@ export const server = {
           });
         }
 
+        // Set as active squad in cookies
+        context.cookies.set("active_squad_id", squad.id, {
+          path: "/",
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 365,
+        });
+
         return { success: true, squad };
       },
     }),
@@ -209,28 +218,60 @@ export const server = {
           });
         }
 
-        const { data: squad, error: squadError } = await supabase
+        // Get all squads owned by user
+        const { data: squads, error: squadsError } = await supabase
           .from("squads")
-          .select("*")
-          .eq("owner_id", user.id)
-          .maybeSingle();
+          .select("id, name")
+          .eq("owner_id", user.id);
 
-        if (squadError) {
-          console.error("Error fetching squad:", squadError);
+        if (squadsError) {
+          console.error("Error fetching squads:", squadsError);
           throw new ActionError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Error al consultar el escuadrón",
+            message: "Error al consultar los escuadrones",
           });
         }
 
-        if (!squad) {
-          return null;
+        if (!squads || squads.length === 0) {
+          return { activeSquad: null, allSquads: [] };
+        }
+
+        // Determine active squad ID from cookie
+        const activeSquadId = context.cookies.get("active_squad_id")?.value;
+        let activeSquad = squads.find((s) => s.id === activeSquadId);
+
+        // Default to first squad if no cookie or cookie squad is not in user's squads
+        if (!activeSquad) {
+          activeSquad = squads[0];
+          // Update cookie to keep it in sync
+          context.cookies.set("active_squad_id", activeSquad.id, {
+            path: "/",
+            httpOnly: true,
+            secure: true,
+            sameSite: "lax",
+            maxAge: 60 * 60 * 24 * 365,
+          });
+        }
+
+        // Fetch full squad details for active squad
+        const { data: squadDetails, error: squadError } = await supabase
+          .from("squads")
+          .select("*")
+          .eq("id", activeSquad.id)
+          .single();
+
+        if (squadError) {
+          console.error("Error fetching active squad:", squadError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al consultar el escuadrón activo",
+          });
         }
 
         const { data: members, error: membersError } = await supabase
           .from("squad_members")
           .select("*")
-          .eq("squad_id", squad.id)
+          .eq("squad_id", activeSquad.id)
           .order("slot_number", { ascending: true });
 
         if (membersError) {
@@ -242,8 +283,11 @@ export const server = {
         }
 
         return {
-          ...squad,
-          members,
+          activeSquad: {
+            ...squadDetails,
+            members,
+          },
+          allSquads: squads,
         };
       },
     }),
@@ -315,6 +359,46 @@ export const server = {
             });
           }
         }
+
+        return { success: true };
+      },
+    }),
+    setActive: defineAction({
+      accept: "json",
+      input: z.object({
+        squadId: z.string().uuid(),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para seleccionar un escuadrón",
+          });
+        }
+
+        const { data: squad, error } = await supabase
+          .from("squads")
+          .select("id")
+          .eq("id", input.squadId)
+          .eq("owner_id", user.id)
+          .maybeSingle();
+
+        if (error || !squad) {
+          throw new ActionError({
+            code: "NOT_FOUND",
+            message: "El escuadrón no existe o no te pertenece",
+          });
+        }
+
+        context.cookies.set("active_squad_id", input.squadId, {
+          path: "/",
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 365,
+        });
 
         return { success: true };
       },

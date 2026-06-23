@@ -1,4 +1,4 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"bf5d2c91e2095a3a12afa72c4ef99b9ad62c6e5b"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="036fce8a-7881-4953-b039-0e6d96483715",e._sentryDebugIdIdentifier="sentry-dbid-036fce8a-7881-4953-b039-0e6d96483715");}catch(e){}}();import './server_BLYpw72K.mjs';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"bef452b3ccc56d267223ad34e70c101dfed3c9a7"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b3a2074d-23ad-4918-9c8a-4786ec52c9db",e._sentryDebugIdIdentifier="sentry-dbid-b3a2074d-23ad-4918-9c8a-4786ec52c9db");}catch(e){}}();import './server_22scp5ZU.mjs';
 import * as z from 'zod/v4';
 import { render } from '@react-email/render';
 import { captureException } from '@sentry/astro';
@@ -6,8 +6,8 @@ import { Resend } from 'resend';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { Html, Head, Preview, Tailwind, Body, Container, Section, Link, Img, Text, Row, Column, Hr } from '@react-email/components';
 import { twMerge } from 'tailwind-merge';
-import { B as BUSINESS_CONFIG } from './business_B-KLZpvX.mjs';
-import { d as defineAction, A as ActionError } from './entrypoint_Dt6MGiQ5.mjs';
+import { B as BUSINESS_CONFIG } from './business_C6gsJJJ2.mjs';
+import { d as defineAction, A as ActionError } from './entrypoint_CllwnPlb.mjs';
 
 const resetText = { margin: 0 };
 const translations = {
@@ -351,6 +351,13 @@ const server = {
             message: `Error al registrar integrantes: ${membersError.message}`
           });
         }
+        context.cookies.set("active_squad_id", squad.id, {
+          path: "/",
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 365
+        });
         return { success: true, squad };
       }
     }),
@@ -365,18 +372,38 @@ const server = {
             message: "Inicie sesión para ver su escuadrón"
           });
         }
-        const { data: squad, error: squadError } = await supabase.from("squads").select("*").eq("owner_id", user.id).maybeSingle();
-        if (squadError) {
-          console.error("Error fetching squad:", squadError);
+        const { data: squads, error: squadsError } = await supabase.from("squads").select("id, name").eq("owner_id", user.id);
+        if (squadsError) {
+          console.error("Error fetching squads:", squadsError);
           throw new ActionError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Error al consultar el escuadrón"
+            message: "Error al consultar los escuadrones"
           });
         }
-        if (!squad) {
-          return null;
+        if (!squads || squads.length === 0) {
+          return { activeSquad: null, allSquads: [] };
         }
-        const { data: members, error: membersError } = await supabase.from("squad_members").select("*").eq("squad_id", squad.id).order("slot_number", { ascending: true });
+        const activeSquadId = context.cookies.get("active_squad_id")?.value;
+        let activeSquad = squads.find((s) => s.id === activeSquadId);
+        if (!activeSquad) {
+          activeSquad = squads[0];
+          context.cookies.set("active_squad_id", activeSquad.id, {
+            path: "/",
+            httpOnly: true,
+            secure: true,
+            sameSite: "lax",
+            maxAge: 60 * 60 * 24 * 365
+          });
+        }
+        const { data: squadDetails, error: squadError } = await supabase.from("squads").select("*").eq("id", activeSquad.id).single();
+        if (squadError) {
+          console.error("Error fetching active squad:", squadError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al consultar el escuadrón activo"
+          });
+        }
+        const { data: members, error: membersError } = await supabase.from("squad_members").select("*").eq("squad_id", activeSquad.id).order("slot_number", { ascending: true });
         if (membersError) {
           console.error("Error fetching members:", membersError);
           throw new ActionError({
@@ -385,8 +412,11 @@ const server = {
           });
         }
         return {
-          ...squad,
-          members
+          activeSquad: {
+            ...squadDetails,
+            members
+          },
+          allSquads: squads
         };
       }
     }),
@@ -446,6 +476,37 @@ const server = {
             });
           }
         }
+        return { success: true };
+      }
+    }),
+    setActive: defineAction({
+      accept: "json",
+      input: z.object({
+        squadId: z.string().uuid()
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para seleccionar un escuadrón"
+          });
+        }
+        const { data: squad, error } = await supabase.from("squads").select("id").eq("id", input.squadId).eq("owner_id", user.id).maybeSingle();
+        if (error || !squad) {
+          throw new ActionError({
+            code: "NOT_FOUND",
+            message: "El escuadrón no existe o no te pertenece"
+          });
+        }
+        context.cookies.set("active_squad_id", input.squadId, {
+          path: "/",
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 365
+        });
         return { success: true };
       }
     })
