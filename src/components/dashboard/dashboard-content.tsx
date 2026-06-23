@@ -1,5 +1,7 @@
-import { BarChart3, HelpCircle, Trophy } from "lucide-react";
+import { actions } from "astro:actions";
+import { BarChart3, Check, Copy, HelpCircle, Trophy } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { MainTabs, type TabType } from "./main-tabs";
 import { SessionPanel } from "./session-panel";
 import type { ActivePlayer } from "./squad-roster";
@@ -18,6 +20,7 @@ interface Member {
 
 interface Squad {
   id: string;
+  invite_code?: string;
   members: Member[];
   name: string;
   owner_id?: string;
@@ -48,6 +51,7 @@ export function DashboardContent({
   const [isEditing, setIsEditing] = useState(false);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("active-session");
+  const [copiedCode, setCopiedCode] = useState(false);
   const [activePlayers, setActivePlayers] = useState<ActivePlayer[]>(() => {
     if (!squad) {
       return [];
@@ -64,6 +68,35 @@ export function DashboardContent({
       };
     });
   });
+
+  const isOwner = squad?.owner_id === currentUser?.id;
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const handleDeleteSquad = async () => {
+    // biome-ignore lint/suspicious/noAlert: standard confirm
+    const confirmed = confirm(
+      "¿Estás seguro de que deseas eliminar este escuadrón? Esta acción es irreversible."
+    );
+    if (!confirmed) {
+      return;
+    }
+    try {
+      const { error } = await actions.squad.delete({ squadId: squad.id });
+      if (error) {
+        throw error;
+      }
+      window.location.href = "/dashboard";
+    } catch (err) {
+      console.error("Error deleting squad:", err);
+      // biome-ignore lint/suspicious/noAlert: alert for user feedback
+      alert("Error al eliminar el escuadrón.");
+    }
+  };
 
   if (!squad || isCreatingNew) {
     return (
@@ -93,14 +126,17 @@ export function DashboardContent({
       <SquadSidebar
         allSquads={allSquads}
         currentUser={currentUser}
-        onEditClick={() => setIsEditing(true)}
         onNewSquadClick={() => setIsCreatingNew(true)}
         squad={squad}
       />
 
       {/* Central content area with tab navigation */}
       <div className="flex flex-1 flex-col">
-        <MainTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        <MainTabs
+          activeTab={activeTab}
+          isOwner={isOwner}
+          onTabChange={setActiveTab}
+        />
 
         <main className="flex-1 p-6 md:p-8">
           {activeTab === "active-session" && (
@@ -168,6 +204,108 @@ export function DashboardContent({
                   composición de escuadrón y rotaciones de mapas se activarán en
                   la Fase 8.
                 </p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "settings" && isOwner && (
+            <div className="rounded-lg border border-border bg-card p-6">
+              <h3 className="mb-6 flex items-center gap-2 border-border border-b pb-4 font-bold text-foreground text-sm tracking-tight">
+                Ajustes del Escuadrón
+              </h3>
+
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {/* Invite Code card */}
+                <div className="space-y-4 rounded-lg border border-border bg-background p-5">
+                  <div>
+                    <h4 className="font-semibold text-foreground text-sm">
+                      Código de Invitación
+                    </h4>
+                    <p className="mt-1 font-light text-muted-foreground text-xs leading-relaxed">
+                      Comparte este código con tus compañeros de equipo para que
+                      puedan unirse a la escuadra y reclamar sus operadores.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-muted/40 px-3.5 py-2.5">
+                    <span className="font-bold font-mono text-foreground text-lg tracking-wider">
+                      {squad.invite_code || "BS-PENDIENTE"}
+                    </span>
+
+                    {squad.invite_code && (
+                      <Button
+                        className="flex h-8 items-center gap-1.5 text-xs"
+                        onClick={() => handleCopyCode(squad.invite_code || "")}
+                        size="sm"
+                        variant="outline"
+                      >
+                        {copiedCode ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 text-green-500" />
+                            <span>Copiado</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5" />
+                            <span>Copiar</span>
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Squad Info card */}
+                <div className="space-y-4 rounded-lg border border-border bg-background p-5">
+                  <div>
+                    <h4 className="font-semibold text-foreground text-sm">
+                      Nombre del Escuadrón
+                    </h4>
+                    <p className="mt-1 font-light text-muted-foreground text-xs leading-relaxed">
+                      Puedes modificar el nombre que identifica a tu escuadrón.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <input
+                      className="w-full rounded-md border border-border bg-muted/30 px-3 py-2 text-foreground text-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-75"
+                      disabled
+                      type="text"
+                      value={squad.name}
+                    />
+                    <Button
+                      className="mt-2 self-start"
+                      onClick={() => setIsEditing(true)}
+                      size="sm"
+                      variant="outline"
+                    >
+                      Modificar Nombre
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Danger Zone card */}
+                <div className="space-y-4 rounded-lg border border-destructive/30 bg-destructive/5 p-5 md:col-span-2">
+                  <div>
+                    <h4 className="font-semibold text-destructive text-sm">
+                      Zona de Peligro
+                    </h4>
+                    <p className="mt-1 font-light text-muted-foreground text-xs leading-relaxed">
+                      Una vez que elimines el escuadrón, no podrás recuperar sus
+                      datos ni el historial de sesiones asociadas. Todos los
+                      slots e integrantes serán desvinculados permanentemente.
+                    </p>
+                  </div>
+
+                  <Button
+                    className="border border-destructive/20 text-destructive hover:bg-destructive/10"
+                    onClick={handleDeleteSquad}
+                    size="sm"
+                    variant="ghost"
+                  >
+                    Eliminar Escuadrón
+                  </Button>
+                </div>
               </div>
             </div>
           )}

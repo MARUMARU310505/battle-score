@@ -1,4 +1,5 @@
 import { actions } from "astro:actions";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 interface Member {
@@ -21,7 +22,6 @@ interface Squad {
 interface SquadSidebarProps {
   allSquads: Array<{ id: string; name: string }>;
   currentUser?: { id: string; email?: string } | null;
-  onEditClick: () => void;
   onNewSquadClick: () => void;
   squad: Squad;
 }
@@ -35,13 +35,40 @@ const CLASS_BADGES: Record<string, string> = {
 
 export function SquadSidebar({
   squad,
-  onEditClick,
   allSquads,
   onNewSquadClick,
   currentUser = null,
 }: SquadSidebarProps) {
   const isOwner = squad.owner_id === currentUser?.id;
   const myMember = squad.members.find((m) => m.user_id === currentUser?.id);
+
+  const [editingSlot, setEditingSlot] = useState<number | null>(null);
+  const [editClass, setEditClass] = useState("Asalto");
+
+  const startEditing = (member: Member) => {
+    setEditingSlot(member.slot_number);
+    setEditClass(member.favorite_class);
+  };
+
+  const handleSaveClass = async (slotNumber: number) => {
+    try {
+      const { error } = await actions.squad.updateMemberClass({
+        squadId: squad.id,
+        slotNumber,
+        favoriteClass: editClass,
+      });
+
+      if (error) {
+        throw error;
+      }
+      setEditingSlot(null);
+      window.location.reload();
+    } catch (err) {
+      console.error("Error updating member class:", err);
+      // biome-ignore lint/suspicious/noAlert: standard alert
+      alert("Error al actualizar el rol del operador.");
+    }
+  };
 
   const handleToggleActive = async (
     slotNumber: number,
@@ -61,27 +88,6 @@ export function SquadSidebar({
       console.error("Error toggling active state:", err);
       // biome-ignore lint/suspicious/noAlert: standard alert
       alert("Error al cambiar el estado del operador.");
-    }
-  };
-
-  const handleDeleteSquad = async () => {
-    // biome-ignore lint/suspicious/noAlert: standard confirm dialog is appropriate for deletion safety
-    const confirmed = confirm(
-      "¿Estás seguro de que deseas eliminar este escuadrón? Esta acción es irreversible."
-    );
-    if (!confirmed) {
-      return;
-    }
-    try {
-      const { error } = await actions.squad.delete({ squadId: squad.id });
-      if (error) {
-        throw error;
-      }
-      window.location.href = "/dashboard";
-    } catch (err) {
-      console.error("Error deleting squad:", err);
-      // biome-ignore lint/suspicious/noAlert: alert for user feedback
-      alert("Error al eliminar el escuadrón.");
     }
   };
 
@@ -153,6 +159,59 @@ export function SquadSidebar({
           {squad.members.map((member) => {
             const hasUser =
               member.user_id !== null && member.user_id !== undefined;
+
+            const isEditingThisSlot = editingSlot === member.slot_number;
+
+            if (isEditingThisSlot) {
+              return (
+                <div
+                  className="space-y-2.5 rounded-lg border border-primary/20 bg-primary/5 p-3"
+                  key={member.id}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono font-semibold text-[9px] text-primary uppercase">
+                      Clase de {member.gamertag}
+                    </span>
+                    <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground">
+                      Nivel {member.level}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <select
+                      className="w-full rounded border border-border bg-background px-2 py-1 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                      onChange={(e) => setEditClass(e.target.value)}
+                      value={editClass}
+                    >
+                      <option value="Asalto">Asalto</option>
+                      <option value="Soporte">Soporte</option>
+                      <option value="Recon">Recon</option>
+                      <option value="Ingeniero">Ingeniero</option>
+                    </select>
+                  </div>
+
+                  <div className="flex justify-end gap-2">
+                    <button
+                      className="cursor-pointer rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                      onClick={() => setEditingSlot(null)}
+                      type="button"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      className="cursor-pointer rounded px-1.5 py-0.5 font-semibold text-[10px] text-primary hover:underline"
+                      onClick={() => handleSaveClass(member.slot_number)}
+                      type="button"
+                    >
+                      Guardar
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+
+            const canEdit =
+              (isOwner && hasUser) || member.user_id === currentUser?.id;
             const canToggle = isOwner && member.slot_number !== 1 && hasUser;
 
             let statusBadge: React.ReactNode = null;
@@ -185,12 +244,10 @@ export function SquadSidebar({
                 key={member.id}
               >
                 <div className="flex items-start gap-3">
-                  {/* Avatar placeholder */}
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted font-bold font-mono text-foreground text-xs uppercase">
                     {member.gamertag.slice(0, 2)}
                   </div>
 
-                  {/* Member Details */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-1">
                       <p className="truncate font-bold text-foreground text-xs">
@@ -210,21 +267,35 @@ export function SquadSidebar({
                   </div>
                 </div>
 
-                {canToggle && (
-                  <div className="flex justify-end border-border/40 border-t pt-2">
-                    <button
-                      className={`cursor-pointer font-mono text-[10px] transition-colors ${
-                        member.is_active
-                          ? "text-destructive transition-colors hover:text-destructive/80"
-                          : "text-green-500 transition-colors hover:text-green-400"
-                      }`}
-                      onClick={() =>
-                        handleToggleActive(member.slot_number, member.is_active)
-                      }
-                      type="button"
-                    >
-                      {member.is_active ? "Desactivar" : "Activar"}
-                    </button>
+                {(canEdit || canToggle) && (
+                  <div className="flex justify-end gap-2 border-border/40 border-t pt-2">
+                    {canEdit && (
+                      <button
+                        className="cursor-pointer font-mono text-[10px] text-muted-foreground transition-colors hover:text-foreground"
+                        onClick={() => startEditing(member)}
+                        type="button"
+                      >
+                        Editar Rol
+                      </button>
+                    )}
+                    {canToggle && (
+                      <button
+                        className={`cursor-pointer font-mono text-[10px] transition-colors ${
+                          member.is_active
+                            ? "text-destructive transition-colors hover:text-destructive/80"
+                            : "text-green-500 transition-colors hover:text-green-400"
+                        }`}
+                        onClick={() =>
+                          handleToggleActive(
+                            member.slot_number,
+                            member.is_active
+                          )
+                        }
+                        type="button"
+                      >
+                        {member.is_active ? "Desactivar" : "Activar"}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -234,39 +305,18 @@ export function SquadSidebar({
       </div>
 
       {/* Footer Actions */}
-      <div className="mt-6 space-y-2 border-border border-t pt-4">
-        {isOwner ? (
-          <>
-            <Button
-              className="w-full"
-              onClick={onEditClick}
-              size="sm"
-              variant="outline"
-            >
-              Editar Escuadrón
-            </Button>
-            <Button
-              className="w-full text-destructive hover:bg-destructive/10"
-              onClick={handleDeleteSquad}
-              size="sm"
-              variant="ghost"
-            >
-              Eliminar Escuadrón
-            </Button>
-          </>
-        ) : (
-          myMember && (
-            <Button
-              className="w-full text-destructive hover:bg-destructive/10"
-              onClick={handleLeaveSquad}
-              size="sm"
-              variant="ghost"
-            >
-              Salir del Escuadrón
-            </Button>
-          )
-        )}
-      </div>
+      {!isOwner && myMember && (
+        <div className="mt-6 space-y-2 border-border border-t pt-4">
+          <Button
+            className="w-full text-destructive hover:bg-destructive/10"
+            onClick={handleLeaveSquad}
+            size="sm"
+            variant="ghost"
+          >
+            Salir del Escuadrón
+          </Button>
+        </div>
+      )}
     </aside>
   );
 }

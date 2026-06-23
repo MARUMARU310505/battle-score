@@ -921,6 +921,78 @@ export const server = {
         return { success: true };
       },
     }),
+    updateMemberClass: defineAction({
+      accept: "json",
+      input: z.object({
+        squadId: z.string().uuid(),
+        slotNumber: z.number().min(1).max(4),
+        favoriteClass: z.string(),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para continuar",
+          });
+        }
+
+        // Fetch squad owner and slot details
+        const { data: squad, error: squadError } = await supabase
+          .from("squads")
+          .select("owner_id")
+          .eq("id", input.squadId)
+          .maybeSingle();
+
+        if (squadError || !squad) {
+          throw new ActionError({
+            code: "NOT_FOUND",
+            message: "Escuadrón no encontrado",
+          });
+        }
+
+        const { data: member, error: memberError } = await supabase
+          .from("squad_members")
+          .select("user_id")
+          .eq("squad_id", input.squadId)
+          .eq("slot_number", input.slotNumber)
+          .maybeSingle();
+
+        if (memberError || !member) {
+          throw new ActionError({
+            code: "NOT_FOUND",
+            message: "Operador no encontrado",
+          });
+        }
+
+        const isOwner = squad.owner_id === user.id;
+        const isSelf = member.user_id === user.id;
+
+        if (!(isOwner || isSelf)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "No tienes permiso para editar este operador",
+          });
+        }
+
+        const { error } = await supabase
+          .from("squad_members")
+          .update({ favorite_class: input.favoriteClass })
+          .eq("squad_id", input.squadId)
+          .eq("slot_number", input.slotNumber);
+
+        if (error) {
+          console.error("Error updating member class:", error);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al actualizar la clase favorita",
+          });
+        }
+
+        return { success: true };
+      },
+    }),
     delete: defineAction({
       accept: "json",
       input: z.object({
