@@ -48,10 +48,12 @@ export function DashboardContent({
   currentUser = null,
   profile = null,
 }: DashboardContentProps) {
-  const [isEditing, setIsEditing] = useState(false);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("active-session");
   const [copiedCode, setCopiedCode] = useState(false);
+  const [squadName, setSquadName] = useState(squad?.name || "");
+  const [isSavingName, setIsSavingName] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
   const [activePlayers, setActivePlayers] = useState<ActivePlayer[]>(() => {
     if (!squad) {
       return [];
@@ -103,18 +105,6 @@ export function DashboardContent({
       <div className="flex min-h-[calc(100vh-4rem)] flex-1 items-center justify-center bg-background p-8">
         <SquadWizard
           onCancel={squad ? () => setIsCreatingNew(false) : undefined}
-          profile={profile}
-        />
-      </div>
-    );
-  }
-
-  if (isEditing) {
-    return (
-      <div className="flex min-h-[calc(100vh-4rem)] flex-1 items-center justify-center bg-background p-8">
-        <SquadWizard
-          initialSquad={squad}
-          onCancel={() => setIsEditing(false)}
           profile={profile}
         />
       </div>
@@ -256,33 +246,75 @@ export function DashboardContent({
                 </div>
 
                 {/* Squad Info card */}
-                <div className="space-y-4 rounded-lg border border-border bg-background p-5">
+                <form
+                  className="space-y-4 rounded-lg border border-border bg-background p-5"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setNameError(null);
+                    if (!squad) {
+                      return;
+                    }
+                    if (squadName.trim().length < 3) {
+                      setNameError(
+                        "El nombre debe tener al menos 3 caracteres."
+                      );
+                      return;
+                    }
+                    try {
+                      setIsSavingName(true);
+                      const { error } = await actions.squad.update({
+                        squadId: squad.id,
+                        name: squadName.trim(),
+                      });
+                      if (error) {
+                        throw error;
+                      }
+                      window.location.reload();
+                    } catch (err) {
+                      console.error("Error updating squad name:", err);
+                      setNameError(
+                        "Error al actualizar el nombre del escuadrón."
+                      );
+                    } finally {
+                      setIsSavingName(false);
+                    }
+                  }}
+                >
                   <div>
                     <h4 className="font-semibold text-foreground text-sm">
                       Nombre del Escuadrón
                     </h4>
                     <p className="mt-1 font-light text-muted-foreground text-xs leading-relaxed">
-                      Puedes modificar el nombre que identifica a tu escuadrón.
+                      Puedes modificar el nombre que identifica a tu escuadrón
+                      directamente aquí.
                     </p>
                   </div>
 
                   <div className="flex flex-col gap-2">
                     <input
-                      className="w-full rounded-md border border-border bg-muted/30 px-3 py-2 text-foreground text-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-75"
-                      disabled
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-75"
+                      disabled={isSavingName}
+                      onChange={(e) => setSquadName(e.target.value)}
                       type="text"
-                      value={squad.name}
+                      value={squadName}
                     />
+                    {nameError && (
+                      <p className="mt-1 font-light text-destructive text-xs">
+                        {nameError}
+                      </p>
+                    )}
                     <Button
                       className="mt-2 self-start"
-                      onClick={() => setIsEditing(true)}
+                      disabled={
+                        isSavingName || squadName.trim() === (squad?.name || "")
+                      }
                       size="sm"
-                      variant="outline"
+                      type="submit"
                     >
-                      Modificar Nombre
+                      {isSavingName ? "Guardando..." : "Guardar Nombre"}
                     </Button>
                   </div>
-                </div>
+                </form>
 
                 {/* Danger Zone card */}
                 <div className="space-y-4 rounded-lg border border-destructive/30 bg-destructive/5 p-5 md:col-span-2">
