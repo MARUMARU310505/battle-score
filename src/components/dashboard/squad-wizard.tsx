@@ -26,6 +26,7 @@ interface SquadWizardProps {
   } | null;
   onCancel?: () => void;
   profile?: {
+    favorite_class?: string;
     gamertag: string;
     level: number;
   } | null;
@@ -45,6 +46,115 @@ function validateMembers(members: MemberInput[]): string | null {
     return "El nivel del Jugador #1 (Líder) debe ser mayor o igual a 1.";
   }
   return null;
+}
+
+interface MemberRowProps {
+  disableGamertagAndLevel: boolean;
+  handleMemberChange: (
+    index: number,
+    field: keyof MemberInput,
+    value: string | number
+  ) => void;
+  isDisabled: boolean;
+  member: MemberInput;
+  originalIndex: number;
+}
+
+function MemberRow({
+  member,
+  originalIndex,
+  isDisabled,
+  disableGamertagAndLevel,
+  handleMemberChange,
+}: MemberRowProps) {
+  const isLeader = member.slot_number === 1;
+
+  return (
+    <div className="space-y-4 rounded-md border border-border/60 bg-background/50 p-4">
+      <div className="flex items-center justify-between border-border/40 border-b pb-2">
+        <span className="font-mono font-semibold text-muted-foreground text-xs uppercase">
+          Operador #{member.slot_number} {isLeader && "(Líder)"}
+        </span>
+        {isDisabled && (
+          <span className="rounded border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[9px] text-amber-500 uppercase">
+            Invitación Pendiente (No se puede editar)
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <label
+            className="mb-1 block font-medium text-muted-foreground text-xs"
+            htmlFor={`gamertag-${member.slot_number}`}
+          >
+            Gamertag
+          </label>
+          <input
+            className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
+            disabled={disableGamertagAndLevel}
+            id={`gamertag-${member.slot_number}`}
+            onChange={(e) =>
+              handleMemberChange(originalIndex, "gamertag", e.target.value)
+            }
+            placeholder="Ej. Ghost"
+            type="text"
+            value={member.gamertag}
+          />
+        </div>
+        <div>
+          <label
+            className="mb-1 block font-medium text-muted-foreground text-xs"
+            htmlFor={`level-${member.slot_number}`}
+          >
+            Nivel
+          </label>
+          <input
+            className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
+            disabled={disableGamertagAndLevel}
+            id={`level-${member.slot_number}`}
+            min="1"
+            onChange={(e) =>
+              handleMemberChange(
+                originalIndex,
+                "level",
+                Number.parseInt(e.target.value, 10) || 1
+              )
+            }
+            type="number"
+            value={member.level}
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label
+            className="mb-1 block font-medium text-muted-foreground text-xs"
+            htmlFor={`favorite_class-${member.slot_number}`}
+          >
+            Clase Favorita
+          </label>
+          <select
+            className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
+            disabled={isDisabled}
+            id={`favorite_class-${member.slot_number}`}
+            onChange={(e) =>
+              handleMemberChange(
+                originalIndex,
+                "favorite_class",
+                e.target.value
+              )
+            }
+            value={member.favorite_class}
+          >
+            {CLASSES.map((cls) => (
+              <option key={cls} value={cls}>
+                {cls}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function SquadWizard({
@@ -122,10 +232,12 @@ export function SquadWizard({
     setError(null);
 
     // Validation
-    const validationError = validateMembers(members);
-    if (validationError) {
-      setError(validationError);
-      return;
+    if (!initialSquad) {
+      const validationError = validateMembers(members);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
     }
 
     const membersToSubmit = members.map((m) => {
@@ -175,6 +287,13 @@ export function SquadWizard({
     }
   };
 
+  let subtitle = "Paso 2: Registrar integrantes (4 operadores)";
+  if (initialSquad) {
+    subtitle = "Modifica el nombre de tu escuadrón";
+  } else if (step === 1) {
+    subtitle = "Paso 1: Nombre de tu equipo";
+  }
+
   return (
     <div className="mx-auto max-w-2xl rounded-lg border border-border bg-card p-6 shadow-sm md:p-8">
       <div className="mb-6 flex items-center justify-between">
@@ -183,14 +302,14 @@ export function SquadWizard({
             {initialSquad ? "Editar Escuadrón" : "Configuración del Escuadrón"}
           </h2>
           <p className="mt-1 font-light text-muted-foreground text-sm">
-            {step === 1
-              ? "Paso 1: Nombre de tu equipo"
-              : "Paso 2: Registrar integrantes (4 operadores)"}
+            {subtitle}
           </p>
         </div>
-        <div className="font-mono text-muted-foreground text-xs">
-          Paso {step} de 2
-        </div>
+        {!initialSquad && (
+          <div className="font-mono text-muted-foreground text-xs">
+            Paso {step} de 2
+          </div>
+        )}
       </div>
 
       {error && (
@@ -199,8 +318,8 @@ export function SquadWizard({
         </div>
       )}
 
-      {step === 1 ? (
-        <div className="space-y-6">
+      {initialSquad && (
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
             <label
               className="mb-2 block font-medium text-foreground text-sm"
@@ -223,12 +342,51 @@ export function SquadWizard({
                 Cancelar
               </Button>
             )}
+            <Button disabled={loading} type="submit">
+              {loading ? "Guardando..." : "Guardar Cambios"}
+            </Button>
+          </div>
+        </form>
+      )}
+
+      {!initialSquad && step === 1 && (
+        <div className="space-y-6">
+          <div>
+            <label
+              className="mb-2 block font-medium text-foreground text-sm"
+              htmlFor="squadName"
+            >
+              Nombre del Escuadrón
+            </label>
+            <input
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              id="squadName"
+              onChange={(e) => setSquadName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleNext();
+                }
+              }}
+              placeholder="Ej. Alpha Team, Battle Score BR, etc."
+              type="text"
+              value={squadName}
+            />
+          </div>
+          <div className="flex justify-end gap-3">
+            {onCancel && (
+              <Button onClick={onCancel} type="button" variant="outline">
+                Cancelar
+              </Button>
+            )}
             <Button onClick={handleNext} type="button">
               Siguiente Paso
             </Button>
           </div>
         </div>
-      ) : (
+      )}
+
+      {!initialSquad && step === 2 && (
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-6">
             {members
@@ -247,97 +405,14 @@ export function SquadWizard({
                 const disableGamertagAndLevel = isDisabled || isLeader;
 
                 return (
-                  <div
-                    className="space-y-4 rounded-md border border-border/60 bg-background/50 p-4"
+                  <MemberRow
+                    disableGamertagAndLevel={disableGamertagAndLevel}
+                    handleMemberChange={handleMemberChange}
+                    isDisabled={isDisabled}
                     key={member.slot_number}
-                  >
-                    <div className="flex items-center justify-between border-border/40 border-b pb-2">
-                      <span className="font-mono font-semibold text-muted-foreground text-xs uppercase">
-                        Operador #{member.slot_number} {isLeader && "(Líder)"}
-                      </span>
-                      {isDisabled && (
-                        <span className="rounded border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[9px] text-amber-500 uppercase">
-                          Invitación Pendiente (No se puede editar)
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <div>
-                        <label
-                          className="mb-1 block font-medium text-muted-foreground text-xs"
-                          htmlFor={`gamertag-${member.slot_number}`}
-                        >
-                          Gamertag
-                        </label>
-                        <input
-                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
-                          disabled={disableGamertagAndLevel}
-                          id={`gamertag-${member.slot_number}`}
-                          onChange={(e) =>
-                            handleMemberChange(
-                              originalIndex,
-                              "gamertag",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Ej. Ghost"
-                          type="text"
-                          value={member.gamertag}
-                        />
-                      </div>
-                      <div>
-                        <label
-                          className="mb-1 block font-medium text-muted-foreground text-xs"
-                          htmlFor={`level-${member.slot_number}`}
-                        >
-                          Nivel
-                        </label>
-                        <input
-                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
-                          disabled={disableGamertagAndLevel}
-                          id={`level-${member.slot_number}`}
-                          min="1"
-                          onChange={(e) =>
-                            handleMemberChange(
-                              originalIndex,
-                              "level",
-                              Number.parseInt(e.target.value, 10) || 1
-                            )
-                          }
-                          type="number"
-                          value={member.level}
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <label
-                          className="mb-1 block font-medium text-muted-foreground text-xs"
-                          htmlFor={`favorite_class-${member.slot_number}`}
-                        >
-                          Clase Favorita
-                        </label>
-                        <select
-                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
-                          disabled={isDisabled}
-                          id={`favorite_class-${member.slot_number}`}
-                          onChange={(e) =>
-                            handleMemberChange(
-                              originalIndex,
-                              "favorite_class",
-                              e.target.value
-                            )
-                          }
-                          value={member.favorite_class}
-                        >
-                          {CLASSES.map((cls) => (
-                            <option key={cls} value={cls}>
-                              {cls}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
+                    member={member}
+                    originalIndex={originalIndex}
+                  />
                 );
               })}
           </div>
