@@ -18,6 +18,7 @@ export interface SquadMember {
   favorite_class: string;
   gamertag: string;
   id: string;
+  is_active: boolean;
   level: number;
   real_name: string;
   slot_number: number;
@@ -77,6 +78,24 @@ export function SquadHub({
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  const [operatorGamertag, setOperatorGamertag] = useState("");
+  const [operatorRealName, setOperatorRealName] = useState("");
+  const [operatorLevel, setOperatorLevel] = useState(1);
+  const [operatorClass, setOperatorClass] = useState("Asalto");
+
+  const handleSelectSlot = (slotNum: number) => {
+    setSelectedSlot(slotNum);
+    const slotMember = foundSquad?.squad_members.find(
+      (m) => m.slot_number === slotNum
+    );
+    if (slotMember) {
+      setOperatorGamertag("");
+      setOperatorRealName("");
+      setOperatorLevel(1);
+      setOperatorClass(slotMember.favorite_class || "Asalto");
+    }
+  };
+
   const handleCopyCode = (code: string, id: string) => {
     navigator.clipboard.writeText(code);
     setCopiedId(id);
@@ -113,8 +132,18 @@ export function SquadHub({
     }
   };
 
-  const handleJoinSquad = async () => {
+  const handleJoinSquad = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!foundSquad || selectedSlot === null) {
+      return;
+    }
+    if (
+      !(operatorGamertag.trim() && operatorRealName.trim()) ||
+      operatorLevel < 1
+    ) {
+      setSearchError(
+        "Por favor completa todos los campos del operador correctamente."
+      );
       return;
     }
     setLoading(true);
@@ -124,6 +153,10 @@ export function SquadHub({
       const { error } = await actions.squad.claimSlot({
         squadId: foundSquad.id,
         slotNumber: selectedSlot,
+        gamertag: operatorGamertag,
+        realName: operatorRealName,
+        level: operatorLevel,
+        favoriteClass: operatorClass,
       });
 
       if (error) {
@@ -422,7 +455,7 @@ export function SquadHub({
                               key={member.id}
                               onClick={() =>
                                 !isClaimed &&
-                                setSelectedSlot(member.slot_number)
+                                handleSelectSlot(member.slot_number)
                               }
                               type="button"
                             >
@@ -446,14 +479,102 @@ export function SquadHub({
                 </div>
 
                 {selectedSlot !== null && (
-                  <Button
-                    className="w-full text-xs"
-                    disabled={loading}
-                    onClick={handleJoinSquad}
-                    type="button"
+                  <form
+                    className="space-y-4 border-border border-t pt-4"
+                    onSubmit={handleJoinSquad}
                   >
-                    Unirse como Operador #{selectedSlot}
-                  </Button>
+                    <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">
+                      Datos de tu Operador (Slot #{selectedSlot})
+                    </h4>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        <label
+                          className="mb-1 block font-medium text-[10px] text-muted-foreground"
+                          htmlFor="hub-gamertag"
+                        >
+                          Gamertag
+                        </label>
+                        <input
+                          className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          id="hub-gamertag"
+                          onChange={(e) => setOperatorGamertag(e.target.value)}
+                          placeholder="Ej. Ghost"
+                          required
+                          type="text"
+                          value={operatorGamertag}
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          className="mb-1 block font-medium text-[10px] text-muted-foreground"
+                          htmlFor="hub-realname"
+                        >
+                          Nombre Real
+                        </label>
+                        <input
+                          className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          id="hub-realname"
+                          onChange={(e) => setOperatorRealName(e.target.value)}
+                          placeholder="Ej. Alex"
+                          required
+                          type="text"
+                          value={operatorRealName}
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          className="mb-1 block font-medium text-[10px] text-muted-foreground"
+                          htmlFor="hub-level"
+                        >
+                          Nivel
+                        </label>
+                        <input
+                          className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          id="hub-level"
+                          min="1"
+                          onChange={(e) =>
+                            setOperatorLevel(Number(e.target.value) || 1)
+                          }
+                          required
+                          type="number"
+                          value={operatorLevel}
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          className="mb-1 block font-medium text-[10px] text-muted-foreground"
+                          htmlFor="hub-class"
+                        >
+                          Clase Favorita
+                        </label>
+                        <select
+                          className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          id="hub-class"
+                          onChange={(e) => setOperatorClass(e.target.value)}
+                          value={operatorClass}
+                        >
+                          <option value="Asalto">Asalto</option>
+                          <option value="Soporte">Soporte</option>
+                          <option value="Recon">Recon</option>
+                          <option value="Ingeniero">Ingeniero</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <Button
+                      className="w-full text-xs"
+                      disabled={loading}
+                      type="submit"
+                    >
+                      {loading
+                        ? "Uniéndose..."
+                        : `Unirse como Operador #${selectedSlot}`}
+                    </Button>
+                  </form>
                 )}
               </div>
             )}

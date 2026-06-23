@@ -194,6 +194,7 @@ export const server = {
           favorite_class: m.favorite_class,
           slot_number: m.slot_number,
           user_id: m.slot_number === 1 ? user.id : null, // Creator claims slot 1 (leader)
+          is_active: m.slot_number === 1, // Leader is active, others inactive/AFK initially
         }));
 
         const { error: membersError } = await supabase
@@ -500,7 +501,8 @@ export const server = {
               level,
               favorite_class,
               slot_number,
-              user_id
+              user_id,
+              is_active
             )
           `)
           .eq("owner_id", user.id);
@@ -545,6 +547,7 @@ export const server = {
             favorite_class: string;
             slot_number: number;
             user_id: string | null;
+            is_active: boolean;
           }[];
         }[] = [];
         if (joinedSquadIds.length > 0) {
@@ -563,7 +566,8 @@ export const server = {
                 level,
                 favorite_class,
                 slot_number,
-                user_id
+                user_id,
+                is_active
               )
             `)
             .in("id", joinedSquadIds);
@@ -616,7 +620,8 @@ export const server = {
               level,
               favorite_class,
               slot_number,
-              user_id
+              user_id,
+              is_active
             )
           `)
           .eq("invite_code", input.inviteCode.trim().toUpperCase())
@@ -645,6 +650,10 @@ export const server = {
       input: z.object({
         squadId: z.string().uuid(),
         slotNumber: z.number().min(1).max(4),
+        gamertag: z.string().min(2),
+        realName: z.string().min(2),
+        level: z.number().min(1),
+        favoriteClass: z.string(),
       }),
       handler: async (input, context) => {
         const user = context.locals.user;
@@ -678,10 +687,17 @@ export const server = {
           });
         }
 
-        // Link the user to the member slot
+        // Link the user to the member slot and update their info
         const { error: claimError } = await supabase
           .from("squad_members")
-          .update({ user_id: user.id })
+          .update({
+            user_id: user.id,
+            gamertag: input.gamertag,
+            real_name: input.realName,
+            level: input.level,
+            favorite_class: input.favoriteClass,
+            is_active: true,
+          })
           .eq("id", existingMember.id);
 
         if (claimError) {
@@ -720,13 +736,56 @@ export const server = {
           });
         }
 
-        // Unlink user_id
-        const { error } = await supabase
+        // Fetch squad owner and slot details
+        const { data: squad, error: squadError } = await supabase
+          .from("squads")
+          .select("owner_id")
+          .eq("id", input.squadId)
+          .maybeSingle();
+
+        if (squadError || !squad) {
+          throw new ActionError({
+            code: "NOT_FOUND",
+            message: "Escuadrón no encontrado",
+          });
+        }
+
+        const { data: member, error: memberError } = await supabase
           .from("squad_members")
-          .update({ user_id: null })
+          .select("user_id")
           .eq("squad_id", input.squadId)
           .eq("slot_number", input.slotNumber)
-          .eq("user_id", user.id);
+          .maybeSingle();
+
+        if (memberError || !member) {
+          throw new ActionError({
+            code: "NOT_FOUND",
+            message: "Operador no encontrado",
+          });
+        }
+
+        const isOwner = squad.owner_id === user.id;
+        const isSelf = member.user_id === user.id;
+
+        if (!(isOwner || isSelf)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "No tienes permiso para liberar este slot",
+          });
+        }
+
+        // Unlink and reset to placeholder
+        const { error } = await supabase
+          .from("squad_members")
+          .update({
+            user_id: null,
+            gamertag: `Operador ${input.slotNumber}`,
+            real_name: "Pendiente",
+            level: 1,
+            is_active: false,
+          })
+          .eq("squad_id", input.squadId)
+          .eq("slot_number", input.slotNumber);
 
         if (error) {
           console.error("Error releasing slot:", error);
@@ -740,6 +799,61 @@ export const server = {
         const activeSquadId = context.cookies.get("active_squad_id")?.value;
         if (activeSquadId === input.squadId) {
           context.cookies.delete("active_squad_id", { path: "/" });
+        }
+
+        return { success: true };
+      },
+    }),
+    setIsActive: defineAction({
+      accept: "json",
+      input: z.object({
+        squadId: z.string().uuid(),
+        slotNumber: z.number().min(1).max(4),
+        isActive: z.boolean(),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para realizar esta acción",
+          });
+        }
+
+        const { data: squad, error: squadError } = await supabase
+          .from("squads")
+          .select("owner_id")
+          .eq("id", input.squadId)
+          .maybeSingle();
+
+        if (squadError || !squad) {
+          throw new ActionError({
+            code: "NOT_FOUND",
+            message: "Escuadrón no encontrado",
+          });
+        }
+
+        if (squad.owner_id !== user.id) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message:
+              "Solo el líder del escuadrón puede cambiar el estado de los integrantes",
+          });
+        }
+
+        const { error } = await supabase
+          .from("squad_members")
+          .update({ is_active: input.isActive })
+          .eq("squad_id", input.squadId)
+          .eq("slot_number", input.slotNumber);
+
+        if (error) {
+          console.error("Error setting member active state:", error);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al cambiar el estado del integrante",
+          });
         }
 
         return { success: true };

@@ -10,9 +10,11 @@ interface Member {
   favorite_class: string;
   gamertag: string;
   id: string;
+  is_active: boolean;
   level: number;
   real_name: string;
   slot_number: number;
+  user_id?: string | null;
 }
 
 interface Squad {
@@ -49,14 +51,18 @@ export function DashboardContent({
     if (!squad) {
       return [];
     }
-    return squad.members.map((member) => ({
-      slot_number: member.slot_number,
-      status: "titular",
-      gamertag: member.gamertag,
-      real_name: member.real_name,
-      favorite_class: member.favorite_class,
-      active_class: member.favorite_class,
-    }));
+    return squad.members.map((member) => {
+      const hasUser = member.user_id !== null && member.user_id !== undefined;
+      return {
+        slot_number: member.slot_number,
+        status: hasUser && member.is_active ? "titular" : "ausente",
+        gamertag: member.gamertag,
+        real_name: member.real_name,
+        favorite_class: member.favorite_class,
+        active_class: member.favorite_class,
+        user_id: member.user_id,
+      };
+    });
   });
 
   if (!squad || isCreatingNew) {

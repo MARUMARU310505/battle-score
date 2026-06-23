@@ -9,6 +9,7 @@ interface MemberInput {
   level: number;
   real_name: string;
   slot_number: number;
+  user_id?: string | null;
 }
 
 interface SquadWizardProps {
@@ -22,6 +23,7 @@ interface SquadWizardProps {
       level: number;
       favorite_class: string;
       slot_number: number;
+      user_id?: string | null;
     }>;
   } | null;
   onCancel?: () => void;
@@ -61,6 +63,7 @@ export function SquadWizard({
       level: m.level,
       favorite_class: m.favorite_class,
       slot_number: m.slot_number,
+      user_id: m.user_id,
     })) || [
       {
         gamertag: "",
@@ -242,6 +245,9 @@ export function SquadWizard({
                   (x) => x.slot_number === member.slot_number
                 );
                 const isLeader = member.slot_number === 1;
+                const hasUser =
+                  member.user_id !== null && member.user_id !== undefined;
+                const isDisabled = !(isLeader || hasUser);
 
                 return (
                   <div
@@ -252,6 +258,11 @@ export function SquadWizard({
                       <span className="font-mono font-semibold text-muted-foreground text-xs uppercase">
                         Operador #{member.slot_number} {isLeader && "(Líder)"}
                       </span>
+                      {isDisabled && (
+                        <span className="rounded border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[9px] text-amber-500 uppercase">
+                          Invitación Pendiente (No se puede editar)
+                        </span>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -263,7 +274,8 @@ export function SquadWizard({
                           Gamertag
                         </label>
                         <input
-                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
+                          disabled={isDisabled}
                           id={`gamertag-${member.slot_number}`}
                           onChange={(e) =>
                             handleMemberChange(
@@ -285,7 +297,8 @@ export function SquadWizard({
                           Nombre Real
                         </label>
                         <input
-                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
+                          disabled={isDisabled}
                           id={`real_name-${member.slot_number}`}
                           onChange={(e) =>
                             handleMemberChange(
@@ -307,7 +320,8 @@ export function SquadWizard({
                           Nivel
                         </label>
                         <input
-                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
+                          disabled={isDisabled}
                           id={`level-${member.slot_number}`}
                           min="1"
                           onChange={(e) =>
@@ -329,7 +343,8 @@ export function SquadWizard({
                           Clase Favorita
                         </label>
                         <select
-                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
+                          disabled={isDisabled}
                           id={`favorite_class-${member.slot_number}`}
                           onChange={(e) =>
                             handleMemberChange(

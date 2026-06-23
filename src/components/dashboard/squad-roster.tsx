@@ -7,6 +7,7 @@ export interface ActivePlayer {
   real_name: string;
   slot_number: number;
   status: "titular" | "reemplazo" | "ausente";
+  user_id?: string | null;
 }
 
 const CLASSES = ["Asalto", "Soporte", "Recon", "Ingeniero"];
@@ -136,79 +137,87 @@ export function SquadRoster({
                 </div>
 
                 {/* Status Toggle buttons */}
-                <div className="flex items-center gap-1.5 self-start sm:self-center">
-                  <button
-                    className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-[10px] transition-all ${
-                      player.status === "titular"
-                        ? "bg-primary text-primary-foreground"
-                        : "border border-border bg-background text-muted-foreground hover:bg-muted"
-                    }`}
-                    onClick={() =>
-                      handleStatusChange(player.slot_number, "titular")
-                    }
-                    type="button"
-                  >
-                    <UserCheck className="h-3 w-3" />
-                    Titular
-                  </button>
-                  <button
-                    className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-[10px] transition-all ${
-                      player.status === "reemplazo"
-                        ? "bg-primary text-primary-foreground"
-                        : "border border-border bg-background text-muted-foreground hover:bg-muted"
-                    }`}
-                    onClick={() =>
-                      handleStatusChange(player.slot_number, "reemplazo")
-                    }
-                    type="button"
-                  >
-                    <User className="h-3 w-3" />
-                    Reemplazo
-                  </button>
-                  <button
-                    className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-[10px] transition-all ${
-                      player.status === "ausente"
-                        ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
-                        : "border border-border bg-background text-muted-foreground hover:bg-muted"
-                    }`}
-                    onClick={() =>
-                      handleStatusChange(player.slot_number, "ausente")
-                    }
-                    type="button"
-                  >
-                    <UserMinus className="h-3 w-3" />
-                    Ausente
-                  </button>
-                </div>
+                {player.user_id !== null && player.user_id !== undefined ? (
+                  <div className="flex items-center gap-1.5 self-start sm:self-center">
+                    <button
+                      className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-[10px] transition-all ${
+                        player.status === "titular"
+                          ? "bg-primary text-primary-foreground"
+                          : "border border-border bg-background text-muted-foreground hover:bg-muted"
+                      }`}
+                      onClick={() =>
+                        handleStatusChange(player.slot_number, "titular")
+                      }
+                      type="button"
+                    >
+                      <UserCheck className="h-3 w-3" />
+                      Titular
+                    </button>
+                    <button
+                      className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-[10px] transition-all ${
+                        player.status === "reemplazo"
+                          ? "bg-primary text-primary-foreground"
+                          : "border border-border bg-background text-muted-foreground hover:bg-muted"
+                      }`}
+                      onClick={() =>
+                        handleStatusChange(player.slot_number, "reemplazo")
+                      }
+                      type="button"
+                    >
+                      <User className="h-3 w-3" />
+                      Reemplazo
+                    </button>
+                    <button
+                      className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-[10px] transition-all ${
+                        player.status === "ausente"
+                          ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
+                          : "border border-border bg-background text-muted-foreground hover:bg-muted"
+                      }`}
+                      onClick={() =>
+                        handleStatusChange(player.slot_number, "ausente")
+                      }
+                      type="button"
+                    >
+                      <UserMinus className="h-3 w-3" />
+                      Ausente
+                    </button>
+                  </div>
+                ) : (
+                  <span className="shrink-0 rounded border border-border/30 bg-muted/40 px-2 py-0.5 font-mono text-[10px] text-muted-foreground/60 italic">
+                    Slot disponible (Invitación)
+                  </span>
+                )}
               </div>
 
               {/* Class Selection */}
-              {!isAbsent && (
-                <div className="mt-3 border-border/40 border-t pt-3">
-                  <div className="flex items-center gap-3">
-                    <label
-                      className="font-medium text-muted-foreground text-xs"
-                      htmlFor={`class-select-${player.slot_number}`}
-                    >
-                      Clase en Sesión:
-                    </label>
-                    <select
-                      className="rounded-md border border-border bg-background px-2 py-1 font-sans text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                      id={`class-select-${player.slot_number}`}
-                      onChange={(e) =>
-                        handleClassChange(player.slot_number, e.target.value)
-                      }
-                      value={player.active_class}
-                    >
-                      {CLASSES.map((cls) => (
-                        <option key={cls} value={cls}>
-                          {cls}
-                        </option>
-                      ))}
-                    </select>
+              {!isAbsent &&
+                player.user_id !== null &&
+                player.user_id !== undefined && (
+                  <div className="mt-3 border-border/40 border-t pt-3">
+                    <div className="flex items-center gap-3">
+                      <label
+                        className="font-medium text-muted-foreground text-xs"
+                        htmlFor={`class-select-${player.slot_number}`}
+                      >
+                        Clase en Sesión:
+                      </label>
+                      <select
+                        className="rounded-md border border-border bg-background px-2 py-1 font-sans text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                        id={`class-select-${player.slot_number}`}
+                        onChange={(e) =>
+                          handleClassChange(player.slot_number, e.target.value)
+                        }
+                        value={player.active_class}
+                      >
+                        {CLASSES.map((cls) => (
+                          <option key={cls} value={cls}>
+                            {cls}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           );
         })}
