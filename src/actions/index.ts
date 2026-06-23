@@ -320,4 +320,127 @@ export const server = {
       },
     }),
   },
+  session: {
+    create: defineAction({
+      accept: "json",
+      input: z.object({
+        name: z.string().min(1),
+        squadId: z.string().uuid(),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para crear una sesión",
+          });
+        }
+
+        // Deactivate any existing active session for this squad first
+        const { error: deactivateError } = await supabase
+          .from("game_sessions")
+          .update({ status: "completed", closed_at: new Date().toISOString() })
+          .eq("squad_id", input.squadId)
+          .eq("status", "active");
+
+        if (deactivateError) {
+          console.error("Error deactivating sessions:", deactivateError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al preparar sesiones anteriores",
+          });
+        }
+
+        const { data: session, error: createError } = await supabase
+          .from("game_sessions")
+          .insert({
+            squad_id: input.squadId,
+            name: input.name,
+            status: "active",
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error("Error creating session:", createError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Error al crear la sesión: ${createError.message}`,
+          });
+        }
+
+        return session;
+      },
+    }),
+    getActive: defineAction({
+      accept: "json",
+      input: z.object({
+        squadId: z.string().uuid(),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para ver sesiones",
+          });
+        }
+
+        const { data: session, error: getError } = await supabase
+          .from("game_sessions")
+          .select("*")
+          .eq("squad_id", input.squadId)
+          .eq("status", "active")
+          .maybeSingle();
+
+        if (getError) {
+          console.error("Error getting active session:", getError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al consultar la sesión activa",
+          });
+        }
+
+        return session;
+      },
+    }),
+    close: defineAction({
+      accept: "json",
+      input: z.object({
+        sessionId: z.string().uuid(),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para cerrar la sesión",
+          });
+        }
+
+        const { data: session, error: closeError } = await supabase
+          .from("game_sessions")
+          .update({
+            status: "completed",
+            closed_at: new Date().toISOString(),
+          })
+          .eq("id", input.sessionId)
+          .select()
+          .single();
+
+        if (closeError) {
+          console.error("Error closing session:", closeError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al cerrar la sesión",
+          });
+        }
+
+        return session;
+      },
+    }),
+  },
 };

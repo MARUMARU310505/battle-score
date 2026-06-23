@@ -1,4 +1,4 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"d9eddfe5ff0a9193a99cfff4c059b06ab7d53ab4"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="eca0974e-eaad-446a-9d6b-91d96fa590f9",e._sentryDebugIdIdentifier="sentry-dbid-eca0974e-eaad-446a-9d6b-91d96fa590f9");}catch(e){}}();import './server_D9HWf41S.mjs';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"bf5d2c91e2095a3a12afa72c4ef99b9ad62c6e5b"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="036fce8a-7881-4953-b039-0e6d96483715",e._sentryDebugIdIdentifier="sentry-dbid-036fce8a-7881-4953-b039-0e6d96483715");}catch(e){}}();import './server_BLYpw72K.mjs';
 import * as z from 'zod/v4';
 import { render } from '@react-email/render';
 import { captureException } from '@sentry/astro';
@@ -6,8 +6,8 @@ import { Resend } from 'resend';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { Html, Head, Preview, Tailwind, Body, Container, Section, Link, Img, Text, Row, Column, Hr } from '@react-email/components';
 import { twMerge } from 'tailwind-merge';
-import { B as BUSINESS_CONFIG } from './business_DWrtXvg_.mjs';
-import { d as defineAction, A as ActionError } from './entrypoint_B2Vs5dyY.mjs';
+import { B as BUSINESS_CONFIG } from './business_B-KLZpvX.mjs';
+import { d as defineAction, A as ActionError } from './entrypoint_Dt6MGiQ5.mjs';
 
 const resetText = { margin: 0 };
 const translations = {
@@ -447,6 +447,99 @@ const server = {
           }
         }
         return { success: true };
+      }
+    })
+  },
+  session: {
+    create: defineAction({
+      accept: "json",
+      input: z.object({
+        name: z.string().min(1),
+        squadId: z.string().uuid()
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para crear una sesión"
+          });
+        }
+        const { error: deactivateError } = await supabase.from("game_sessions").update({ status: "completed", closed_at: (/* @__PURE__ */ new Date()).toISOString() }).eq("squad_id", input.squadId).eq("status", "active");
+        if (deactivateError) {
+          console.error("Error deactivating sessions:", deactivateError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al preparar sesiones anteriores"
+          });
+        }
+        const { data: session, error: createError } = await supabase.from("game_sessions").insert({
+          squad_id: input.squadId,
+          name: input.name,
+          status: "active"
+        }).select().single();
+        if (createError) {
+          console.error("Error creating session:", createError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Error al crear la sesión: ${createError.message}`
+          });
+        }
+        return session;
+      }
+    }),
+    getActive: defineAction({
+      accept: "json",
+      input: z.object({
+        squadId: z.string().uuid()
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para ver sesiones"
+          });
+        }
+        const { data: session, error: getError } = await supabase.from("game_sessions").select("*").eq("squad_id", input.squadId).eq("status", "active").maybeSingle();
+        if (getError) {
+          console.error("Error getting active session:", getError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al consultar la sesión activa"
+          });
+        }
+        return session;
+      }
+    }),
+    close: defineAction({
+      accept: "json",
+      input: z.object({
+        sessionId: z.string().uuid()
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para cerrar la sesión"
+          });
+        }
+        const { data: session, error: closeError } = await supabase.from("game_sessions").update({
+          status: "completed",
+          closed_at: (/* @__PURE__ */ new Date()).toISOString()
+        }).eq("id", input.sessionId).select().single();
+        if (closeError) {
+          console.error("Error closing session:", closeError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al cerrar la sesión"
+          });
+        }
+        return session;
       }
     })
   }

@@ -1,11 +1,11 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"d9eddfe5ff0a9193a99cfff4c059b06ab7d53ab4"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="5b702ead-34c3-4b15-a17f-de23fa2f783c",e._sentryDebugIdIdentifier="sentry-dbid-5b702ead-34c3-4b15-a17f-de23fa2f783c");}catch(e){}}();import './page-ssr_CYs5QmLu.mjs';
-import { c as createComponent } from './astro-component_DDRuvWP-.mjs';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"bf5d2c91e2095a3a12afa72c4ef99b9ad62c6e5b"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="5b702ead-34c3-4b15-a17f-de23fa2f783c",e._sentryDebugIdIdentifier="sentry-dbid-5b702ead-34c3-4b15-a17f-de23fa2f783c");}catch(e){}}();import './page-ssr_CXNdpZpl.mjs';
+import { c as createComponent } from './astro-component_B2e-4z6a.mjs';
 import 'piccolore';
-import { Q as renderTemplate, T as maybeRenderHead } from './params-and-props_C_SQUMVQ.mjs';
-import { r as renderComponent } from './entrypoint_B2Vs5dyY.mjs';
+import { Q as renderTemplate, T as maybeRenderHead } from './params-and-props_D91wChjV.mjs';
+import { r as renderComponent } from './entrypoint_Dt6MGiQ5.mjs';
 import { jsxs, jsx } from 'react/jsx-runtime';
-import { B as Button, N as Nav } from './nav_CrSyAfBx.mjs';
-import { $ as $$BaseLayout } from './base-layout_BXkConVn.mjs';
+import { B as Button, N as Nav } from './nav_BCPO8t3c.mjs';
+import { $ as $$BaseLayout } from './base-layout_CkZaE3xY.mjs';
 
 function Hero() {
   return /* @__PURE__ */ jsxs("section", { className: "relative overflow-hidden bg-background py-24 sm:py-32", children: [

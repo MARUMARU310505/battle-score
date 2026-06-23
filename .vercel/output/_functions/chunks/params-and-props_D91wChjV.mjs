@@ -1,4 +1,4 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"d9eddfe5ff0a9193a99cfff4c059b06ab7d53ab4"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="731d64ae-d6c5-469e-86c5-ca8aadad0aaa",e._sentryDebugIdIdentifier="sentry-dbid-731d64ae-d6c5-469e-86c5-ca8aadad0aaa");}catch(e){}}();import { escape } from 'html-escaper';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"bf5d2c91e2095a3a12afa72c4ef99b9ad62c6e5b"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="731d64ae-d6c5-469e-86c5-ca8aadad0aaa",e._sentryDebugIdIdentifier="sentry-dbid-731d64ae-d6c5-469e-86c5-ca8aadad0aaa");}catch(e){}}();import { escape } from 'html-escaper';
 import 'piccolore';
 import { clsx } from 'clsx';
 import { decodeBase64, encodeBase64, encodeHexUpperCase, decodeHex } from '@oslojs/encoding';
