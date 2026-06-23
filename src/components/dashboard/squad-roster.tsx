@@ -13,6 +13,7 @@ const CLASSES = ["Asalto", "Soporte", "Recon", "Ingeniero"];
 
 interface SquadRosterProps {
   activePlayers: ActivePlayer[];
+  disabled?: boolean;
   onChange: (players: ActivePlayer[]) => void;
   originalMembers: Array<{
     gamertag: string;
@@ -25,6 +26,7 @@ export function SquadRoster({
   activePlayers,
   onChange,
   originalMembers,
+  disabled = false,
 }: SquadRosterProps) {
   const handleStatusChange = (
     slot: number,
@@ -111,7 +113,8 @@ export function SquadRoster({
                     <h4 className="font-semibold text-foreground text-sm">
                       {isSub ? (
                         <input
-                          className="rounded-md border border-border bg-background px-2 py-0.5 font-normal font-sans text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="rounded-md border border-border bg-background px-2 py-0.5 font-normal font-sans text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-75"
+                          disabled={disabled}
                           onChange={(e) =>
                             handleGamertagChange(
                               player.slot_number,
@@ -133,11 +136,12 @@ export function SquadRoster({
                 {player.user_id !== null && player.user_id !== undefined ? (
                   <div className="flex items-center gap-1.5 self-start sm:self-center">
                     <button
-                      className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-[10px] transition-all ${
+                      className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-[10px] transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                         player.status === "titular"
                           ? "bg-primary text-primary-foreground"
                           : "border border-border bg-background text-muted-foreground hover:bg-muted"
                       }`}
+                      disabled={disabled}
                       onClick={() =>
                         handleStatusChange(player.slot_number, "titular")
                       }
@@ -147,11 +151,12 @@ export function SquadRoster({
                       Titular
                     </button>
                     <button
-                      className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-[10px] transition-all ${
+                      className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-[10px] transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                         player.status === "reemplazo"
                           ? "bg-primary text-primary-foreground"
                           : "border border-border bg-background text-muted-foreground hover:bg-muted"
                       }`}
+                      disabled={disabled}
                       onClick={() =>
                         handleStatusChange(player.slot_number, "reemplazo")
                       }
@@ -161,11 +166,12 @@ export function SquadRoster({
                       Reemplazo
                     </button>
                     <button
-                      className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-[10px] transition-all ${
+                      className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-[10px] transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                         player.status === "ausente"
                           ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
                           : "border border-border bg-background text-muted-foreground hover:bg-muted"
                       }`}
+                      disabled={disabled}
                       onClick={() =>
                         handleStatusChange(player.slot_number, "ausente")
                       }
@@ -195,7 +201,8 @@ export function SquadRoster({
                         Clase en Sesión:
                       </label>
                       <select
-                        className="rounded-md border border-border bg-background px-2 py-1 font-sans text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="rounded-md border border-border bg-background px-2 py-1 font-sans text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-75"
+                        disabled={disabled}
                         id={`class-select-${player.slot_number}`}
                         onChange={(e) =>
                           handleClassChange(player.slot_number, e.target.value)

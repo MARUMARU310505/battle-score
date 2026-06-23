@@ -108,6 +108,25 @@ export function SessionPanel({
   };
 
   if (!initialSession) {
+    if (!isOwner) {
+      return (
+        <div className="mx-auto max-w-md rounded-lg border border-border bg-card p-6 shadow-sm md:p-8">
+          <div className="text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted/20">
+              <Calendar className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h2 className="mt-4 font-bold text-foreground text-lg tracking-tight">
+              Sin Sesión Activa
+            </h2>
+            <p className="mt-2 font-light text-muted-foreground text-sm leading-relaxed">
+              A la espera de que el líder del escuadrón comience una sesión de
+              juego.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="mx-auto max-w-md rounded-lg border border-border bg-card p-6 shadow-sm md:p-8">
         <div className="mb-6 text-center">
@@ -211,6 +230,7 @@ export function SessionPanel({
         <div className="md:col-span-1">
           <SquadRoster
             activePlayers={activePlayers}
+            disabled={!isOwner}
             onChange={setActivePlayers}
             originalMembers={squad.members}
           />
