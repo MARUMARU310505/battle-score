@@ -1,11 +1,11 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"9aa1f11240b5d340e4026a0e80081cd252d2d44d"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="4d68bcd9-ce6f-4b01-88a3-71641aaa3db8",e._sentryDebugIdIdentifier="sentry-dbid-4d68bcd9-ce6f-4b01-88a3-71641aaa3db8");}catch(e){}}();import './page-ssr_CUJ-rDYR.mjs';
-import { c as createComponent } from './astro-component_Cjjv5WYH.mjs';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"d9eddfe5ff0a9193a99cfff4c059b06ab7d53ab4"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="5b702ead-34c3-4b15-a17f-de23fa2f783c",e._sentryDebugIdIdentifier="sentry-dbid-5b702ead-34c3-4b15-a17f-de23fa2f783c");}catch(e){}}();import './page-ssr_CYs5QmLu.mjs';
+import { c as createComponent } from './astro-component_DDRuvWP-.mjs';
 import 'piccolore';
-import { Q as renderTemplate, T as maybeRenderHead } from './params-and-props_DeEqr1n3.mjs';
-import { r as renderComponent } from './entrypoint_Det9JS8i.mjs';
+import { Q as renderTemplate, T as maybeRenderHead } from './params-and-props_C_SQUMVQ.mjs';
+import { r as renderComponent } from './entrypoint_B2Vs5dyY.mjs';
 import { jsxs, jsx } from 'react/jsx-runtime';
-import { B as Button, N as Nav } from './nav_pqK0N1rx.mjs';
-import { $ as $$BaseLayout } from './base-layout_fhN2eVec.mjs';
+import { B as Button, N as Nav } from './nav_CrSyAfBx.mjs';
+import { $ as $$BaseLayout } from './base-layout_BXkConVn.mjs';
 
 function Hero() {
   return /* @__PURE__ */ jsxs("section", { className: "relative overflow-hidden bg-background py-24 sm:py-32", children: [
@@ -46,7 +46,7 @@ const $$Index = createComponent(($$result, $$props, $$slots) => {
   Astro2.self = $$Index;
   const { user } = Astro2.locals;
   return renderTemplate`${renderComponent($$result, "BaseLayout", $$BaseLayout, { "metadata": {
-    title: "RedSec BR Analytics — Analiza tu escuadrón",
+    title: "Battle Score BR Analytics — Analiza tu escuadrón",
     description: "Plataforma de análisis de rendimiento para escuadrones competitivos de Battle Royale.",
     ignoreTitleTemplate: true
   } }, { "default": ($$result2) => renderTemplate` ${maybeRenderHead()}<div class="min-h-screen bg-background text-foreground transition-colors duration-200"> ${renderComponent($$result2, "Nav", Nav, { "user": user, "client:load": true, "client:component-hydration": "load", "client:component-path": "@/components/landing/nav", "client:component-export": "Nav" })} <main>${renderComponent($$result2, "Hero", Hero, { "client:load": true, "client:component-hydration": "load", "client:component-path": "@/components/landing/hero", "client:component-export": "Hero" })}</main> </div> ` })}`;

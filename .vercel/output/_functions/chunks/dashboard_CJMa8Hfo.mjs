@@ -1,13 +1,13 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"9aa1f11240b5d340e4026a0e80081cd252d2d44d"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="9f5f1e77-f630-4aca-8a3c-51125fb0d846",e._sentryDebugIdIdentifier="sentry-dbid-9f5f1e77-f630-4aca-8a3c-51125fb0d846");}catch(e){}}();import './page-ssr_CUJ-rDYR.mjs';
-import { c as createComponent } from './astro-component_Cjjv5WYH.mjs';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"d9eddfe5ff0a9193a99cfff4c059b06ab7d53ab4"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="36111fd7-0362-40fd-910c-9df80a6f0d24",e._sentryDebugIdIdentifier="sentry-dbid-36111fd7-0362-40fd-910c-9df80a6f0d24");}catch(e){}}();import './page-ssr_CYs5QmLu.mjs';
+import { c as createComponent } from './astro-component_DDRuvWP-.mjs';
 import 'piccolore';
-import { Q as renderTemplate, T as maybeRenderHead } from './params-and-props_DeEqr1n3.mjs';
-import { r as renderComponent } from './entrypoint_Det9JS8i.mjs';
-import { a as actions } from './server_DO_UlrIg.mjs';
+import { Q as renderTemplate, T as maybeRenderHead } from './params-and-props_C_SQUMVQ.mjs';
+import { r as renderComponent } from './entrypoint_B2Vs5dyY.mjs';
+import { a as actions } from './server_D9HWf41S.mjs';
 import { jsxs, jsx } from 'react/jsx-runtime';
 import { useState } from 'react';
-import { B as Button, N as Nav } from './nav_pqK0N1rx.mjs';
-import { $ as $$BaseLayout } from './base-layout_fhN2eVec.mjs';
+import { B as Button, N as Nav } from './nav_CrSyAfBx.mjs';
+import { $ as $$BaseLayout } from './base-layout_BXkConVn.mjs';
 
 const CLASS_BADGES = {
   Asalto: "🚀 Asalto",
@@ -179,7 +179,7 @@ function SquadWizard({
     /* @__PURE__ */ jsxs("div", { className: "mb-6 flex items-center justify-between", children: [
       /* @__PURE__ */ jsxs("div", { children: [
         /* @__PURE__ */ jsx("h2", { className: "font-bold text-foreground text-xl tracking-tight", children: initialSquad ? "Editar Escuadrón" : "Configuración del Escuadrón" }),
-        /* @__PURE__ */ jsx("p", { className: "mt-1 font-light text-muted-foreground text-sm", children: step === 1 ? "Paso 1: Nombre de tu equipo" : "Paso 2: Registrar integrantes (4 slots)" })
+        /* @__PURE__ */ jsx("p", { className: "mt-1 font-light text-muted-foreground text-sm", children: step === 1 ? "Paso 1: Nombre de tu equipo" : "Paso 2: Registrar integrantes (4 operadores)" })
       ] }),
       /* @__PURE__ */ jsxs("div", { className: "font-mono text-muted-foreground text-xs", children: [
         "Paso ",
@@ -204,7 +204,7 @@ function SquadWizard({
             className: "w-full rounded-md border border-border bg-background px-3 py-2 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary",
             id: "squadName",
             onChange: (e) => setSquadName(e.target.value),
-            placeholder: "Ej. Alpha Team, RedSec BR, etc.",
+            placeholder: "Ej. Alpha Team, Battle Score BR, etc.",
             type: "text",
             value: squadName
           }
@@ -221,7 +221,7 @@ function SquadWizard({
           className: "space-y-4 rounded-md border border-border/60 bg-background/50 p-4",
           children: [
             /* @__PURE__ */ jsx("div", { className: "flex items-center justify-between border-border/40 border-b pb-2", children: /* @__PURE__ */ jsxs("span", { className: "font-mono font-semibold text-muted-foreground text-xs uppercase", children: [
-              "Slot #",
+              "Operador #",
               member.slot_number,
               " ",
               index === 0 && "(Líder)"
@@ -242,7 +242,7 @@ function SquadWizard({
                     className: "w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary",
                     id: `gamertag-${member.slot_number}`,
                     onChange: (e) => handleMemberChange(index, "gamertag", e.target.value),
-                    placeholder: "Ej. Mpacheco",
+                    placeholder: "Ej. Ghost",
                     type: "text",
                     value: member.gamertag
                   }
@@ -263,7 +263,7 @@ function SquadWizard({
                     className: "w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary",
                     id: `real_name-${member.slot_number}`,
                     onChange: (e) => handleMemberChange(index, "real_name", e.target.value),
-                    placeholder: "Ej. Manuel",
+                    placeholder: "Ej. Alex",
                     type: "text",
                     value: member.real_name
                   }
@@ -385,8 +385,8 @@ const $$Dashboard = createComponent(async ($$result, $$props, $$slots) => {
   }
   const { data: squad } = await Astro2.callAction(actions.squad.get, {});
   return renderTemplate`${renderComponent($$result, "BaseLayout", $$BaseLayout, { "metadata": {
-    title: "Dashboard — RedSec BR Analytics",
-    description: "Panel principal de RedSec BR Analytics",
+    title: "Dashboard — Battle Score BR Analytics",
+    description: "Panel principal de Battle Score BR Analytics",
     ignoreTitleTemplate: true
   } }, { "default": async ($$result2) => renderTemplate` ${maybeRenderHead()}<div class="min-h-screen bg-background text-foreground flex flex-col"> ${renderComponent($$result2, "Nav", Nav, { "user": user, "client:load": true, "client:component-hydration": "load", "client:component-path": "@/components/landing/nav", "client:component-export": "Nav" })} ${renderComponent($$result2, "DashboardContent", DashboardContent, { "squad": squad, "client:load": true, "client:component-hydration": "load", "client:component-path": "@/components/dashboard/dashboard-content", "client:component-export": "DashboardContent" })} </div> ` })}`;
 }, "/Users/mpacheco/Documents/projects/PROJECT-battle-score/battle-score/src/pages/dashboard.astro", void 0);

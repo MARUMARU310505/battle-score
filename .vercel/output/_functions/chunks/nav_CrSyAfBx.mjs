@@ -1,11 +1,11 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"9aa1f11240b5d340e4026a0e80081cd252d2d44d"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="0f7bb73f-ca0d-4a03-9581-584111af005e",e._sentryDebugIdIdentifier="sentry-dbid-0f7bb73f-ca0d-4a03-9581-584111af005e");}catch(e){}}();import { jsx, jsxs } from 'react/jsx-runtime';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"d9eddfe5ff0a9193a99cfff4c059b06ab7d53ab4"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="245b9c60-1caf-4c12-8af1-12de0eb468d8",e._sentryDebugIdIdentifier="sentry-dbid-245b9c60-1caf-4c12-8af1-12de0eb468d8");}catch(e){}}();import { jsx, jsxs } from 'react/jsx-runtime';
 import { Moon, Sun } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button as Button$1 } from '@base-ui/react/button';
 import { cva } from 'class-variance-authority';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { a as createSupabaseBrowserClient } from './supabase_MTUNIMHc.mjs';
+import { a as createSupabaseBrowserClient } from './supabase_DcPCbuCC.mjs';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -98,15 +98,31 @@ function Nav({ user = null }) {
   };
   return /* @__PURE__ */ jsx("header", { className: "sticky top-0 z-50 w-full border-border border-b bg-background/80 backdrop-blur-md", children: /* @__PURE__ */ jsxs("div", { className: "mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8", children: [
     /* @__PURE__ */ jsx("div", { className: "flex items-center gap-2", children: /* @__PURE__ */ jsx("a", { className: "flex items-center space-x-2", href: "/", children: /* @__PURE__ */ jsxs("span", { className: "font-bold text-foreground text-xl tracking-tight", children: [
-      "REDSEC",
+      "Battle Score",
       /* @__PURE__ */ jsx("span", { className: "ml-1.5 border-border border-l pl-1.5 font-light font-sans text-muted-foreground text-sm uppercase", children: "BR Analytics" })
     ] }) }) }),
     /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-4", children: [
       /* @__PURE__ */ jsx(ThemeToggle, {}),
       user ? /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-4", children: [
         /* @__PURE__ */ jsx("span", { className: "hidden text-muted-foreground text-sm md:inline-block", children: user.email }),
-        /* @__PURE__ */ jsx(Button, { asChild: true, size: "sm", variant: "outline", children: /* @__PURE__ */ jsx("a", { href: "/dashboard", children: "Dashboard" }) }),
-        /* @__PURE__ */ jsx(Button, { asChild: true, size: "sm", variant: "ghost", children: /* @__PURE__ */ jsx("a", { href: "/api/auth/signout", children: "Cerrar sesión" }) })
+        /* @__PURE__ */ jsx(
+          "a",
+          {
+            className: cn(
+              buttonVariants({ variant: "outline", size: "sm" })
+            ),
+            href: "/dashboard",
+            children: "Dashboard"
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "a",
+          {
+            className: cn(buttonVariants({ variant: "ghost", size: "sm" })),
+            href: "/api/auth/signout",
+            children: "Cerrar sesión"
+          }
+        )
       ] }) : /* @__PURE__ */ jsx(Button, { onClick: handleSignIn, size: "sm", children: /* @__PURE__ */ jsx("span", { children: "Iniciar con Google" }) })
     ] })
   ] }) });

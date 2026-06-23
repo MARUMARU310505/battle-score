@@ -1,4 +1,4 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"9aa1f11240b5d340e4026a0e80081cd252d2d44d"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="eca0974e-eaad-446a-9d6b-91d96fa590f9",e._sentryDebugIdIdentifier="sentry-dbid-eca0974e-eaad-446a-9d6b-91d96fa590f9");}catch(e){}}();import './server_DO_UlrIg.mjs';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"d9eddfe5ff0a9193a99cfff4c059b06ab7d53ab4"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="eca0974e-eaad-446a-9d6b-91d96fa590f9",e._sentryDebugIdIdentifier="sentry-dbid-eca0974e-eaad-446a-9d6b-91d96fa590f9");}catch(e){}}();import './server_D9HWf41S.mjs';
 import * as z from 'zod/v4';
 import { render } from '@react-email/render';
 import { captureException } from '@sentry/astro';
@@ -6,8 +6,8 @@ import { Resend } from 'resend';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { Html, Head, Preview, Tailwind, Body, Container, Section, Link, Img, Text, Row, Column, Hr } from '@react-email/components';
 import { twMerge } from 'tailwind-merge';
-import { B as BUSINESS_CONFIG } from './business_Dj_wr3Kz.mjs';
-import { d as defineAction, A as ActionError } from './entrypoint_Det9JS8i.mjs';
+import { B as BUSINESS_CONFIG } from './business_DWrtXvg_.mjs';
+import { d as defineAction, A as ActionError } from './entrypoint_B2Vs5dyY.mjs';
 
 const resetText = { margin: 0 };
 const translations = {

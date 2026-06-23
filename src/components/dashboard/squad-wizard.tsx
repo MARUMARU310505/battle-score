@@ -175,7 +175,7 @@ export function SquadWizard({
           <p className="mt-1 font-light text-muted-foreground text-sm">
             {step === 1
               ? "Paso 1: Nombre de tu equipo"
-              : "Paso 2: Registrar integrantes (4 slots)"}
+              : "Paso 2: Registrar integrantes (4 operadores)"}
           </p>
         </div>
         <div className="font-mono text-muted-foreground text-xs">
@@ -202,7 +202,7 @@ export function SquadWizard({
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               id="squadName"
               onChange={(e) => setSquadName(e.target.value)}
-              placeholder="Ej. Alpha Team, RedSec BR, etc."
+              placeholder="Ej. Alpha Team, Battle Score BR, etc."
               type="text"
               value={squadName}
             />
@@ -228,7 +228,7 @@ export function SquadWizard({
               >
                 <div className="flex items-center justify-between border-border/40 border-b pb-2">
                   <span className="font-mono font-semibold text-muted-foreground text-xs uppercase">
-                    Slot #{member.slot_number} {index === 0 && "(Líder)"}
+                    Operador #{member.slot_number} {index === 0 && "(Líder)"}
                   </span>
                 </div>
 
@@ -246,7 +246,7 @@ export function SquadWizard({
                       onChange={(e) =>
                         handleMemberChange(index, "gamertag", e.target.value)
                       }
-                      placeholder="Ej. Mpacheco"
+                      placeholder="Ej. Ghost"
                       type="text"
                       value={member.gamertag}
                     />
@@ -264,7 +264,7 @@ export function SquadWizard({
                       onChange={(e) =>
                         handleMemberChange(index, "real_name", e.target.value)
                       }
-                      placeholder="Ej. Manuel"
+                      placeholder="Ej. Alex"
                       type="text"
                       value={member.real_name}
                     />

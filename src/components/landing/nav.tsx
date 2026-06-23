@@ -1,6 +1,7 @@
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 interface NavProps {
   user?: {
@@ -27,7 +28,7 @@ export function Nav({ user = null }: NavProps) {
         <div className="flex items-center gap-2">
           <a className="flex items-center space-x-2" href="/">
             <span className="font-bold text-foreground text-xl tracking-tight">
-              REDSEC
+              Battle Score
               <span className="ml-1.5 border-border border-l pl-1.5 font-light font-sans text-muted-foreground text-sm uppercase">
                 BR Analytics
               </span>
@@ -44,12 +45,20 @@ export function Nav({ user = null }: NavProps) {
               <span className="hidden text-muted-foreground text-sm md:inline-block">
                 {user.email}
               </span>
-              <Button asChild size="sm" variant="outline">
-                <a href="/dashboard">Dashboard</a>
-              </Button>
-              <Button asChild size="sm" variant="ghost">
-                <a href="/api/auth/signout">Cerrar sesión</a>
-              </Button>
+              <a
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" })
+                )}
+                href="/dashboard"
+              >
+                Dashboard
+              </a>
+              <a
+                className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+                href="/api/auth/signout"
+              >
+                Cerrar sesión
+              </a>
             </div>
           ) : (
             <Button onClick={handleSignIn} size="sm">

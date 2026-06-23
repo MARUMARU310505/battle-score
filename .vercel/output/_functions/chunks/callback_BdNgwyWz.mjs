@@ -1,9 +1,9 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"9aa1f11240b5d340e4026a0e80081cd252d2d44d"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3031ed98-2024-4b99-87c0-e1b745e2c2bd",e._sentryDebugIdIdentifier="sentry-dbid-3031ed98-2024-4b99-87c0-e1b745e2c2bd");}catch(e){}}();import './page-ssr_CUJ-rDYR.mjs';
-import { c as createComponent } from './astro-component_Cjjv5WYH.mjs';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"d9eddfe5ff0a9193a99cfff4c059b06ab7d53ab4"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3031ed98-2024-4b99-87c0-e1b745e2c2bd",e._sentryDebugIdIdentifier="sentry-dbid-3031ed98-2024-4b99-87c0-e1b745e2c2bd");}catch(e){}}();import './page-ssr_CYs5QmLu.mjs';
+import { c as createComponent } from './astro-component_DDRuvWP-.mjs';
 import 'piccolore';
-import './params-and-props_DeEqr1n3.mjs';
+import './params-and-props_C_SQUMVQ.mjs';
 import 'clsx';
-import { c as createSupabaseServerClient } from './supabase_MTUNIMHc.mjs';
+import { c as createSupabaseServerClient } from './supabase_DcPCbuCC.mjs';
 
 const $$Callback = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$props, $$slots);
