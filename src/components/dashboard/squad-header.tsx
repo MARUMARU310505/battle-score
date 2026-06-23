@@ -9,7 +9,10 @@ export function SquadHeader({ activePlayers }: SquadHeaderProps) {
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {activePlayers.map((player) => {
         const isAbsent = player.status === "ausente";
-        const kdr = 0.0; // Placeholder stats for Fase 5
+        const k = player.kills || 0;
+        const d = player.deaths || 0;
+        const a = player.assists || 0;
+        const kdr = d > 0 ? k / d : k;
 
         return (
           <div
@@ -52,7 +55,7 @@ export function SquadHeader({ activePlayers }: SquadHeaderProps) {
                     K
                   </p>
                   <p className="mt-0.5 font-semibold text-foreground text-sm">
-                    0
+                    {k}
                   </p>
                 </div>
                 <div>
@@ -60,7 +63,7 @@ export function SquadHeader({ activePlayers }: SquadHeaderProps) {
                     D
                   </p>
                   <p className="mt-0.5 font-semibold text-foreground text-sm">
-                    0
+                    {d}
                   </p>
                 </div>
                 <div>
@@ -68,7 +71,7 @@ export function SquadHeader({ activePlayers }: SquadHeaderProps) {
                     A
                   </p>
                   <p className="mt-0.5 font-semibold text-foreground text-sm">
-                    0
+                    {a}
                   </p>
                 </div>
                 <div>

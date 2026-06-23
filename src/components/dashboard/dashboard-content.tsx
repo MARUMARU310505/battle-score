@@ -33,17 +33,50 @@ interface Session {
   squad_id: string;
 }
 
+export interface PlayerMatchStats {
+  active_class: string;
+  assists: number;
+  created_at: string;
+  deaths: number;
+  downs: number;
+  end_game: boolean;
+  gamertag: string;
+  id: string;
+  kills: number;
+  match_id: string;
+  mental_state: number;
+  primary_weapon: string;
+  respawned: boolean;
+  revives: number;
+  user_id?: string | null;
+}
+
+export interface Match {
+  created_at: string;
+  elimination_cause: string;
+  hostility: string;
+  id: string;
+  loot: string;
+  ping: number;
+  placement: number;
+  player_match_stats: PlayerMatchStats[];
+  poi: string;
+  session_id: string;
+}
+
 interface DashboardContentProps {
   activeSession: Session | null;
   allSquads: Array<{ id: string; name: string }>;
   currentUser?: { id: string; email?: string } | null;
   profile?: { gamertag: string; level: number } | null;
+  sessionMatches?: Match[];
   squad: Squad | null;
 }
 
 export function DashboardContent({
   squad,
   activeSession,
+  sessionMatches = [],
   allSquads,
   currentUser = null,
   profile = null,
@@ -60,6 +93,22 @@ export function DashboardContent({
     }
     return squad.members.map((member) => {
       const hasUser = member.user_id !== null && member.user_id !== undefined;
+
+      let kills = 0;
+      let deaths = 0;
+      let assists = 0;
+
+      for (const match of sessionMatches) {
+        const stats = match.player_match_stats?.find(
+          (p) => p.gamertag === member.gamertag
+        );
+        if (stats) {
+          kills += stats.kills || 0;
+          deaths += stats.deaths || 0;
+          assists += stats.assists || 0;
+        }
+      }
+
       return {
         slot_number: member.slot_number,
         status: hasUser && member.is_active ? "titular" : "ausente",
@@ -67,6 +116,9 @@ export function DashboardContent({
         favorite_class: member.favorite_class,
         active_class: member.favorite_class,
         user_id: member.user_id,
+        kills,
+        deaths,
+        assists,
       };
     });
   });
@@ -133,6 +185,8 @@ export function DashboardContent({
             <SessionPanel
               activePlayers={activePlayers}
               initialSession={activeSession}
+              isOwner={isOwner}
+              sessionMatches={sessionMatches}
               setActivePlayers={setActivePlayers}
               squad={squad}
             />

@@ -28,6 +28,7 @@ if (!squad) {
 }
 
 let activeSession: Record<string, any> | null = null;
+let sessionMatches: any[] = [];
 const { data: sessionData } = await Astro.callAction(
   actions.session.getActive,
   {
@@ -35,6 +36,13 @@ const { data: sessionData } = await Astro.callAction(
   }
 );
 activeSession = sessionData || null;
+
+if (activeSession) {
+  const { data: matchesData } = await Astro.callAction(actions.match.list, {
+    sessionId: activeSession.id,
+  });
+  sessionMatches = matchesData || [];
+}
 ---
 
 <BaseLayout
@@ -50,6 +58,7 @@ activeSession = sessionData || null;
       squad={squad}
       allSquads={allSquads}
       activeSession={activeSession}
+      sessionMatches={sessionMatches}
       currentUser={user}
       profile={profile}
       client:load

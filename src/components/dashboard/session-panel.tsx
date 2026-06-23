@@ -2,6 +2,8 @@ import { actions } from "astro:actions";
 import { Calendar, Play, Power } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import type { Match, PlayerMatchStats } from "./dashboard-content";
+import { MatchForm } from "./match-form";
 import { SquadHeader } from "./squad-header";
 import { type ActivePlayer, SquadRoster } from "./squad-roster";
 
@@ -24,11 +26,14 @@ interface Squad {
   id: string;
   members: SquadMember[];
   name: string;
+  owner_id?: string;
 }
 
 interface SessionPanelProps {
   activePlayers: ActivePlayer[];
   initialSession: Session | null;
+  isOwner: boolean;
+  sessionMatches: Match[];
   setActivePlayers: (players: ActivePlayer[]) => void;
   squad: Squad;
 }
@@ -36,12 +41,16 @@ interface SessionPanelProps {
 export function SessionPanel({
   squad,
   initialSession,
+  sessionMatches,
   activePlayers,
   setActivePlayers,
+  isOwner,
 }: SessionPanelProps) {
   const [sessionName, setSessionName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isRegisteringMatch, setIsRegisteringMatch] = useState(false);
+  const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
 
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,16 +182,18 @@ export function SessionPanel({
             </p>
           </div>
         </div>
-        <Button
-          className="flex items-center gap-1.5"
-          disabled={loading}
-          onClick={handleCloseSession}
-          size="sm"
-          variant="destructive"
-        >
-          <Power className="h-4 w-4" />
-          {loading ? "Cerrando..." : "Finalizar Sesión"}
-        </Button>
+        {isOwner && (
+          <Button
+            className="flex items-center gap-1.5"
+            disabled={loading}
+            onClick={handleCloseSession}
+            size="sm"
+            variant="destructive"
+          >
+            <Power className="h-4 w-4" />
+            {loading ? "Cerrando..." : "Finalizar Sesión"}
+          </Button>
+        )}
       </div>
 
       {error && (
@@ -205,24 +216,226 @@ export function SessionPanel({
           />
         </div>
 
-        {/* Right Column: Match registration placeholder */}
+        {/* Right Column: Match registration or list */}
         <div className="space-y-4 md:col-span-2">
-          <div className="rounded-lg border border-border bg-card p-6">
-            <h3 className="font-bold text-foreground text-sm tracking-tight">
-              Partidas de la Sesión
-            </h3>
-            <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-border border-dashed bg-background/50 p-12 text-center">
-              <span className="mb-4 text-3xl">⚔️</span>
-              <h4 className="font-semibold text-foreground text-sm">
-                Registro de Partidas Diferido
-              </h4>
-              <p className="mt-2 max-w-sm font-light text-muted-foreground text-xs">
-                En la Fase 6 podrás registrar tus partidas ronda por ronda,
-                especificando estadísticas de cada jugador, drops, POIs y
-                rendimiento táctico.
-              </p>
+          {isRegisteringMatch ? (
+            <div className="space-y-4">
+              <Button
+                onClick={() => setIsRegisteringMatch(false)}
+                size="sm"
+                variant="outline"
+              >
+                Volver al Listado
+              </Button>
+              <MatchForm
+                activePlayers={activePlayers}
+                onCancel={() => setIsRegisteringMatch(false)}
+                onSuccess={() => {
+                  setIsRegisteringMatch(false);
+                  window.location.reload();
+                }}
+                sessionId={initialSession.id}
+              />
             </div>
-          </div>
+          ) : (
+            <div className="rounded-lg border border-border bg-card p-6">
+              <div className="flex items-center justify-between border-border/40 border-b pb-4">
+                <h3 className="font-bold text-foreground text-sm tracking-tight">
+                  Partidas de la Sesión
+                </h3>
+                {isOwner && initialSession.status === "active" && (
+                  <Button onClick={() => setIsRegisteringMatch(true)} size="sm">
+                    + Registrar Partida
+                  </Button>
+                )}
+              </div>
+
+              {sessionMatches.length === 0 ? (
+                <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-border border-dashed bg-background/50 p-12 text-center">
+                  <span className="mb-4 text-3xl">⚔️</span>
+                  <h4 className="font-semibold text-foreground text-sm">
+                    Sin Partidas Registradas
+                  </h4>
+                  <p className="mt-2 max-w-sm font-light text-muted-foreground text-xs">
+                    {isOwner
+                      ? "Registra tu primera partida de la sesión usando el botón superior para empezar a acumular estadísticas."
+                      : "El líder del escuadrón aún no ha registrado ninguna partida para esta sesión."}
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {sessionMatches.map((match) => {
+                    const isExpanded = expandedMatchId === match.id;
+                    const matchDate = new Date(
+                      match.created_at
+                    ).toLocaleTimeString("es-ES", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    });
+
+                    return (
+                      <div
+                        className="overflow-hidden rounded-lg border border-border/60 bg-background/30"
+                        key={match.id}
+                      >
+                        {/* Summary Row */}
+                        <button
+                          className="flex w-full cursor-pointer items-center justify-between p-3.5 text-left transition-colors hover:bg-muted/10"
+                          onClick={() =>
+                            setExpandedMatchId(isExpanded ? null : match.id)
+                          }
+                          type="button"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={`flex h-6 w-6 items-center justify-center rounded-full font-mono font-semibold text-xs ${
+                                match.placement === 1
+                                  ? "border border-amber-500/30 bg-amber-500/20 text-amber-500"
+                                  : "bg-muted text-muted-foreground"
+                              }`}
+                            >
+                              {match.placement}
+                            </span>
+                            <div>
+                              <p className="font-bold text-foreground text-xs">
+                                {match.placement === 1
+                                  ? "¡Victoria! 🏆"
+                                  : `Lugar #${match.placement}`}
+                              </p>
+                              <p className="font-light text-[10px] text-muted-foreground">
+                                Drop:{" "}
+                                <span className="font-medium text-foreground/80">
+                                  {match.poi}
+                                </span>{" "}
+                                • {matchDate}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-4">
+                            <div className="hidden text-right sm:block">
+                              <p className="font-mono text-[10px] text-muted-foreground">
+                                PING
+                              </p>
+                              <p className="font-mono text-foreground text-xs">
+                                {match.ping} ms
+                              </p>
+                            </div>
+                            <span className="font-mono text-primary text-xs hover:underline">
+                              {isExpanded ? "Ocultar" : "Detalles"}
+                            </span>
+                          </div>
+                        </button>
+
+                        {/* Expanded Player Stats */}
+                        {isExpanded && (
+                          <div className="space-y-3 border-border/40 border-t bg-card/40 p-4">
+                            <div className="flex justify-between border-border/20 border-b pb-2 text-[10px] text-muted-foreground">
+                              <div>
+                                <span className="font-semibold text-foreground/80">
+                                  Causa:{" "}
+                                </span>
+                                {match.elimination_cause}
+                              </div>
+                              <div>
+                                <span className="font-semibold text-foreground/80">
+                                  Loot:{" "}
+                                </span>
+                                {match.loot} •{" "}
+                                <span className="font-semibold text-foreground/80">
+                                  Hostilidad:{" "}
+                                </span>
+                                {match.hostility}
+                              </div>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-left font-sans text-xs">
+                                <thead>
+                                  <tr className="border-border/30 border-b font-mono text-[10px] text-muted-foreground uppercase">
+                                    <th className="py-2">Operador</th>
+                                    <th className="py-2 text-center">Clase</th>
+                                    <th className="py-2 text-center">
+                                      K / D / A
+                                    </th>
+                                    <th className="py-2 text-center">
+                                      Downs / Rev
+                                    </th>
+                                    <th className="py-2 text-center">Arma</th>
+                                    <th className="py-2 text-center">
+                                      Desp / Final
+                                    </th>
+                                    <th className="py-2 text-center">Mente</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border/20">
+                                  {match.player_match_stats?.map(
+                                    (stat: PlayerMatchStats) => {
+                                      const k = stat.kills || 0;
+                                      const d = stat.deaths || 0;
+                                      const kdr =
+                                        d > 0
+                                          ? (k / d).toFixed(2)
+                                          : k.toFixed(2);
+
+                                      const mentalColors = [
+                                        "text-red-500",
+                                        "text-amber-500",
+                                        "text-blue-500",
+                                        "text-emerald-500",
+                                        "text-green-500",
+                                      ];
+
+                                      return (
+                                        <tr
+                                          className="hover:bg-muted/5"
+                                          key={stat.id}
+                                        >
+                                          <td className="py-2 font-semibold text-foreground">
+                                            {stat.gamertag}
+                                          </td>
+                                          <td className="py-2 text-center">
+                                            <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-primary">
+                                              {stat.active_class}
+                                            </span>
+                                          </td>
+                                          <td className="py-2 text-center font-mono">
+                                            {k} / {d} / {stat.assists}{" "}
+                                            <span className="text-[10px] text-muted-foreground">
+                                              ({kdr})
+                                            </span>
+                                          </td>
+                                          <td className="py-2 text-center font-mono">
+                                            {stat.downs} / {stat.revives}
+                                          </td>
+                                          <td className="py-2 text-center font-light text-muted-foreground">
+                                            {stat.primary_weapon}
+                                          </td>
+                                          <td className="py-2 text-center">
+                                            {stat.respawned ? "✅" : "❌"} /{" "}
+                                            {stat.end_game ? "✅" : "❌"}
+                                          </td>
+                                          <td
+                                            className={`py-2 text-center font-bold ${mentalColors[stat.mental_state - 1]}`}
+                                          >
+                                            {stat.mental_state}
+                                          </td>
+                                        </tr>
+                                      );
+                                    }
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

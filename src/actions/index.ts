@@ -1154,4 +1154,132 @@ export const server = {
       },
     }),
   },
+  match: {
+    create: defineAction({
+      accept: "json",
+      input: z.object({
+        sessionId: z.string().uuid(),
+        poi: z.string(),
+        placement: z.number().min(1),
+        hostility: z.string(),
+        loot: z.string(),
+        eliminationCause: z.string(),
+        ping: z.number(),
+        playerStats: z.array(
+          z.object({
+            userId: z.string().uuid().nullable().optional(),
+            gamertag: z.string().min(1),
+            activeClass: z.string(),
+            downs: z.number().min(0),
+            kills: z.number().min(0),
+            deaths: z.number().min(0),
+            assists: z.number().min(0),
+            revives: z.number().min(0),
+            primaryWeapon: z.string(),
+            respawned: z.boolean(),
+            endGame: z.boolean(),
+            mentalState: z.number().min(1).max(5),
+          })
+        ),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para registrar una partida",
+          });
+        }
+
+        const { data: match, error: matchError } = await supabase
+          .from("matches")
+          .insert({
+            session_id: input.sessionId,
+            poi: input.poi,
+            placement: input.placement,
+            hostility: input.hostility,
+            loot: input.loot,
+            elimination_cause: input.eliminationCause,
+            ping: input.ping,
+          })
+          .select()
+          .single();
+
+        if (matchError) {
+          console.error("Error creating match:", matchError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Error al registrar la partida: ${matchError.message}`,
+          });
+        }
+
+        const statsToInsert = input.playerStats.map((ps) => ({
+          match_id: match.id,
+          user_id: ps.userId || null,
+          gamertag: ps.gamertag,
+          active_class: ps.activeClass,
+          downs: ps.downs,
+          kills: ps.kills,
+          deaths: ps.deaths,
+          assists: ps.assists,
+          revives: ps.revives,
+          primary_weapon: ps.primaryWeapon || "Ninguna",
+          respawned: ps.respawned,
+          end_game: ps.endGame,
+          mental_state: ps.mentalState,
+        }));
+
+        const { error: statsError } = await supabase
+          .from("player_match_stats")
+          .insert(statsToInsert);
+
+        if (statsError) {
+          console.error("Error creating player stats:", statsError);
+          await supabase.from("matches").delete().eq("id", match.id);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Error al registrar estadísticas de jugadores: ${statsError.message}`,
+          });
+        }
+
+        return { success: true, matchId: match.id };
+      },
+    }),
+    list: defineAction({
+      accept: "json",
+      input: z.object({
+        sessionId: z.string().uuid(),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para ver partidas",
+          });
+        }
+
+        const { data: matches, error: matchesError } = await supabase
+          .from("matches")
+          .select(`
+            *,
+            player_match_stats (*)
+          `)
+          .eq("session_id", input.sessionId)
+          .order("created_at", { ascending: true });
+
+        if (matchesError) {
+          console.error("Error listing matches:", matchesError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al consultar las partidas",
+          });
+        }
+
+        return matches;
+      },
+    }),
+  },
 };
