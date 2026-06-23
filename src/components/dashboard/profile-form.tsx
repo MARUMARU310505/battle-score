@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 interface Profile {
+  favorite_class: string;
   gamertag: string;
   level: number;
 }
@@ -15,6 +16,9 @@ interface ProfileFormProps {
 export function ProfileForm({ initialProfile }: ProfileFormProps) {
   const [gamertag, setGamertag] = useState(initialProfile?.gamertag || "");
   const [level, setLevel] = useState<number>(initialProfile?.level || 1);
+  const [favoriteClass, setFavoriteClass] = useState(
+    initialProfile?.favorite_class || "Asalto"
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -41,6 +45,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       const { error: actionError } = await actions.profile.save({
         gamertag: gamertag.trim(),
         level,
+        favoriteClass,
       });
 
       if (actionError) {
@@ -140,6 +145,27 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                   value={level === 0 ? "" : level}
                 />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label
+                className="font-semibold text-muted-foreground text-xs uppercase tracking-wider"
+                htmlFor="favorite-class"
+              >
+                Clase Favorita
+              </label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={loading || success}
+                id="favorite-class"
+                onChange={(e) => setFavoriteClass(e.target.value)}
+                value={favoriteClass}
+              >
+                <option value="Asalto">Asalto</option>
+                <option value="Soporte">Soporte</option>
+                <option value="Recon">Recon</option>
+                <option value="Ingeniero">Ingeniero</option>
+              </select>
             </div>
 
             <Button

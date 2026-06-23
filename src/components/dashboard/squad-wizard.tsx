@@ -67,7 +67,7 @@ export function SquadWizard({
       {
         gamertag: profile?.gamertag || "",
         level: profile?.level || 1,
-        favorite_class: "Asalto",
+        favorite_class: profile?.favorite_class || "Asalto",
         slot_number: 1,
       },
       {

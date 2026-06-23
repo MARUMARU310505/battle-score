@@ -164,6 +164,7 @@ export const server = {
       input: z.object({
         gamertag: z.string().min(2),
         level: z.number().min(1),
+        favoriteClass: z.string(),
       }),
       handler: async (input, context) => {
         const user = context.locals.user;
@@ -179,6 +180,7 @@ export const server = {
             id: user.id,
             gamertag: input.gamertag,
             level: input.level,
+            favorite_class: input.favoriteClass,
           },
           {
             onConflict: "id",
@@ -199,6 +201,7 @@ export const server = {
           .update({
             gamertag: input.gamertag,
             level: input.level,
+            favorite_class: input.favoriteClass,
           })
           .eq("user_id", user.id);
 

@@ -87,7 +87,9 @@ export function SquadHub({
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const [operatorClass, setOperatorClass] = useState("Asalto");
+  const [operatorClass, setOperatorClass] = useState(
+    profile?.favorite_class || "Asalto"
+  );
 
   const handleSelectSlot = (slotNum: number) => {
     setSelectedSlot(slotNum);
@@ -95,7 +97,9 @@ export function SquadHub({
       (m) => m.slot_number === slotNum
     );
     if (slotMember) {
-      setOperatorClass(slotMember.favorite_class || "Asalto");
+      setOperatorClass(
+        profile?.favorite_class || slotMember.favorite_class || "Asalto"
+      );
     }
   };
 
