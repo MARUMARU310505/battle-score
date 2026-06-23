@@ -158,9 +158,23 @@ export const server = {
           });
         }
 
+        // Generate a random 6-character code (BS-XXXXXX)
+        const generateInviteCode = () => {
+          const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+          let code = "BS-";
+          for (let i = 0; i < 6; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+          }
+          return code;
+        };
+
         const { data: squad, error: squadError } = await supabase
           .from("squads")
-          .insert({ name: input.name, owner_id: user.id })
+          .insert({
+            name: input.name,
+            owner_id: user.id,
+            invite_code: generateInviteCode(),
+          })
           .select()
           .single();
 
@@ -179,6 +193,7 @@ export const server = {
           level: m.level,
           favorite_class: m.favorite_class,
           slot_number: m.slot_number,
+          user_id: m.slot_number === 1 ? user.id : null, // Creator claims slot 1 (leader)
         }));
 
         const { error: membersError } = await supabase
@@ -218,21 +233,58 @@ export const server = {
           });
         }
 
-        // Get all squads owned by user
-        const { data: squads, error: squadsError } = await supabase
+        // 1. Get squads owned by user
+        const { data: ownedSquads, error: ownedError } = await supabase
           .from("squads")
           .select("id, name")
           .eq("owner_id", user.id);
 
-        if (squadsError) {
-          console.error("Error fetching squads:", squadsError);
+        if (ownedError) {
+          console.error("Error fetching owned squads:", ownedError);
           throw new ActionError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Error al consultar los escuadrones",
+            message: "Error al consultar los escuadrones del creador",
           });
         }
 
-        if (!squads || squads.length === 0) {
+        // 2. Get squads joined by user
+        const { data: joinedMembers, error: joinedError } = await supabase
+          .from("squad_members")
+          .select("squad_id")
+          .eq("user_id", user.id);
+
+        if (joinedError) {
+          console.error("Error fetching joined squad IDs:", joinedError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al consultar las escuadras asociadas",
+          });
+        }
+
+        const joinedSquadIds = (joinedMembers || [])
+          .map((m) => m.squad_id)
+          .filter((id) => !ownedSquads?.some((s) => s.id === id));
+
+        let joinedSquads: { id: string; name: string }[] = [];
+        if (joinedSquadIds.length > 0) {
+          const { data, error: fetchJoinedError } = await supabase
+            .from("squads")
+            .select("id, name")
+            .in("id", joinedSquadIds);
+
+          if (fetchJoinedError) {
+            console.error("Error fetching joined squads:", fetchJoinedError);
+            throw new ActionError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Error al consultar los escuadrones asociados",
+            });
+          }
+          joinedSquads = data || [];
+        }
+
+        const squads = [...(ownedSquads || []), ...joinedSquads];
+
+        if (squads.length === 0) {
           return { activeSquad: null, allSquads: [] };
         }
 
@@ -378,17 +430,34 @@ export const server = {
           });
         }
 
-        const { data: squad, error } = await supabase
+        // Check if user is owner
+        const { data: ownedSquad } = await supabase
           .from("squads")
           .select("id")
           .eq("id", input.squadId)
           .eq("owner_id", user.id)
           .maybeSingle();
 
-        if (error || !squad) {
+        let canAccess = !!ownedSquad;
+
+        if (!canAccess) {
+          // Check if user is member
+          const { data: joinedMember } = await supabase
+            .from("squad_members")
+            .select("id")
+            .eq("squad_id", input.squadId)
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (joinedMember) {
+            canAccess = true;
+          }
+        }
+
+        if (!canAccess) {
           throw new ActionError({
             code: "NOT_FOUND",
-            message: "El escuadrón no existe o no te pertenece",
+            message: "El escuadrón no existe o no perteneces a él",
           });
         }
 
@@ -399,6 +468,279 @@ export const server = {
           sameSite: "lax",
           maxAge: 60 * 60 * 24 * 365,
         });
+
+        return { success: true };
+      },
+    }),
+    getHubData: defineAction({
+      accept: "json",
+      handler: async (_, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para ver sus escuadrones",
+          });
+        }
+
+        // 1. Fetch squads owned by user
+        const { data: ownedSquads, error: ownedError } = await supabase
+          .from("squads")
+          .select(`
+            id,
+            name,
+            owner_id,
+            invite_code,
+            created_at,
+            squad_members (
+              id,
+              gamertag,
+              real_name,
+              level,
+              favorite_class,
+              slot_number,
+              user_id
+            )
+          `)
+          .eq("owner_id", user.id);
+
+        if (ownedError) {
+          console.error("Error fetching owned squads:", ownedError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al consultar los escuadrones del creador",
+          });
+        }
+
+        // 2. Fetch squads joined by user
+        const { data: joinedMembers, error: joinedError } = await supabase
+          .from("squad_members")
+          .select("squad_id")
+          .eq("user_id", user.id);
+
+        if (joinedError) {
+          console.error("Error fetching joined squad IDs:", joinedError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al consultar las escuadras asociadas",
+          });
+        }
+
+        const joinedSquadIds = (joinedMembers || [])
+          .map((m) => m.squad_id)
+          .filter((id) => !ownedSquads?.some((s) => s.id === id));
+
+        let joinedSquads: {
+          id: string;
+          name: string;
+          owner_id: string;
+          invite_code: string;
+          created_at: string;
+          squad_members: {
+            id: string;
+            gamertag: string;
+            real_name: string;
+            level: number;
+            favorite_class: string;
+            slot_number: number;
+            user_id: string | null;
+          }[];
+        }[] = [];
+        if (joinedSquadIds.length > 0) {
+          const { data, error: fetchJoinedError } = await supabase
+            .from("squads")
+            .select(`
+              id,
+              name,
+              owner_id,
+              invite_code,
+              created_at,
+              squad_members (
+                id,
+                gamertag,
+                real_name,
+                level,
+                favorite_class,
+                slot_number,
+                user_id
+              )
+            `)
+            .in("id", joinedSquadIds);
+
+          if (fetchJoinedError) {
+            console.error("Error fetching joined squads:", fetchJoinedError);
+            throw new ActionError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Error al consultar los escuadrones asociados",
+            });
+          }
+          joinedSquads = data || [];
+        }
+
+        // Combine and sort by created_at desc
+        const allSquads = [...(ownedSquads || []), ...joinedSquads].sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+        return allSquads;
+      },
+    }),
+    getSquadByCode: defineAction({
+      accept: "json",
+      input: z.object({
+        inviteCode: z.string().min(4),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para buscar el escuadrón",
+          });
+        }
+
+        const { data: squad, error } = await supabase
+          .from("squads")
+          .select(`
+            id,
+            name,
+            owner_id,
+            invite_code,
+            squad_members (
+              id,
+              gamertag,
+              real_name,
+              level,
+              favorite_class,
+              slot_number,
+              user_id
+            )
+          `)
+          .eq("invite_code", input.inviteCode.trim().toUpperCase())
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error searching squad by code:", error);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al buscar el escuadrón",
+          });
+        }
+
+        if (!squad) {
+          throw new ActionError({
+            code: "NOT_FOUND",
+            message: "Código de invitación no válido o escuadrón no encontrado",
+          });
+        }
+
+        return squad;
+      },
+    }),
+    claimSlot: defineAction({
+      accept: "json",
+      input: z.object({
+        squadId: z.string().uuid(),
+        slotNumber: z.number().min(1).max(4),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para unirte al escuadrón",
+          });
+        }
+
+        // Verify if slot is already claimed
+        const { data: existingMember, error: fetchError } = await supabase
+          .from("squad_members")
+          .select("id, user_id")
+          .eq("squad_id", input.squadId)
+          .eq("slot_number", input.slotNumber)
+          .maybeSingle();
+
+        if (fetchError || !existingMember) {
+          throw new ActionError({
+            code: "BAD_REQUEST",
+            message: "El slot seleccionado no es válido",
+          });
+        }
+
+        if (existingMember.user_id) {
+          throw new ActionError({
+            code: "CONFLICT",
+            message: "Este slot ya ha sido reclamado por otro jugador",
+          });
+        }
+
+        // Link the user to the member slot
+        const { error: claimError } = await supabase
+          .from("squad_members")
+          .update({ user_id: user.id })
+          .eq("id", existingMember.id);
+
+        if (claimError) {
+          console.error("Error claiming slot:", claimError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al reclamar el slot de operador",
+          });
+        }
+
+        // Set as active squad in cookies
+        context.cookies.set("active_squad_id", input.squadId, {
+          path: "/",
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 365,
+        });
+
+        return { success: true };
+      },
+    }),
+    releaseSlot: defineAction({
+      accept: "json",
+      input: z.object({
+        squadId: z.string().uuid(),
+        slotNumber: z.number().min(1).max(4),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para salir del escuadrón",
+          });
+        }
+
+        // Unlink user_id
+        const { error } = await supabase
+          .from("squad_members")
+          .update({ user_id: null })
+          .eq("squad_id", input.squadId)
+          .eq("slot_number", input.slotNumber)
+          .eq("user_id", user.id);
+
+        if (error) {
+          console.error("Error releasing slot:", error);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al desvincular el rol de operador",
+          });
+        }
+
+        // Clear active squad cookie if it matches
+        const activeSquadId = context.cookies.get("active_squad_id")?.value;
+        if (activeSquadId === input.squadId) {
+          context.cookies.delete("active_squad_id", { path: "/" });
+        }
 
         return { success: true };
       },

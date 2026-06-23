@@ -8,6 +8,7 @@ interface Member {
   level: number;
   real_name: string;
   slot_number: number;
+  user_id?: string | null;
 }
 
 interface Squad {
@@ -41,18 +42,28 @@ export function SquadSidebar({
       <div className="space-y-6">
         {/* Squad Selector */}
         <div className="space-y-1.5">
-          <label
-            className="font-mono font-semibold text-[10px] text-muted-foreground uppercase tracking-wider"
-            htmlFor="squad-switcher"
-          >
-            Escuadrón Activo
-          </label>
+          <div className="flex items-center justify-between">
+            <label
+              className="font-mono font-semibold text-[10px] text-muted-foreground uppercase tracking-wider"
+              htmlFor="squad-switcher"
+            >
+              Escuadrón Activo
+            </label>
+            <a
+              className="font-mono font-semibold text-[10px] text-primary hover:underline"
+              href="/dashboard"
+            >
+              Ir al Hub
+            </a>
+          </div>
           <select
             className="w-full cursor-pointer rounded-md border border-border bg-background px-2.5 py-1.5 font-bold text-foreground text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
             id="squad-switcher"
             onChange={async (e) => {
               const val = e.target.value;
-              if (val === "new") {
+              if (val === "hub") {
+                window.location.href = "/dashboard";
+              } else if (val === "new") {
                 onNewSquadClick();
               } else {
                 await actions.squad.setActive({ squadId: val });
@@ -66,6 +77,9 @@ export function SquadSidebar({
                 {s.name}
               </option>
             ))}
+            <option className="font-semibold text-muted-foreground" value="hub">
+              🏠 Volver al Hub
+            </option>
             <option className="font-semibold text-primary" value="new">
               + Crear Escuadrón
             </option>
@@ -97,11 +111,23 @@ export function SquadSidebar({
                 <p className="mt-0.5 truncate font-light text-[10px] text-muted-foreground">
                   {member.real_name}
                 </p>
-                <div className="mt-1.5 flex items-center gap-1.5">
+                <div className="mt-1.5 flex items-center justify-between gap-2">
                   <span className="rounded-full border border-primary/10 bg-primary/5 px-2 py-0.5 font-medium text-[10px] text-primary">
                     {CLASS_BADGES[member.favorite_class] ||
                       member.favorite_class}
                   </span>
+                  {member.user_id ? (
+                    <span className="shrink-0 rounded border border-green-500/20 bg-green-500/10 px-1 py-0.2 font-mono font-semibold text-[9px] text-green-500 uppercase">
+                      Vinculado
+                    </span>
+                  ) : (
+                    <span
+                      className="shrink-0 rounded border border-amber-500/20 bg-amber-500/10 px-1 py-0.2 font-mono font-semibold text-[9px] text-amber-500 uppercase"
+                      title="Slot disponible para invitar"
+                    >
+                      Invitación
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

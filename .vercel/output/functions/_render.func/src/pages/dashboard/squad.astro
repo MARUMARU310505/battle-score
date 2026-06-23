@@ -1,0 +1,50 @@
+---
+import { actions } from "astro:actions";
+import { DashboardContent } from "@/components/dashboard/dashboard-content";
+import { Nav } from "@/components/landing/nav";
+import BaseLayout from "@/layouts/base-layout.astro";
+
+const { user } = Astro.locals;
+
+// Secondary safety check (middleware already guards this route)
+if (!user) {
+  return Astro.redirect("/");
+}
+
+// Fetch squad using Astro action
+const { data } = await Astro.callAction(actions.squad.get, {});
+const squad = data?.activeSquad || null;
+const allSquads = data?.allSquads || [];
+
+// If no active squad, redirect back to the Hub
+if (!squad) {
+  return Astro.redirect("/dashboard");
+}
+
+let activeSession: Record<string, any> | null = null;
+const { data: sessionData } = await Astro.callAction(
+  actions.session.getActive,
+  {
+    squadId: squad.id,
+  }
+);
+activeSession = sessionData || null;
+---
+
+<BaseLayout
+  metadata={{
+    title: "Panel de Escuadrón — Battle Score",
+    description: "Panel principal del escuadrón en Battle Score",
+    ignoreTitleTemplate: true,
+  }}
+>
+  <div class="min-h-screen bg-background text-foreground flex flex-col">
+    <Nav user={user} client:load />
+    <DashboardContent
+      squad={squad}
+      allSquads={allSquads}
+      activeSession={activeSession}
+      client:load
+    />
+  </div>
+</BaseLayout>

@@ -1,6 +1,6 @@
 ---
 import { actions } from "astro:actions";
-import { DashboardContent } from "@/components/dashboard/dashboard-content";
+import { SquadHubContainer } from "@/components/dashboard/squad-hub";
 import { Nav } from "@/components/landing/nav";
 import BaseLayout from "@/layouts/base-layout.astro";
 
@@ -11,37 +11,20 @@ if (!user) {
   return Astro.redirect("/");
 }
 
-// Fetch squad using Astro action
-const { data } = await Astro.callAction(actions.squad.get, {});
-const squad = data?.activeSquad || null;
-const allSquads = data?.allSquads || [];
-
-let activeSession: Record<string, any> | null = null;
-if (squad) {
-  const { data: sessionData } = await Astro.callAction(
-    actions.session.getActive,
-    {
-      squadId: squad.id,
-    }
-  );
-  activeSession = sessionData;
-}
+// Fetch squads using Astro action
+const { data } = await Astro.callAction(actions.squad.getHubData, {});
+const squadsList = data || [];
 ---
 
 <BaseLayout
   metadata={{
-    title: "Dashboard — Battle Score BR Analytics",
-    description: "Panel principal de Battle Score BR Analytics",
+    title: "Hub de Escuadrones — Battle Score",
+    description: "Hub de escuadrones de Battle Score",
     ignoreTitleTemplate: true,
   }}
 >
   <div class="min-h-screen bg-background text-foreground flex flex-col">
     <Nav user={user} client:load />
-    <DashboardContent
-      squad={squad}
-      allSquads={allSquads}
-      activeSession={activeSession}
-      client:load
-    />
+    <SquadHubContainer squads={squadsList} currentUser={user} client:load />
   </div>
 </BaseLayout>

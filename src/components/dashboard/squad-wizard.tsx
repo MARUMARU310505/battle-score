@@ -152,8 +152,8 @@ export function SquadWizard({
         }
       }
 
-      // Success - Reload page to refresh state on SSR
-      window.location.reload();
+      // Success - Redirect to active squad dashboard
+      window.location.href = "/dashboard/squad";
     } catch (err) {
       console.error(err);
       const message =
