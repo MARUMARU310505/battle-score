@@ -7,7 +7,6 @@ interface MemberInput {
   gamertag: string;
   id?: string;
   level: number;
-  real_name: string;
   slot_number: number;
   user_id?: string | null;
 }
@@ -19,7 +18,6 @@ interface SquadWizardProps {
     members: Array<{
       id: string;
       gamertag: string;
-      real_name: string;
       level: number;
       favorite_class: string;
       slot_number: number;
@@ -27,6 +25,10 @@ interface SquadWizardProps {
     }>;
   } | null;
   onCancel?: () => void;
+  profile?: {
+    gamertag: string;
+    level: number;
+  } | null;
 }
 
 const CLASSES = ["Asalto", "Soporte", "Recon", "Ingeniero"];
@@ -39,9 +41,6 @@ function validateMembers(members: MemberInput[]): string | null {
   if (!m.gamertag.trim()) {
     return "El Gamertag del Jugador #1 (Líder) es requerido.";
   }
-  if (!m.real_name.trim()) {
-    return "El nombre real del Jugador #1 (Líder) es requerido.";
-  }
   if (m.level < 1) {
     return "El nivel del Jugador #1 (Líder) debe ser mayor o igual a 1.";
   }
@@ -50,6 +49,7 @@ function validateMembers(members: MemberInput[]): string | null {
 
 export function SquadWizard({
   initialSquad = null,
+  profile = null,
   onCancel,
 }: SquadWizardProps) {
   const showOnlySlot1 = !initialSquad;
@@ -59,36 +59,31 @@ export function SquadWizard({
     initialSquad?.members.map((m) => ({
       id: m.id,
       gamertag: m.gamertag,
-      real_name: m.real_name,
       level: m.level,
       favorite_class: m.favorite_class,
       slot_number: m.slot_number,
       user_id: m.user_id,
     })) || [
       {
-        gamertag: "",
-        real_name: "",
-        level: 1,
+        gamertag: profile?.gamertag || "",
+        level: profile?.level || 1,
         favorite_class: "Asalto",
         slot_number: 1,
       },
       {
         gamertag: "",
-        real_name: "",
         level: 1,
         favorite_class: "Soporte",
         slot_number: 2,
       },
       {
         gamertag: "",
-        real_name: "",
         level: 1,
         favorite_class: "Recon",
         slot_number: 3,
       },
       {
         gamertag: "",
-        real_name: "",
         level: 1,
         favorite_class: "Ingeniero",
         slot_number: 4,
@@ -140,7 +135,6 @@ export function SquadWizard({
       return {
         ...m,
         gamertag: m.gamertag.trim() || `Operador ${m.slot_number}`,
-        real_name: m.real_name.trim() || "Pendiente",
         level: m.level || 1,
       };
     });
@@ -153,7 +147,6 @@ export function SquadWizard({
         const { error: actionError } = await actions.squad.update({
           squadId: initialSquad.id,
           name: squadName,
-          members: membersToSubmit,
         });
         if (actionError) {
           throw actionError;
@@ -249,6 +242,10 @@ export function SquadWizard({
                   member.user_id !== null && member.user_id !== undefined;
                 const isDisabled = !(isLeader || hasUser);
 
+                // Disable Gamertag/Level inputs for Leader since they come from the global profile,
+                // and disable completely for placeholder/invitation slots.
+                const disableGamertagAndLevel = isDisabled || isLeader;
+
                 return (
                   <div
                     className="space-y-4 rounded-md border border-border/60 bg-background/50 p-4"
@@ -275,7 +272,7 @@ export function SquadWizard({
                         </label>
                         <input
                           className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
-                          disabled={isDisabled}
+                          disabled={disableGamertagAndLevel}
                           id={`gamertag-${member.slot_number}`}
                           onChange={(e) =>
                             handleMemberChange(
@@ -292,36 +289,13 @@ export function SquadWizard({
                       <div>
                         <label
                           className="mb-1 block font-medium text-muted-foreground text-xs"
-                          htmlFor={`real_name-${member.slot_number}`}
-                        >
-                          Nombre Real
-                        </label>
-                        <input
-                          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
-                          disabled={isDisabled}
-                          id={`real_name-${member.slot_number}`}
-                          onChange={(e) =>
-                            handleMemberChange(
-                              originalIndex,
-                              "real_name",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Ej. Alex"
-                          type="text"
-                          value={member.real_name}
-                        />
-                      </div>
-                      <div>
-                        <label
-                          className="mb-1 block font-medium text-muted-foreground text-xs"
                           htmlFor={`level-${member.slot_number}`}
                         >
                           Nivel
                         </label>
                         <input
                           className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
-                          disabled={isDisabled}
+                          disabled={disableGamertagAndLevel}
                           id={`level-${member.slot_number}`}
                           min="1"
                           onChange={(e) =>
@@ -335,7 +309,7 @@ export function SquadWizard({
                           value={member.level}
                         />
                       </div>
-                      <div>
+                      <div className="md:col-span-2">
                         <label
                           className="mb-1 block font-medium text-muted-foreground text-xs"
                           htmlFor={`favorite_class-${member.slot_number}`}

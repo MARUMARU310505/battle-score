@@ -11,6 +11,12 @@ if (!user) {
   return Astro.redirect("/");
 }
 
+// Check if user has profile, if not redirect to setup
+const { data: profile } = await Astro.callAction(actions.profile.get, {});
+if (!profile) {
+  return Astro.redirect("/dashboard/profile");
+}
+
 // Fetch squad using Astro action
 const { data } = await Astro.callAction(actions.squad.get, {});
 const squad = data?.activeSquad || null;
@@ -45,6 +51,7 @@ activeSession = sessionData || null;
       allSquads={allSquads}
       activeSession={activeSession}
       currentUser={user}
+      profile={profile}
       client:load
     />
   </div>

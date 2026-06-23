@@ -20,7 +20,6 @@ export interface SquadMember {
   id: string;
   is_active: boolean;
   level: number;
-  real_name: string;
   slot_number: number;
   user_id: string | null;
 }
@@ -34,25 +33,33 @@ export interface Squad {
   squad_members: SquadMember[];
 }
 
+interface Profile {
+  gamertag: string;
+  level: number;
+}
+
 interface SquadHubProps {
   currentUser: { email?: string; id: string };
   onNewSquadClick: () => void;
+  profile: Profile | null;
   squads: Squad[];
 }
 
 export function SquadHubContainer({
   squads,
   currentUser,
+  profile,
 }: {
   squads: Squad[];
   currentUser: { email?: string; id: string };
+  profile: Profile | null;
 }) {
   const [isCreating, setIsCreating] = useState(false);
 
   if (isCreating) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] flex-1 items-center justify-center bg-background p-8">
-        <SquadWizard onCancel={() => setIsCreating(false)} />
+        <SquadWizard onCancel={() => setIsCreating(false)} profile={profile} />
       </div>
     );
   }
@@ -61,6 +68,7 @@ export function SquadHubContainer({
     <SquadHub
       currentUser={currentUser}
       onNewSquadClick={() => setIsCreating(true)}
+      profile={profile}
       squads={squads}
     />
   );
@@ -70,6 +78,7 @@ export function SquadHub({
   squads,
   currentUser,
   onNewSquadClick,
+  profile,
 }: SquadHubProps) {
   const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -78,9 +87,6 @@ export function SquadHub({
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const [operatorGamertag, setOperatorGamertag] = useState("");
-  const [operatorRealName, setOperatorRealName] = useState("");
-  const [operatorLevel, setOperatorLevel] = useState(1);
   const [operatorClass, setOperatorClass] = useState("Asalto");
 
   const handleSelectSlot = (slotNum: number) => {
@@ -89,9 +95,6 @@ export function SquadHub({
       (m) => m.slot_number === slotNum
     );
     if (slotMember) {
-      setOperatorGamertag("");
-      setOperatorRealName("");
-      setOperatorLevel(1);
       setOperatorClass(slotMember.favorite_class || "Asalto");
     }
   };
@@ -137,15 +140,6 @@ export function SquadHub({
     if (!foundSquad || selectedSlot === null) {
       return;
     }
-    if (
-      !(operatorGamertag.trim() && operatorRealName.trim()) ||
-      operatorLevel < 1
-    ) {
-      setSearchError(
-        "Por favor completa todos los campos del operador correctamente."
-      );
-      return;
-    }
     setLoading(true);
     setSearchError(null);
 
@@ -153,9 +147,6 @@ export function SquadHub({
       const { error } = await actions.squad.claimSlot({
         squadId: foundSquad.id,
         slotNumber: selectedSlot,
-        gamertag: operatorGamertag,
-        realName: operatorRealName,
-        level: operatorLevel,
         favoriteClass: operatorClass,
       });
 
@@ -496,31 +487,11 @@ export function SquadHub({
                           Gamertag
                         </label>
                         <input
-                          className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
+                          disabled
                           id="hub-gamertag"
-                          onChange={(e) => setOperatorGamertag(e.target.value)}
-                          placeholder="Ej. Ghost"
-                          required
                           type="text"
-                          value={operatorGamertag}
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          className="mb-1 block font-medium text-[10px] text-muted-foreground"
-                          htmlFor="hub-realname"
-                        >
-                          Nombre Real
-                        </label>
-                        <input
-                          className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                          id="hub-realname"
-                          onChange={(e) => setOperatorRealName(e.target.value)}
-                          placeholder="Ej. Alex"
-                          required
-                          type="text"
-                          value={operatorRealName}
+                          value={profile?.gamertag || ""}
                         />
                       </div>
 
@@ -532,19 +503,15 @@ export function SquadHub({
                           Nivel
                         </label>
                         <input
-                          className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
+                          disabled
                           id="hub-level"
-                          min="1"
-                          onChange={(e) =>
-                            setOperatorLevel(Number(e.target.value) || 1)
-                          }
-                          required
                           type="number"
-                          value={operatorLevel}
+                          value={profile?.level || 1}
                         />
                       </div>
 
-                      <div>
+                      <div className="sm:col-span-2">
                         <label
                           className="mb-1 block font-medium text-[10px] text-muted-foreground"
                           htmlFor="hub-class"

@@ -17,7 +17,6 @@ interface SquadMember {
   gamertag: string;
   id: string;
   level: number;
-  real_name: string;
   slot_number: number;
 }
 

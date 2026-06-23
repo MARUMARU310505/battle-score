@@ -4,7 +4,6 @@ export interface ActivePlayer {
   active_class: string;
   favorite_class: string;
   gamertag: string;
-  real_name: string;
   slot_number: number;
   status: "titular" | "reemplazo" | "ausente";
   user_id?: string | null;
@@ -17,7 +16,6 @@ interface SquadRosterProps {
   onChange: (players: ActivePlayer[]) => void;
   originalMembers: Array<{
     gamertag: string;
-    real_name: string;
     favorite_class: string;
     slot_number: number;
   }>;
@@ -39,24 +37,19 @@ export function SquadRoster({
 
       const original = originalMembers.find((m) => m.slot_number === slot);
       let newGamertag = player.gamertag;
-      let newRealName = player.real_name;
 
       if (status === "titular" && original) {
         newGamertag = original.gamertag;
-        newRealName = original.real_name;
       } else if (status === "reemplazo") {
         newGamertag = "";
-        newRealName = "Sustituto";
       } else if (status === "ausente") {
         newGamertag = "Ausente";
-        newRealName = "Ausente";
       }
 
       return {
         ...player,
         status,
         gamertag: newGamertag,
-        real_name: newRealName,
       };
     });
 

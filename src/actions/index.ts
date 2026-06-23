@@ -131,6 +131,85 @@ export const server = {
       }
     },
   }),
+  profile: {
+    get: defineAction({
+      accept: "json",
+      handler: async (_, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para continuar",
+          });
+        }
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error fetching profile:", error);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al obtener el perfil",
+          });
+        }
+        return profile;
+      },
+    }),
+    save: defineAction({
+      accept: "json",
+      input: z.object({
+        gamertag: z.string().min(2),
+        level: z.number().min(1),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para guardar tu perfil",
+          });
+        }
+        const { error } = await supabase.from("profiles").upsert(
+          {
+            id: user.id,
+            gamertag: input.gamertag,
+            level: input.level,
+          },
+          {
+            onConflict: "id",
+          }
+        );
+
+        if (error) {
+          console.error("Error saving profile:", error);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Error al guardar el perfil: ${error.message}`,
+          });
+        }
+
+        // Sync with squad_members slots where this user is linked
+        const { error: syncError } = await supabase
+          .from("squad_members")
+          .update({
+            gamertag: input.gamertag,
+            level: input.level,
+          })
+          .eq("user_id", user.id);
+
+        if (syncError) {
+          console.error("Error syncing profile with squad members:", syncError);
+        }
+
+        return { success: true };
+      },
+    }),
+  },
   squad: {
     create: defineAction({
       accept: "json",
@@ -139,9 +218,6 @@ export const server = {
         members: z
           .array(
             z.object({
-              gamertag: z.string().min(2),
-              real_name: z.string().min(2),
-              level: z.number().min(1),
               favorite_class: z.string(),
               slot_number: z.number().min(1).max(4),
             })
@@ -155,6 +231,21 @@ export const server = {
           throw new ActionError({
             code: "UNAUTHORIZED",
             message: "Inicie sesión para crear un escuadrón",
+          });
+        }
+
+        // Fetch creator's profile first
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("gamertag, level")
+          .eq("id", user.id)
+          .single();
+
+        if (profileError || !profile) {
+          throw new ActionError({
+            code: "NOT_FOUND",
+            message:
+              "Por favor configura tu perfil de operador primero antes de crear una escuadra",
           });
         }
 
@@ -186,16 +277,18 @@ export const server = {
           });
         }
 
-        const membersToInsert = input.members.map((m) => ({
-          squad_id: squad.id,
-          gamertag: m.gamertag,
-          real_name: m.real_name,
-          level: m.level,
-          favorite_class: m.favorite_class,
-          slot_number: m.slot_number,
-          user_id: m.slot_number === 1 ? user.id : null, // Creator claims slot 1 (leader)
-          is_active: m.slot_number === 1, // Leader is active, others inactive/AFK initially
-        }));
+        const membersToInsert = input.members.map((m) => {
+          const isLeader = m.slot_number === 1;
+          return {
+            squad_id: squad.id,
+            gamertag: isLeader ? profile.gamertag : `Operador ${m.slot_number}`,
+            level: isLeader ? profile.level : 1,
+            favorite_class: m.favorite_class,
+            slot_number: m.slot_number,
+            user_id: isLeader ? user.id : null,
+            is_active: isLeader,
+          };
+        });
 
         const { error: membersError } = await supabase
           .from("squad_members")
@@ -349,18 +442,6 @@ export const server = {
       input: z.object({
         squadId: z.string().uuid(),
         name: z.string().min(3),
-        members: z
-          .array(
-            z.object({
-              id: z.string().uuid().optional(),
-              gamertag: z.string().min(2),
-              real_name: z.string().min(2),
-              level: z.number().min(1),
-              favorite_class: z.string(),
-              slot_number: z.number().min(1).max(4),
-            })
-          )
-          .length(4),
       }),
       handler: async (input, context) => {
         const user = context.locals.user;
@@ -384,33 +465,6 @@ export const server = {
             code: "INTERNAL_SERVER_ERROR",
             message: "Error al actualizar el escuadrón",
           });
-        }
-
-        for (const m of input.members) {
-          const { error: memberError } = await supabase
-            .from("squad_members")
-            .upsert(
-              {
-                id: m.id,
-                squad_id: input.squadId,
-                gamertag: m.gamertag,
-                real_name: m.real_name,
-                level: m.level,
-                favorite_class: m.favorite_class,
-                slot_number: m.slot_number,
-              },
-              {
-                onConflict: "squad_id,slot_number",
-              }
-            );
-
-          if (memberError) {
-            console.error("Error upserting member:", memberError);
-            throw new ActionError({
-              code: "INTERNAL_SERVER_ERROR",
-              message: `Error al actualizar integrantes: ${memberError.message}`,
-            });
-          }
         }
 
         return { success: true };
@@ -497,7 +551,6 @@ export const server = {
             squad_members (
               id,
               gamertag,
-              real_name,
               level,
               favorite_class,
               slot_number,
@@ -542,7 +595,6 @@ export const server = {
           squad_members: {
             id: string;
             gamertag: string;
-            real_name: string;
             level: number;
             favorite_class: string;
             slot_number: number;
@@ -562,7 +614,6 @@ export const server = {
               squad_members (
                 id,
                 gamertag,
-                real_name,
                 level,
                 favorite_class,
                 slot_number,
@@ -616,7 +667,6 @@ export const server = {
             squad_members (
               id,
               gamertag,
-              real_name,
               level,
               favorite_class,
               slot_number,
@@ -650,9 +700,6 @@ export const server = {
       input: z.object({
         squadId: z.string().uuid(),
         slotNumber: z.number().min(1).max(4),
-        gamertag: z.string().min(2),
-        realName: z.string().min(2),
-        level: z.number().min(1),
         favoriteClass: z.string(),
       }),
       handler: async (input, context) => {
@@ -662,6 +709,20 @@ export const server = {
           throw new ActionError({
             code: "UNAUTHORIZED",
             message: "Inicie sesión para unirte al escuadrón",
+          });
+        }
+
+        // Fetch user's profile first
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("gamertag, level")
+          .eq("id", user.id)
+          .single();
+
+        if (profileError || !profile) {
+          throw new ActionError({
+            code: "NOT_FOUND",
+            message: "Por favor configura tu perfil de operador primero",
           });
         }
 
@@ -687,14 +748,13 @@ export const server = {
           });
         }
 
-        // Link the user to the member slot and update their info
+        // Link the user to the member slot and update their info using profile values
         const { error: claimError } = await supabase
           .from("squad_members")
           .update({
             user_id: user.id,
-            gamertag: input.gamertag,
-            real_name: input.realName,
-            level: input.level,
+            gamertag: profile.gamertag,
+            level: profile.level,
             favorite_class: input.favoriteClass,
             is_active: true,
           })
@@ -780,7 +840,6 @@ export const server = {
           .update({
             user_id: null,
             gamertag: `Operador ${input.slotNumber}`,
-            real_name: "Pendiente",
             level: 1,
             is_active: false,
           })

@@ -1,6 +1,6 @@
 ---
 import { actions } from "astro:actions";
-import { SquadHubContainer } from "@/components/dashboard/squad-hub";
+import { ProfileForm } from "@/components/dashboard/profile-form";
 import { Nav } from "@/components/landing/nav";
 import BaseLayout from "@/layouts/base-layout.astro";
 
@@ -11,31 +11,22 @@ if (!user) {
   return Astro.redirect("/");
 }
 
-// Check if user has profile, if not redirect to setup
+// Fetch existing profile if any
 const { data: profile } = await Astro.callAction(actions.profile.get, {});
-if (!profile) {
-  return Astro.redirect("/dashboard/profile");
-}
-
-// Fetch squads using Astro action
-const { data } = await Astro.callAction(actions.squad.getHubData, {});
-const squadsList = data || [];
 ---
 
 <BaseLayout
   metadata={{
-    title: "Hub de Escuadrones — Battle Score",
-    description: "Hub de escuadrones de Battle Score",
+    title: "Mi Perfil de Operador — Battle Score",
+    description: "Configura tu perfil de operador global",
     ignoreTitleTemplate: true,
   }}
 >
   <div class="min-h-screen bg-background text-foreground flex flex-col">
     <Nav user={user} client:load />
-    <SquadHubContainer
-      squads={squadsList}
-      currentUser={user}
-      profile={profile}
-      client:load
-    />
+
+    <main class="flex-1 flex items-center justify-center p-4 md:p-8">
+      <ProfileForm initialProfile={profile} client:load />
+    </main>
   </div>
 </BaseLayout>

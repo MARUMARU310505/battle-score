@@ -54,6 +54,14 @@ export function Nav({ user = null }: NavProps) {
                 Dashboard
               </a>
               <a
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" })
+                )}
+                href="/dashboard/profile"
+              >
+                Editar Perfil
+              </a>
+              <a
                 className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
                 href="/api/auth/signout"
               >

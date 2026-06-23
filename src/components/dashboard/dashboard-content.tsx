@@ -12,7 +12,6 @@ interface Member {
   id: string;
   is_active: boolean;
   level: number;
-  real_name: string;
   slot_number: number;
   user_id?: string | null;
 }
@@ -35,6 +34,7 @@ interface DashboardContentProps {
   activeSession: Session | null;
   allSquads: Array<{ id: string; name: string }>;
   currentUser?: { id: string; email?: string } | null;
+  profile?: { gamertag: string; level: number } | null;
   squad: Squad | null;
 }
 
@@ -43,6 +43,7 @@ export function DashboardContent({
   activeSession,
   allSquads,
   currentUser = null,
+  profile = null,
 }: DashboardContentProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
@@ -57,7 +58,6 @@ export function DashboardContent({
         slot_number: member.slot_number,
         status: hasUser && member.is_active ? "titular" : "ausente",
         gamertag: member.gamertag,
-        real_name: member.real_name,
         favorite_class: member.favorite_class,
         active_class: member.favorite_class,
         user_id: member.user_id,
@@ -70,6 +70,7 @@ export function DashboardContent({
       <div className="flex min-h-[calc(100vh-4rem)] flex-1 items-center justify-center bg-background p-8">
         <SquadWizard
           onCancel={squad ? () => setIsCreatingNew(false) : undefined}
+          profile={profile}
         />
       </div>
     );
@@ -81,6 +82,7 @@ export function DashboardContent({
         <SquadWizard
           initialSquad={squad}
           onCancel={() => setIsEditing(false)}
+          profile={profile}
         />
       </div>
     );
