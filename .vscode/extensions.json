@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "astro-build.astro-vscode",
+    "usernamehw.errorlens",
+    "EditorConfig.EditorConfig",
+    "bradlc.vscode-tailwindcss",
+    "biomejs.biome",
+    "wix.vscode-import-cost",
+    "YoavBls.pretty-ts-errors",
+    "trailing-spaces.trailing-spaces"
+  ]
+}

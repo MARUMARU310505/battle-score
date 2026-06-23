@@ -1,0 +1,71 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/react",
+    "ultracite/biome/astro"
+  ],
+  "javascript": {
+    "globals": ["BUSINESS_CONFIG", "Astro", "Slots", "Attributes"]
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.astro"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedImports": "off",
+            "noUndeclaredVariables": "off"
+          },
+          "suspicious": {
+            "noReactSpecificProps": "error",
+            "noExplicitAny": "off",
+            "noDoubleEquals": "off",
+            "noVar": "off"
+          },
+          "style": {
+            "noNestedTernary": "off",
+            "useConsistentObjectDefinitions": "off",
+            "useTemplate": "off"
+          },
+          "a11y": {
+            "noSvgWithoutTitle": "off",
+            "useIframeTitle": "off"
+          },
+          "complexity": {
+            "useDateNow": "off"
+          },
+          "nursery": {
+            "useSortedClasses": "off"
+          }
+        }
+      },
+      "assist": {
+        "actions": {
+          "source": {
+            "useSortedAttributes": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.astro"],
+      "json": {
+        "formatter": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "includes": ["**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noNestedTernary": "off",
+            "useConsistentTypeDefinitions": "off"
+          }
+        }
+      }
+    }
+  ]
+}
