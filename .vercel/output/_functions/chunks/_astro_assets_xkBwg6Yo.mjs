@@ -1,6 +1,7 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"25f39b046960f343648b5091ab94457f0b17ccff"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="556ff8e3-70e6-4cea-97c6-bfa02f6cf3c3",e._sentryDebugIdIdentifier="sentry-dbid-556ff8e3-70e6-4cea-97c6-bfa02f6cf3c3");}catch(e){}}();import { A as AstroError, b3 as NoImageMetadata, b4 as FailedToFetchRemoteImageDimensions, b5 as RemoteImageNotAllowed, b6 as InvalidComponentArgs, aT as joinPaths, b7 as ExpectedImage, b0 as isRemotePath, b8 as LocalImageUsedWrongly, b9 as MissingImageDimension, ba as UnsupportedImageFormat, bb as IncompatibleDescriptorOptions, bc as UnsupportedImageConversion, bd as InvalidImageService, be as ExpectedImageOptions, bf as ExpectedNotESMImage, bg as ImageMissingAlt, T as maybeRenderHead, a4 as addAttribute, Q as renderTemplate, bh as FontFamilyNotFound, b1 as unescapeHTML, bi as MissingGetFontFileRequestUrl } from './params-and-props_Ug7RKuBl.mjs';
-import { t as typeHandlers, a as types, i as isRemoteAllowed, s as spreadAttributes } from './entrypoint_wceMKO0z.mjs';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"dce79c2b46fb8658052efd0b0dac2c852fc4de15"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a5cb6f89-bb97-42ef-8391-2a7877c41866",e._sentryDebugIdIdentifier="sentry-dbid-a5cb6f89-bb97-42ef-8391-2a7877c41866");}catch(e){}}();import { A as AstroError, b3 as NoImageMetadata, b4 as FailedToFetchRemoteImageDimensions, b5 as RemoteImageNotAllowed, aT as joinPaths, b6 as ExpectedImage, b0 as isRemotePath, b7 as LocalImageUsedWrongly, b8 as MissingImageDimension, b9 as UnsupportedImageFormat, ba as IncompatibleDescriptorOptions, bb as UnsupportedImageConversion, bc as InvalidImageService, bd as ExpectedImageOptions, be as ExpectedNotESMImage, bf as ImageMissingAlt, T as maybeRenderHead, a4 as addAttribute, Q as renderTemplate, bg as FontFamilyNotFound, b1 as unescapeHTML, bh as MissingGetFontFileRequestUrl } from './params-and-props_DaruqQBn.mjs';
+import { t as typeHandlers, a as types, i as isRemoteAllowed, s as spreadAttributes } from './entrypoint_esym_OeE.mjs';
 import * as mime from 'mrmime';
+import { c as createComponent } from './astro-component_C70HfCt2.mjs';
 import 'clsx';
 import 'piccolore';
 
@@ -211,40 +212,6 @@ async function inferRemoteSize(url, imageConfig) {
     ...NoImageMetadata,
     message: NoImageMetadata.message(url)
   });
-}
-
-function validateArgs(args) {
-  if (args.length !== 3) return false;
-  if (!args[0] || typeof args[0] !== "object") return false;
-  return true;
-}
-function baseCreateComponent(cb, moduleId, propagation) {
-  const name = moduleId?.split("/").pop()?.replace(".astro", "") ?? "";
-  const fn = (...args) => {
-    if (!validateArgs(args)) {
-      throw new AstroError({
-        ...InvalidComponentArgs,
-        message: InvalidComponentArgs.message(name)
-      });
-    }
-    return cb(...args);
-  };
-  Object.defineProperty(fn, "name", { value: name, writable: false });
-  fn.isAstroComponentFactory = true;
-  fn.moduleId = moduleId;
-  fn.propagation = propagation;
-  return fn;
-}
-function createComponentWithOptions(opts) {
-  const cb = baseCreateComponent(opts.factory, opts.moduleId, opts.propagation);
-  return cb;
-}
-function createComponent(arg1, moduleId, propagation) {
-  if (typeof arg1 === "function") {
-    return baseCreateComponent(arg1, moduleId, propagation);
-  } else {
-    return createComponentWithOptions(arg1);
-  }
 }
 
 const VALID_SUPPORTED_FORMATS = [
@@ -625,7 +592,7 @@ async function getConfiguredImageService() {
   if (!globalThis?.astroAsset?.imageService) {
     const { default: service } = await import(
       // @ts-expect-error
-      './sharp_DMIPvhVg.mjs'
+      './sharp_BLL7c2zJ.mjs'
     ).catch((e) => {
       const error = new AstroError(InvalidImageService);
       error.cause = e;
@@ -1004,4 +971,4 @@ const assetQueryParams = undefined;
 					});
 							const getImage = async (options) => await getImage$1(options, imageConfig);
 
-export { $$Font as $, baseService as b, createComponent as c, detector as d, fetchWithRedirects as f, getConfiguredImageService as g, imageConfig as i, parseQuality as p };
+export { $$Font as $, baseService as b, detector as d, fetchWithRedirects as f, getConfiguredImageService as g, imageConfig as i, parseQuality as p };

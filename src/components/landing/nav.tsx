@@ -1,13 +1,25 @@
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
 
 interface NavProps {
   user?: {
-    email: string;
+    email?: string;
   } | null;
 }
 
 export function Nav({ user = null }: NavProps) {
+  const handleSignIn = async () => {
+    const supabase = createSupabaseBrowserClient();
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+      },
+    });
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-border border-b bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -35,9 +47,12 @@ export function Nav({ user = null }: NavProps) {
               <Button asChild size="sm" variant="outline">
                 <a href="/dashboard">Dashboard</a>
               </Button>
+              <Button asChild size="sm" variant="ghost">
+                <a href="/api/auth/signout">Cerrar sesión</a>
+              </Button>
             </div>
           ) : (
-            <Button size="sm">
+            <Button onClick={handleSignIn} size="sm">
               <span>Iniciar con Google</span>
             </Button>
           )}

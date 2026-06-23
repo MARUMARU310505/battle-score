@@ -1,8 +1,8 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"25f39b046960f343648b5091ab94457f0b17ccff"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="fbc73559-4613-44a7-ac0b-db771c0bbddd",e._sentryDebugIdIdentifier="sentry-dbid-fbc73559-4613-44a7-ac0b-db771c0bbddd");}catch(e){}}();import { $ as $$BaseLayout } from './base-layout_Bl-HtU1c.mjs';
-import { c as createComponent } from './_astro_assets_Cw_dlQdA.mjs';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"dce79c2b46fb8658052efd0b0dac2c852fc4de15"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="bcf20c4b-4bde-447e-9f38-7c0439fb5cc1",e._sentryDebugIdIdentifier="sentry-dbid-bcf20c4b-4bde-447e-9f38-7c0439fb5cc1");}catch(e){}}();import './page-ssr_CNlRdk4O.mjs';
+import { c as createComponent } from './astro-component_C70HfCt2.mjs';
 import 'piccolore';
-import { Q as renderTemplate, T as maybeRenderHead } from './params-and-props_Ug7RKuBl.mjs';
-import { r as renderComponent } from './entrypoint_wceMKO0z.mjs';
+import { Q as renderTemplate, T as maybeRenderHead } from './params-and-props_DaruqQBn.mjs';
+import { r as renderComponent } from './entrypoint_esym_OeE.mjs';
 import { jsx, jsxs } from 'react/jsx-runtime';
 import { Button as Button$1 } from '@base-ui/react/button';
 import { cva } from 'class-variance-authority';
@@ -10,6 +10,8 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { Moon, Sun } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { a as createSupabaseBrowserClient } from './supabase_D_q8zc7u.mjs';
+import { $ as $$BaseLayout } from './base-layout_CQtlwg5Z.mjs';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -124,6 +126,16 @@ function ThemeToggle() {
 }
 
 function Nav({ user = null }) {
+  const handleSignIn = async () => {
+    const supabase = createSupabaseBrowserClient();
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo
+      }
+    });
+  };
   return /* @__PURE__ */ jsx("header", { className: "sticky top-0 z-50 w-full border-border border-b bg-background/80 backdrop-blur-md", children: /* @__PURE__ */ jsxs("div", { className: "mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8", children: [
     /* @__PURE__ */ jsx("div", { className: "flex items-center gap-2", children: /* @__PURE__ */ jsx("a", { className: "flex items-center space-x-2", href: "/", children: /* @__PURE__ */ jsxs("span", { className: "font-bold text-foreground text-xl tracking-tight", children: [
       "REDSEC",
@@ -133,18 +145,22 @@ function Nav({ user = null }) {
       /* @__PURE__ */ jsx(ThemeToggle, {}),
       user ? /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-4", children: [
         /* @__PURE__ */ jsx("span", { className: "hidden text-muted-foreground text-sm md:inline-block", children: user.email }),
-        /* @__PURE__ */ jsx(Button, { asChild: true, size: "sm", variant: "outline", children: /* @__PURE__ */ jsx("a", { href: "/dashboard", children: "Dashboard" }) })
-      ] }) : /* @__PURE__ */ jsx(Button, { size: "sm", children: /* @__PURE__ */ jsx("span", { children: "Iniciar con Google" }) })
+        /* @__PURE__ */ jsx(Button, { asChild: true, size: "sm", variant: "outline", children: /* @__PURE__ */ jsx("a", { href: "/dashboard", children: "Dashboard" }) }),
+        /* @__PURE__ */ jsx(Button, { asChild: true, size: "sm", variant: "ghost", children: /* @__PURE__ */ jsx("a", { href: "/api/auth/signout", children: "Cerrar sesión" }) })
+      ] }) : /* @__PURE__ */ jsx(Button, { onClick: handleSignIn, size: "sm", children: /* @__PURE__ */ jsx("span", { children: "Iniciar con Google" }) })
     ] })
   ] }) });
 }
 
 const $$Index = createComponent(($$result, $$props, $$slots) => {
+  const Astro2 = $$result.createAstro($$props, $$slots);
+  Astro2.self = $$Index;
+  const { user } = Astro2.locals;
   return renderTemplate`${renderComponent($$result, "BaseLayout", $$BaseLayout, { "metadata": {
     title: "RedSec BR Analytics — Analiza tu escuadrón",
     description: "Plataforma de análisis de rendimiento para escuadrones competitivos de Battle Royale.",
     ignoreTitleTemplate: true
-  } }, { "default": ($$result2) => renderTemplate` ${maybeRenderHead()}<div class="min-h-screen bg-background text-foreground transition-colors duration-200"> ${renderComponent($$result2, "Nav", Nav, { "client:load": true, "client:component-hydration": "load", "client:component-path": "@/components/landing/nav", "client:component-export": "Nav" })} <main>${renderComponent($$result2, "Hero", Hero, { "client:load": true, "client:component-hydration": "load", "client:component-path": "@/components/landing/hero", "client:component-export": "Hero" })}</main> </div> ` })}`;
+  } }, { "default": ($$result2) => renderTemplate` ${maybeRenderHead()}<div class="min-h-screen bg-background text-foreground transition-colors duration-200"> ${renderComponent($$result2, "Nav", Nav, { "user": user, "client:load": true, "client:component-hydration": "load", "client:component-path": "@/components/landing/nav", "client:component-export": "Nav" })} <main>${renderComponent($$result2, "Hero", Hero, { "client:load": true, "client:component-hydration": "load", "client:component-path": "@/components/landing/hero", "client:component-export": "Hero" })}</main> </div> ` })}`;
 }, "/Users/mpacheco/Documents/projects/PROJECT-battle-score/battle-score/src/pages/index.astro", void 0);
 
 const $$file = "/Users/mpacheco/Documents/projects/PROJECT-battle-score/battle-score/src/pages/index.astro";

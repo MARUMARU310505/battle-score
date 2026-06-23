@@ -1,10 +1,10 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"25f39b046960f343648b5091ab94457f0b17ccff"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="928d951c-c8e5-438f-a716-ecc8afd01f52",e._sentryDebugIdIdentifier="sentry-dbid-928d951c-c8e5-438f-a716-ecc8afd01f52");}catch(e){}}();import * as Sentry from '@sentry/astro';
-import { c as createComponent, $ as $$Font } from './_astro_assets_Cw_dlQdA.mjs';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"dce79c2b46fb8658052efd0b0dac2c852fc4de15"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="f43af3b3-6cb6-408e-909a-aa456c92580f",e._sentryDebugIdIdentifier="sentry-dbid-f43af3b3-6cb6-408e-909a-aa456c92580f");}catch(e){}}();import { c as createComponent } from './astro-component_C70HfCt2.mjs';
 import 'piccolore';
-import { U as createRenderInstruction, Q as renderTemplate, a4 as addAttribute, b1 as unescapeHTML, B as renderSlot, b2 as renderHead, F as Fragment } from './params-and-props_Ug7RKuBl.mjs';
-import { s as spreadAttributes, r as renderComponent } from './entrypoint_wceMKO0z.mjs';
+import { U as createRenderInstruction, Q as renderTemplate, a4 as addAttribute, b1 as unescapeHTML, B as renderSlot, b2 as renderHead, F as Fragment } from './params-and-props_DaruqQBn.mjs';
+import { s as spreadAttributes, r as renderComponent } from './entrypoint_esym_OeE.mjs';
+import { $ as $$Font } from './_astro_assets_xkBwg6Yo.mjs';
 import 'clsx';
-import { B as BUSINESS_CONFIG } from './business_BWtpPii9.mjs';
+import { B as BUSINESS_CONFIG } from './business_JLc5HIHy.mjs';
 
 async function renderScript(result, id) {
   const inlined = result.inlinedScripts.get(id);
@@ -19,14 +19,6 @@ async function renderScript(result, id) {
   }
   return createRenderInstruction({ type: "script", id, content });
 }
-
-Sentry.init({
-  dsn: undefined                                 ,
-  debug: false,
-  environment: undefined                                 ,
-  release: undefined                                            ,
-  tracesSampleRate: 1
-});
 
 const $$Favicons = createComponent(($$result, $$props, $$slots) => {
   return renderTemplate`<!-- Favicons --><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/manifest.webmanifest"><!-- Favicon for IE --><link rel="shortcut icon" href="/favicon.ico" type="image/x-icon"><!-- Favicons for different sizes --><link rel="icon" type="image/png" sizes="16x16" href="/icon-16.png"><link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png"><link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png"><!-- Apple Touch Icon (for backwards compatibility) --><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">`;
