@@ -1,0 +1,354 @@
+import { actions } from "astro:actions";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+
+interface MemberInput {
+  favorite_class: string;
+  gamertag: string;
+  id?: string;
+  level: number;
+  real_name: string;
+  slot_number: number;
+}
+
+interface SquadWizardProps {
+  initialSquad?: {
+    id: string;
+    name: string;
+    members: Array<{
+      id: string;
+      gamertag: string;
+      real_name: string;
+      level: number;
+      favorite_class: string;
+      slot_number: number;
+    }>;
+  } | null;
+  onCancel?: () => void;
+}
+
+const CLASSES = ["Asalto", "Soporte", "Recon", "Ingeniero"];
+
+function validateMembers(members: MemberInput[]): string | null {
+  for (let i = 0; i < members.length; i++) {
+    const m = members[i];
+    if (!m.gamertag.trim()) {
+      return `El Gamertag del Jugador #${i + 1} es requerido.`;
+    }
+    if (!m.real_name.trim()) {
+      return `El nombre real del Jugador #${i + 1} es requerido.`;
+    }
+    if (m.level < 1) {
+      return `El nivel del Jugador #${i + 1} debe ser mayor o igual a 1.`;
+    }
+  }
+  return null;
+}
+
+export function SquadWizard({
+  initialSquad = null,
+  onCancel,
+}: SquadWizardProps) {
+  const [step, setStep] = useState(1);
+  const [squadName, setSquadName] = useState(initialSquad?.name || "");
+  const [members, setMembers] = useState<MemberInput[]>(
+    initialSquad?.members.map((m) => ({
+      id: m.id,
+      gamertag: m.gamertag,
+      real_name: m.real_name,
+      level: m.level,
+      favorite_class: m.favorite_class,
+      slot_number: m.slot_number,
+    })) || [
+      {
+        gamertag: "",
+        real_name: "",
+        level: 1,
+        favorite_class: "Asalto",
+        slot_number: 1,
+      },
+      {
+        gamertag: "",
+        real_name: "",
+        level: 1,
+        favorite_class: "Soporte",
+        slot_number: 2,
+      },
+      {
+        gamertag: "",
+        real_name: "",
+        level: 1,
+        favorite_class: "Recon",
+        slot_number: 3,
+      },
+      {
+        gamertag: "",
+        real_name: "",
+        level: 1,
+        favorite_class: "Ingeniero",
+        slot_number: 4,
+      },
+    ]
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleMemberChange = (
+    index: number,
+    field: keyof MemberInput,
+    value: string | number
+  ) => {
+    setMembers((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        [field]: value,
+      };
+      return updated;
+    });
+  };
+
+  const handleNext = () => {
+    if (squadName.trim().length < 3) {
+      setError("El nombre del escuadrón debe tener al menos 3 caracteres.");
+      return;
+    }
+    setError(null);
+    setStep(2);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    // Validation
+    const validationError = validateMembers(members);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setLoading(false);
+    try {
+      setLoading(true);
+      if (initialSquad) {
+        // Edit mode
+        const { error: actionError } = await actions.squad.update({
+          squadId: initialSquad.id,
+          name: squadName,
+          members,
+        });
+        if (actionError) {
+          throw actionError;
+        }
+      } else {
+        // Create mode
+        const { error: actionError } = await actions.squad.create({
+          name: squadName,
+          members,
+        });
+        if (actionError) {
+          throw actionError;
+        }
+      }
+
+      // Success - Reload page to refresh state on SSR
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Ocurrió un error inesperado al guardar el escuadrón.";
+      setError(message);
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mx-auto max-w-2xl rounded-lg border border-border bg-card p-6 shadow-sm md:p-8">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="font-bold text-foreground text-xl tracking-tight">
+            {initialSquad ? "Editar Escuadrón" : "Configuración del Escuadrón"}
+          </h2>
+          <p className="mt-1 font-light text-muted-foreground text-sm">
+            {step === 1
+              ? "Paso 1: Nombre de tu equipo"
+              : "Paso 2: Registrar integrantes (4 slots)"}
+          </p>
+        </div>
+        <div className="font-mono text-muted-foreground text-xs">
+          Paso {step} de 2
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-6 rounded-md bg-destructive/10 p-3 font-light text-destructive text-sm">
+          {error}
+        </div>
+      )}
+
+      {step === 1 ? (
+        <div className="space-y-6">
+          <div>
+            <label
+              className="mb-2 block font-medium text-foreground text-sm"
+              htmlFor="squadName"
+            >
+              Nombre del Escuadrón
+            </label>
+            <input
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              id="squadName"
+              onChange={(e) => setSquadName(e.target.value)}
+              placeholder="Ej. Alpha Team, RedSec BR, etc."
+              type="text"
+              value={squadName}
+            />
+          </div>
+          <div className="flex justify-end gap-3">
+            {onCancel && (
+              <Button onClick={onCancel} type="button" variant="outline">
+                Cancelar
+              </Button>
+            )}
+            <Button onClick={handleNext} type="button">
+              Siguiente Paso
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-6">
+            {members.map((member, index) => (
+              <div
+                className="space-y-4 rounded-md border border-border/60 bg-background/50 p-4"
+                key={member.slot_number}
+              >
+                <div className="flex items-center justify-between border-border/40 border-b pb-2">
+                  <span className="font-mono font-semibold text-muted-foreground text-xs uppercase">
+                    Slot #{member.slot_number} {index === 0 && "(Líder)"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label
+                      className="mb-1 block font-medium text-muted-foreground text-xs"
+                      htmlFor={`gamertag-${member.slot_number}`}
+                    >
+                      Gamertag
+                    </label>
+                    <input
+                      className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
+                      id={`gamertag-${member.slot_number}`}
+                      onChange={(e) =>
+                        handleMemberChange(index, "gamertag", e.target.value)
+                      }
+                      placeholder="Ej. Mpacheco"
+                      type="text"
+                      value={member.gamertag}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      className="mb-1 block font-medium text-muted-foreground text-xs"
+                      htmlFor={`real_name-${member.slot_number}`}
+                    >
+                      Nombre Real
+                    </label>
+                    <input
+                      className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary"
+                      id={`real_name-${member.slot_number}`}
+                      onChange={(e) =>
+                        handleMemberChange(index, "real_name", e.target.value)
+                      }
+                      placeholder="Ej. Manuel"
+                      type="text"
+                      value={member.real_name}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      className="mb-1 block font-medium text-muted-foreground text-xs"
+                      htmlFor={`level-${member.slot_number}`}
+                    >
+                      Nivel
+                    </label>
+                    <input
+                      className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                      id={`level-${member.slot_number}`}
+                      min="1"
+                      onChange={(e) =>
+                        handleMemberChange(
+                          index,
+                          "level",
+                          Number.parseInt(e.target.value, 10) || 1
+                        )
+                      }
+                      type="number"
+                      value={member.level}
+                    />
+                  </div>
+                  <div>
+                    <label
+                      className="mb-1 block font-medium text-muted-foreground text-xs"
+                      htmlFor={`favorite_class-${member.slot_number}`}
+                    >
+                      Clase Favorita
+                    </label>
+                    <select
+                      className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                      id={`favorite_class-${member.slot_number}`}
+                      onChange={(e) =>
+                        handleMemberChange(
+                          index,
+                          "favorite_class",
+                          e.target.value
+                        )
+                      }
+                      value={member.favorite_class}
+                    >
+                      {CLASSES.map((cls) => (
+                        <option key={cls} value={cls}>
+                          {cls}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-between gap-3">
+            <Button
+              disabled={loading}
+              onClick={() => setStep(1)}
+              type="button"
+              variant="outline"
+            >
+              Atrás
+            </Button>
+            <div className="flex gap-3">
+              {onCancel && (
+                <Button
+                  disabled={loading}
+                  onClick={onCancel}
+                  type="button"
+                  variant="outline"
+                >
+                  Cancelar
+                </Button>
+              )}
+              <Button disabled={loading} type="submit">
+                {loading ? "Guardando..." : "Guardar Escuadrón"}
+              </Button>
+            </div>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}

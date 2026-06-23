@@ -1,5 +1,4 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"dce79c2b46fb8658052efd0b0dac2c852fc4de15"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="30189e10-211f-4423-ba5d-4cbe896c1b7c",e._sentryDebugIdIdentifier="sentry-dbid-30189e10-211f-4423-ba5d-4cbe896c1b7c");}catch(e){}}();import { p as pipelineSymbol, A as AstroError, a as ActionCalledFromServerError } from './params-and-props_DaruqQBn.mjs';
-import { c as createActionsProxy, d as defineAction, A as ActionError } from './entrypoint_esym_OeE.mjs';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"9aa1f11240b5d340e4026a0e80081cd252d2d44d"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="eca0974e-eaad-446a-9d6b-91d96fa590f9",e._sentryDebugIdIdentifier="sentry-dbid-eca0974e-eaad-446a-9d6b-91d96fa590f9");}catch(e){}}();import './server_DO_UlrIg.mjs';
 import * as z from 'zod/v4';
 import { render } from '@react-email/render';
 import { captureException } from '@sentry/astro';
@@ -7,19 +6,8 @@ import { Resend } from 'resend';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { Html, Head, Preview, Tailwind, Body, Container, Section, Link, Img, Text, Row, Column, Hr } from '@react-email/components';
 import { twMerge } from 'tailwind-merge';
-import { B as BUSINESS_CONFIG } from './business_JLc5HIHy.mjs';
-
-createActionsProxy({
-  handleAction: async (param, path, context) => {
-    const pipeline = context ? Reflect.get(context, pipelineSymbol) : void 0;
-    if (!pipeline) {
-      throw new AstroError(ActionCalledFromServerError);
-    }
-    const action = await pipeline.getAction(path);
-    if (!action) throw new Error(`Action not found: ${path}`);
-    return action.bind(context)(param);
-  }
-});
+import { B as BUSINESS_CONFIG } from './business_Dj_wr3Kz.mjs';
+import { d as defineAction, A as ActionError } from './entrypoint_Det9JS8i.mjs';
 
 const resetText = { margin: 0 };
 const translations = {
@@ -313,7 +301,155 @@ const server = {
         });
       }
     }
-  })
+  }),
+  squad: {
+    create: defineAction({
+      accept: "json",
+      input: z.object({
+        name: z.string().min(3),
+        members: z.array(
+          z.object({
+            gamertag: z.string().min(2),
+            real_name: z.string().min(2),
+            level: z.number().min(1),
+            favorite_class: z.string(),
+            slot_number: z.number().min(1).max(4)
+          })
+        ).length(4)
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para crear un escuadrón"
+          });
+        }
+        const { data: squad, error: squadError } = await supabase.from("squads").insert({ name: input.name, owner_id: user.id }).select().single();
+        if (squadError) {
+          console.error("Error creating squad:", squadError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Error al crear el escuadrón: ${squadError.message}`
+          });
+        }
+        const membersToInsert = input.members.map((m) => ({
+          squad_id: squad.id,
+          gamertag: m.gamertag,
+          real_name: m.real_name,
+          level: m.level,
+          favorite_class: m.favorite_class,
+          slot_number: m.slot_number
+        }));
+        const { error: membersError } = await supabase.from("squad_members").insert(membersToInsert);
+        if (membersError) {
+          console.error("Error creating members:", membersError);
+          await supabase.from("squads").delete().eq("id", squad.id);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Error al registrar integrantes: ${membersError.message}`
+          });
+        }
+        return { success: true, squad };
+      }
+    }),
+    get: defineAction({
+      accept: "json",
+      handler: async (_, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para ver su escuadrón"
+          });
+        }
+        const { data: squad, error: squadError } = await supabase.from("squads").select("*").eq("owner_id", user.id).maybeSingle();
+        if (squadError) {
+          console.error("Error fetching squad:", squadError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al consultar el escuadrón"
+          });
+        }
+        if (!squad) {
+          return null;
+        }
+        const { data: members, error: membersError } = await supabase.from("squad_members").select("*").eq("squad_id", squad.id).order("slot_number", { ascending: true });
+        if (membersError) {
+          console.error("Error fetching members:", membersError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al consultar integrantes del escuadrón"
+          });
+        }
+        return {
+          ...squad,
+          members
+        };
+      }
+    }),
+    update: defineAction({
+      accept: "json",
+      input: z.object({
+        squadId: z.string().uuid(),
+        name: z.string().min(3),
+        members: z.array(
+          z.object({
+            id: z.string().uuid().optional(),
+            gamertag: z.string().min(2),
+            real_name: z.string().min(2),
+            level: z.number().min(1),
+            favorite_class: z.string(),
+            slot_number: z.number().min(1).max(4)
+          })
+        ).length(4)
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para modificar el escuadrón"
+          });
+        }
+        const { error: squadError } = await supabase.from("squads").update({ name: input.name }).eq("id", input.squadId).eq("owner_id", user.id);
+        if (squadError) {
+          console.error("Error updating squad:", squadError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al actualizar el escuadrón"
+          });
+        }
+        for (const m of input.members) {
+          const { error: memberError } = await supabase.from("squad_members").upsert(
+            {
+              id: m.id,
+              squad_id: input.squadId,
+              gamertag: m.gamertag,
+              real_name: m.real_name,
+              level: m.level,
+              favorite_class: m.favorite_class,
+              slot_number: m.slot_number
+            },
+            {
+              onConflict: "squad_id,slot_number"
+            }
+          );
+          if (memberError) {
+            console.error("Error upserting member:", memberError);
+            throw new ActionError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: `Error al actualizar integrantes: ${memberError.message}`
+            });
+          }
+        }
+        return { success: true };
+      }
+    })
+  }
 };
 
 export { server };
