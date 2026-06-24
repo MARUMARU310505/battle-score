@@ -10,7 +10,7 @@ export function SquadHeader({ activePlayers }: SquadHeaderProps) {
       {activePlayers.map((player) => {
         const isAbsent = player.status === "ausente";
         const k = player.kills || 0;
-        const d = player.deaths || 0;
+        const d = player.downs || 0;
         const a = player.assists || 0;
         const kdr = d > 0 ? k / d : k;
 

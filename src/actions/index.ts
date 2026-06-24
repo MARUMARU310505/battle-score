@@ -1153,6 +1153,114 @@ export const server = {
         return session;
       },
     }),
+    getHistory: defineAction({
+      accept: "json",
+      input: z.object({
+        squadId: z.string().uuid(),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para ver el historial",
+          });
+        }
+
+        // Fetch all completed sessions for this squad
+        const { data: sessions, error: sessionsError } = await supabase
+          .from("game_sessions")
+          .select("*")
+          .eq("squad_id", input.squadId)
+          .eq("status", "completed")
+          .order("closed_at", { ascending: false });
+
+        if (sessionsError) {
+          console.error("Error fetching session history:", sessionsError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al consultar el historial de sesiones",
+          });
+        }
+
+        if (!sessions || sessions.length === 0) {
+          return [];
+        }
+
+        // For each session, fetch match count and aggregated stats
+        const enrichedSessions = await Promise.all(
+          sessions.map(async (session) => {
+            const { data: matches, error: matchesError } = await supabase
+              .from("matches")
+              .select("id, placement")
+              .eq("session_id", session.id);
+
+            if (matchesError) {
+              console.error("Error fetching matches for session:", matchesError);
+              return {
+                ...session,
+                match_count: 0,
+                avg_placement: 0,
+                win_rate: 0,
+              };
+            }
+
+            const matchCount = matches?.length || 0;
+            const wins = matches?.filter((m) => m.placement === 1).length || 0;
+            const avgPlacement =
+              matchCount > 0
+                ? matches.reduce((sum, m) => sum + m.placement, 0) / matchCount
+                : 0;
+            const winRate = matchCount > 0 ? (wins / matchCount) * 100 : 0;
+
+            return {
+              ...session,
+              match_count: matchCount,
+              avg_placement: Math.round(avgPlacement * 10) / 10,
+              win_rate: Math.round(winRate),
+            };
+          })
+        );
+
+        return enrichedSessions;
+      },
+    }),
+    getDetail: defineAction({
+      accept: "json",
+      input: z.object({
+        sessionId: z.string().uuid(),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión para ver el detalle de la sesión",
+          });
+        }
+
+        const { data: matches, error: matchesError } = await supabase
+          .from("matches")
+          .select(`
+            *,
+            player_match_stats (*)
+          `)
+          .eq("session_id", input.sessionId)
+          .order("created_at", { ascending: true });
+
+        if (matchesError) {
+          console.error("Error fetching session detail:", matchesError);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al consultar el detalle de la sesión",
+          });
+        }
+
+        return matches || [];
+      },
+    }),
   },
   match: {
     create: defineAction({
@@ -1164,7 +1272,6 @@ export const server = {
         hostility: z.string(),
         loot: z.string(),
         eliminationCause: z.string(),
-        ping: z.number(),
         playerStats: z.array(
           z.object({
             userId: z.string().uuid().nullable().optional(),
@@ -1172,10 +1279,8 @@ export const server = {
             activeClass: z.string(),
             downs: z.number().min(0),
             kills: z.number().min(0),
-            deaths: z.number().min(0),
             assists: z.number().min(0),
             revives: z.number().min(0),
-            primaryWeapon: z.string(),
             respawned: z.boolean(),
             endGame: z.boolean(),
             mentalState: z.number().min(1).max(5),
@@ -1201,7 +1306,7 @@ export const server = {
             hostility: input.hostility,
             loot: input.loot,
             elimination_cause: input.eliminationCause,
-            ping: input.ping,
+            ping: 0,
           })
           .select()
           .single();
@@ -1221,7 +1326,7 @@ export const server = {
           active_class: ps.activeClass,
           downs: ps.downs,
           kills: ps.kills,
-          deaths: ps.deaths,
+          deaths: 0,
           assists: ps.assists,
           revives: ps.revives,
           primary_weapon: ps.primaryWeapon || "Ninguna",

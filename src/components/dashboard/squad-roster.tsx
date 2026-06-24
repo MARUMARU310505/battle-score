@@ -2,8 +2,11 @@ import { User, UserCheck, UserMinus } from "lucide-react";
 
 export interface ActivePlayer {
   active_class: string;
+  assists?: number;
+  downs?: number;
   favorite_class: string;
   gamertag: string;
+  kills?: number;
   slot_number: number;
   status: "titular" | "reemplazo" | "ausente";
   user_id?: string | null;

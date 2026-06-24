@@ -333,14 +333,6 @@ export function SessionPanel({
                           </div>
 
                           <div className="flex items-center gap-4">
-                            <div className="hidden text-right sm:block">
-                              <p className="font-mono text-[10px] text-muted-foreground">
-                                PING
-                              </p>
-                              <p className="font-mono text-foreground text-xs">
-                                {match.ping} ms
-                              </p>
-                            </div>
                             <span className="font-mono text-primary text-xs hover:underline">
                               {isExpanded ? "Ocultar" : "Detalles"}
                             </span>
@@ -381,7 +373,6 @@ export function SessionPanel({
                                     <th className="py-2 text-center">
                                       Downs / Rev
                                     </th>
-                                    <th className="py-2 text-center">Arma</th>
                                     <th className="py-2 text-center">
                                       Desp / Final
                                     </th>
@@ -392,7 +383,7 @@ export function SessionPanel({
                                   {match.player_match_stats?.map(
                                     (stat: PlayerMatchStats) => {
                                       const k = stat.kills || 0;
-                                      const d = stat.deaths || 0;
+                                      const d = stat.downs || 0;
                                       const kdr =
                                         d > 0
                                           ? (k / d).toFixed(2)
@@ -427,9 +418,6 @@ export function SessionPanel({
                                           </td>
                                           <td className="py-2 text-center font-mono">
                                             {stat.downs} / {stat.revives}
-                                          </td>
-                                          <td className="py-2 text-center font-light text-muted-foreground">
-                                            {stat.primary_weapon}
                                           </td>
                                           <td className="py-2 text-center">
                                             {stat.respawned ? "✅" : "❌"} /{" "}

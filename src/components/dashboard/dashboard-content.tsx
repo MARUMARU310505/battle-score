@@ -37,7 +37,6 @@ export interface PlayerMatchStats {
   active_class: string;
   assists: number;
   created_at: string;
-  deaths: number;
   downs: number;
   end_game: boolean;
   gamertag: string;
@@ -45,7 +44,6 @@ export interface PlayerMatchStats {
   kills: number;
   match_id: string;
   mental_state: number;
-  primary_weapon: string;
   respawned: boolean;
   revives: number;
   user_id?: string | null;
@@ -57,7 +55,6 @@ export interface Match {
   hostility: string;
   id: string;
   loot: string;
-  ping: number;
   placement: number;
   player_match_stats: PlayerMatchStats[];
   poi: string;
@@ -95,7 +92,7 @@ export function DashboardContent({
       const hasUser = member.user_id !== null && member.user_id !== undefined;
 
       let kills = 0;
-      let deaths = 0;
+      let downs = 0;
       let assists = 0;
 
       for (const match of sessionMatches) {
@@ -104,7 +101,7 @@ export function DashboardContent({
         );
         if (stats) {
           kills += stats.kills || 0;
-          deaths += stats.deaths || 0;
+          downs += stats.downs || 0;
           assists += stats.assists || 0;
         }
       }
@@ -117,7 +114,7 @@ export function DashboardContent({
         active_class: member.favorite_class,
         user_id: member.user_id,
         kills,
-        deaths,
+        downs,
         assists,
       };
     });

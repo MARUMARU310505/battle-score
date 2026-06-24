@@ -1,18 +1,17 @@
 import { actions } from "astro:actions";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import POIS from "@/data/pois.json";
 import type { ActivePlayer } from "./squad-roster";
 
 interface PlayerStatInput {
   activeClass: string;
   assists: number;
-  deaths: number;
   downs: number;
   endGame: boolean;
   gamertag: string;
   kills: number;
   mentalState: number;
-  primaryWeapon: string;
   respawned: boolean;
   revives: number;
   userId?: string | null;
@@ -25,60 +24,7 @@ interface MatchFormProps {
   sessionId: string;
 }
 
-const POIS = [
-  "Military Base",
-  "Downtown",
-  "Superstore",
-  "Airport",
-  "Promenade",
-  "Boneyard",
-  "Storage Town",
-  "Train Station",
-  "Hospital",
-  "Stadium",
-  "TV Station",
-  "Quarry",
-  "Lumber",
-  "Farmland",
-  "Prison",
-  "Port",
-  "Desconocido",
-];
 
-const WEAPONS = [
-  "Ninguna",
-  "Kilo 141",
-  "M4A1",
-  "Grau 5.56",
-  "M13",
-  "CR-56 AMAX",
-  "FARA 83",
-  "MP5",
-  "MP7",
-  "Fennec",
-  "MAC-10",
-  "OTS 9",
-  "Lachmann Sub",
-  "FSS Hurricane",
-  "Kar98k",
-  "HDR",
-  "AX-50",
-  "SP-R 208",
-  "Swiss K31",
-  "MCPR-300",
-  "Signal 50",
-  "Bruen MK9",
-  "PKM",
-  "FiNN LMG",
-  "RAAL MG",
-  "Sakin MG38",
-  "RPK",
-  "Origin 12",
-  "R9-0",
-  "Gallo SA12",
-  "JAK-12",
-  "KV Broadside",
-];
 
 export function MatchForm({
   sessionId,
@@ -101,7 +47,6 @@ export function MatchForm({
   );
   const [loot, setLoot] = useState<"Malo" | "Normal" | "Excelente">("Normal");
   const [eliminationCause, setEliminationCause] = useState("Ninguna");
-  const [ping, setPing] = useState(30);
 
   // Step 2: Individual Player Stats State
   const [playerStats, setPlayerStats] = useState<PlayerStatInput[]>(() =>
@@ -111,10 +56,8 @@ export function MatchForm({
       activeClass: p.active_class,
       downs: 0,
       kills: 0,
-      deaths: 0,
       assists: 0,
       revives: 0,
-      primaryWeapon: "Ninguna",
       respawned: false,
       endGame: false,
       mentalState: 3,
@@ -158,7 +101,6 @@ export function MatchForm({
         hostility,
         loot,
         eliminationCause: placement === 1 ? "Victoria" : eliminationCause,
-        ping,
         playerStats,
       });
 
@@ -291,24 +233,7 @@ export function MatchForm({
               </select>
             </div>
 
-            <div>
-              <label
-                className="mb-1 block font-medium text-muted-foreground text-xs"
-                htmlFor="match-ping"
-              >
-                Ping / Latencia (ms)
-              </label>
-              <input
-                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                id="match-ping"
-                min="0"
-                onChange={(e) =>
-                  setPing(Number.parseInt(e.target.value, 10) || 0)
-                }
-                type="number"
-                value={ping}
-              />
-            </div>
+
 
             <div>
               <label
@@ -359,7 +284,7 @@ export function MatchForm({
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <div>
                     <label
                       className="mb-0.5 block text-[10px] text-muted-foreground"
@@ -406,28 +331,7 @@ export function MatchForm({
                     />
                   </div>
 
-                  <div>
-                    <label
-                      className="mb-0.5 block text-[10px] text-muted-foreground"
-                      htmlFor={`deaths-${stat.gamertag}`}
-                    >
-                      Muertes (D)
-                    </label>
-                    <input
-                      className="w-full rounded border border-border bg-background px-2 py-1 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                      id={`deaths-${stat.gamertag}`}
-                      min="0"
-                      onChange={(e) =>
-                        handleStatChange(
-                          idx,
-                          "deaths",
-                          Number.parseInt(e.target.value, 10) || 0
-                        )
-                      }
-                      type="number"
-                      value={stat.deaths}
-                    />
-                  </div>
+
 
                   <div>
                     <label
@@ -476,30 +380,7 @@ export function MatchForm({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-end">
-                  <div>
-                    <label
-                      className="mb-0.5 block text-[10px] text-muted-foreground"
-                      htmlFor={`weapon-${stat.gamertag}`}
-                    >
-                      Arma Principal
-                    </label>
-                    <select
-                      className="w-full rounded border border-border bg-background px-2 py-1 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                      id={`weapon-${stat.gamertag}`}
-                      onChange={(e) =>
-                        handleStatChange(idx, "primaryWeapon", e.target.value)
-                      }
-                      value={stat.primaryWeapon}
-                    >
-                      {WEAPONS.map((w) => (
-                        <option key={w} value={w}>
-                          {w}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-end">
                   <div className="flex flex-wrap gap-4 py-1">
                     <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-muted-foreground">
                       <input
