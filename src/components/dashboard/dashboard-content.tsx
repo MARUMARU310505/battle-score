@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MainTabs, type TabType } from "./main-tabs";
 import { SessionPanel } from "./session-panel";
+import { SessionsHistory } from "./sessions-history";
 import type { ActivePlayer } from "./squad-roster";
 import { SquadSidebar } from "./squad-sidebar";
 import { SquadWizard } from "./squad-wizard";
@@ -190,23 +191,7 @@ export function DashboardContent({
           )}
 
           {activeTab === "history" && (
-            <div className="rounded-lg border border-border bg-card p-6">
-              <h3 className="flex items-center gap-2 font-bold text-foreground text-sm tracking-tight">
-                <Trophy className="h-4 w-4 text-muted-foreground" />
-                Sesiones Anteriores
-              </h3>
-              <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-border border-dashed bg-background/50 p-12 text-center">
-                <span className="mb-4 text-3xl">📅</span>
-                <h4 className="font-semibold text-foreground text-sm">
-                  Historial Cerrado
-                </h4>
-                <p className="mt-2 max-w-sm font-light text-muted-foreground text-xs">
-                  En la Fase 7 se habilitará el desglose completo del historial,
-                  donde podrás consultar todas las sesiones finalizadas, sus
-                  métricas acumuladas y las partidas jugadas.
-                </p>
-              </div>
-            </div>
+            <SessionsHistory squadId={squad.id} />
           )}
 
           {activeTab === "stats" && (
