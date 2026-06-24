@@ -82,7 +82,7 @@ function MemberRow({
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div>
           <label
             className="mb-1 block font-medium text-muted-foreground text-xs"
@@ -125,7 +125,7 @@ function MemberRow({
             value={member.level}
           />
         </div>
-        <div className="md:col-span-2">
+        <div className="xl:col-span-2">
           <label
             className="mb-1 block font-medium text-muted-foreground text-xs"
             htmlFor={`favorite_class-${member.slot_number}`}
@@ -295,7 +295,7 @@ export function SquadWizard({
   }
 
   return (
-    <div className="mx-auto max-w-2xl rounded-lg border border-border bg-card p-6 shadow-sm md:p-8">
+    <div className="mx-auto max-w-2xl rounded-lg border border-border bg-card p-6 shadow-sm xl:p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="font-bold text-foreground text-xl tracking-tight">

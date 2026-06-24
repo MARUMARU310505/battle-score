@@ -162,7 +162,7 @@ export function DashboardContent({
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-1 flex-col bg-background md:flex-row">
+    <div className="flex min-h-[calc(100vh-4rem)] flex-1 flex-col bg-background xl:flex-row">
       <SquadSidebar
         allSquads={allSquads}
         currentUser={currentUser}
@@ -178,7 +178,7 @@ export function DashboardContent({
           onTabChange={setActiveTab}
         />
 
-        <main className="flex-1 p-6 md:p-8">
+        <main className="flex-1 p-6 xl:p-8">
           {activeTab === "active-session" && (
             <SessionPanel
               activePlayers={activePlayers}
@@ -240,7 +240,7 @@ export function DashboardContent({
                 Ajustes del Escuadrón
               </h3>
 
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                 {/* Invite Code card */}
                 <div className="space-y-4 rounded-lg border border-border bg-background p-5">
                   <div>
@@ -353,7 +353,7 @@ export function DashboardContent({
                 </form>
 
                 {/* Danger Zone card */}
-                <div className="space-y-4 rounded-lg border border-destructive/30 bg-destructive/5 p-5 md:col-span-2">
+                <div className="space-y-4 rounded-lg border border-destructive/30 bg-destructive/5 p-5 xl:col-span-2">
                   <div>
                     <h4 className="font-semibold text-destructive text-sm">
                       Zona de Peligro

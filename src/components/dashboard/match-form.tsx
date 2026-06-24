@@ -146,7 +146,7 @@ export function MatchForm({
 
       {step === 1 ? (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             <div>
               <label
                 className="mb-1 block font-medium text-muted-foreground text-xs"
@@ -284,7 +284,7 @@ export function MatchForm({
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
                   <div>
                     <label
                       className="mb-0.5 block text-[10px] text-muted-foreground"
@@ -380,7 +380,7 @@ export function MatchForm({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-end">
+                <div className="grid grid-cols-1 gap-3 xl:grid-cols-2 xl:items-end">
                   <div className="flex flex-wrap gap-4 py-1">
                     <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-muted-foreground">
                       <input

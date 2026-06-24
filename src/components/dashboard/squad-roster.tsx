@@ -107,7 +107,7 @@ export function SquadRoster({
               key={player.slot_number}
             >
               {/* Operator details & Toggle */}
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                 <div>
                   <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase">
                     Operador #{player.slot_number}
@@ -137,7 +137,7 @@ export function SquadRoster({
 
                 {/* Status Toggle buttons */}
                 {player.user_id !== null && player.user_id !== undefined ? (
-                  <div className="flex items-center gap-1.5 self-start sm:self-center">
+                  <div className="flex items-center gap-1.5 self-start xl:self-center">
                     <button
                       className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-[10px] transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
                         player.status === "titular"

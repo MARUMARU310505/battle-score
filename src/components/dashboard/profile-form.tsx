@@ -73,9 +73,9 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
   return (
     <div className="mx-auto w-full max-w-md">
       <div className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-lg backdrop-blur-md">
-        <div className="space-y-6 p-6 sm:p-8">
+        <div className="space-y-6 p-6 xl:p-8">
           <div className="space-y-2 text-center">
-            <h1 className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text font-bold text-2xl text-transparent tracking-tight sm:text-3xl">
+            <h1 className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text font-bold text-2xl text-transparent tracking-tight xl:text-3xl">
               {isNew ? "Configura tu Perfil" : "Editar Perfil"}
             </h1>
             <p className="text-muted-foreground text-sm">

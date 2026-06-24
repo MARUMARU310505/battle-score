@@ -1,12 +1,13 @@
 import { actions } from "astro:actions";
 import {
+  ArrowRight,
   Check,
   Copy,
-  LogIn,
   LogOut,
   Plus,
   Search,
   ShieldCheck,
+  UserPlus,
   Users,
 } from "lucide-react";
 import { useState } from "react";
@@ -201,9 +202,9 @@ export function SquadHub({
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 xl:px-6 xl:px-8">
       {/* Header */}
-      <div className="flex flex-col justify-between gap-4 border-border border-b pb-6 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-4 border-border border-b pb-6 xl:flex-row xl:items-center">
         <div>
           <h1 className="font-bold text-2xl text-foreground tracking-tight">
             Hub de Escuadrones
@@ -214,7 +215,7 @@ export function SquadHub({
           </p>
         </div>
         <Button
-          className="flex items-center gap-1.5 self-start sm:self-center"
+          className="flex items-center gap-1.5 self-start xl:self-center"
           onClick={onNewSquadClick}
         >
           <Plus className="h-4 w-4" />
@@ -222,9 +223,9 @@ export function SquadHub({
         </Button>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
         {/* Left/Center: Your Squads list */}
-        <div className="space-y-6 lg:col-span-2">
+        <div className="space-y-6 xl:col-span-2">
           <h2 className="flex items-center gap-2 font-bold text-foreground text-lg tracking-tight">
             <Users className="h-5 w-5 text-muted-foreground" />
             Tus Escuadras
@@ -242,7 +243,7 @@ export function SquadHub({
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
               {squads.map((squad) => {
                 const isOwner = squad.owner_id === currentUser.id;
                 const myMemberSlot = squad.squad_members.find(
@@ -343,7 +344,7 @@ export function SquadHub({
                           onClick={() => handleEnterSquad(squad.id)}
                           size="sm"
                         >
-                          <LogIn className="mr-1.5 h-3.5 w-3.5" />
+                          <ArrowRight className="mr-1.5 h-3.5 w-3.5" />
                           Entrar al Panel
                         </Button>
                         {!isOwner && myMemberSlot && (
@@ -482,7 +483,7 @@ export function SquadHub({
                       Datos de tu Operador (Slot #{selectedSlot})
                     </h4>
 
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
                       <div>
                         <label
                           className="mb-1 block font-medium text-[10px] text-muted-foreground"
@@ -515,7 +516,7 @@ export function SquadHub({
                         />
                       </div>
 
-                      <div className="sm:col-span-2">
+                      <div className="xl:col-span-2">
                         <label
                           className="mb-1 block font-medium text-[10px] text-muted-foreground"
                           htmlFor="hub-class"
@@ -541,9 +542,14 @@ export function SquadHub({
                       disabled={loading}
                       type="submit"
                     >
-                      {loading
-                        ? "Uniéndose..."
-                        : `Unirse como Operador #${selectedSlot}`}
+                      {loading ? (
+                        "Uniéndose..."
+                      ) : (
+                        <>
+                          <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                          Unirse como Operador #{selectedSlot}
+                        </>
+                      )}
                     </Button>
                   </form>
                 )}

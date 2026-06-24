@@ -204,7 +204,7 @@ export function SessionsHistory({ squadId }: SessionsHistoryProps) {
 
                 <div className="flex items-center gap-4">
                   {/* Quick Stats */}
-                  <div className="hidden items-center gap-3 sm:flex">
+                  <div className="hidden items-center gap-3 xl:flex">
                     <div className="flex items-center gap-1 text-center">
                       <Crosshair className="h-3 w-3 text-muted-foreground" />
                       <span className="font-mono text-foreground text-xs">
@@ -252,7 +252,7 @@ export function SessionsHistory({ squadId }: SessionsHistoryProps) {
 
               {/* Mobile Stats (visible below summary on small screens) */}
               {!isExpanded && (
-                <div className="flex gap-4 border-border/40 border-t px-4 py-2 sm:hidden">
+                <div className="flex gap-4 border-border/40 border-t px-4 py-2 xl:hidden">
                   <span className="font-mono text-muted-foreground text-xs">
                     {session.match_count} partidas
                   </span>

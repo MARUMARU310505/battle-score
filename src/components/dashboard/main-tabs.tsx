@@ -43,7 +43,7 @@ export function MainTabs({
 
   return (
     <div className="border-border border-b bg-card/30 backdrop-blur-xs">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 xl:px-6 xl:px-8">
         <nav
           aria-label="Tabs"
           className="scrollbar-none -mb-px flex space-x-6 overflow-x-auto"

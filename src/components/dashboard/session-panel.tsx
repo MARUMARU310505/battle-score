@@ -110,7 +110,7 @@ export function SessionPanel({
   if (!initialSession) {
     if (!isOwner) {
       return (
-        <div className="mx-auto max-w-md rounded-lg border border-border bg-card p-6 shadow-sm md:p-8">
+        <div className="mx-auto max-w-md rounded-lg border border-border bg-card p-6 shadow-sm xl:p-8">
           <div className="text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted/20">
               <Calendar className="h-6 w-6 text-muted-foreground" />
@@ -128,7 +128,7 @@ export function SessionPanel({
     }
 
     return (
-      <div className="mx-auto max-w-md rounded-lg border border-border bg-card p-6 shadow-sm md:p-8">
+      <div className="mx-auto max-w-md rounded-lg border border-border bg-card p-6 shadow-sm xl:p-8">
         <div className="mb-6 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <Play className="h-6 w-6 text-primary" />
@@ -189,7 +189,7 @@ export function SessionPanel({
   return (
     <div className="space-y-6">
       {/* Session info banner */}
-      <div className="flex flex-col justify-between gap-4 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-4 rounded-lg border border-border bg-card p-4 xl:flex-row xl:items-center">
         <div className="flex items-start gap-3">
           <Calendar className="mt-1 h-5 w-5 shrink-0 text-primary" />
           <div>
@@ -225,9 +225,9 @@ export function SessionPanel({
       <SquadHeader activePlayers={activePlayers} />
 
       {/* Main dashboard columns */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         {/* Left Column: Squad Roster configuration */}
-        <div className="md:col-span-1">
+        <div className="xl:col-span-1">
           <SquadRoster
             activePlayers={activePlayers}
             disabled={!isOwner}
@@ -237,7 +237,7 @@ export function SessionPanel({
         </div>
 
         {/* Right Column: Match registration or list */}
-        <div className="space-y-4 md:col-span-2">
+        <div className="space-y-4 xl:col-span-2">
           {isRegisteringMatch ? (
             <div className="space-y-4">
               <Button
