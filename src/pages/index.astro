@@ -13,10 +13,8 @@ const { user } = Astro.locals;
     ignoreTitleTemplate: true,
   }}
 >
-  <div
-    class="min-h-screen bg-background text-foreground transition-colors duration-200"
-  >
+  <div class="flex flex-1 flex-col">
     <Nav user={user} client:load />
-    <main><Hero client:load /></main>
+    <div class="flex flex-1 flex-col"><Hero client:load /></div>
   </div>
 </BaseLayout>

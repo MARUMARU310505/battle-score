@@ -44,18 +44,22 @@ const gtmId = BUSINESS_CONFIG.googleTagManager?.id;
         : ""}
     />
   </head>
-  <body>
+  <body class="flex min-h-screen flex-col bg-muted/20 text-foreground antialiased transition-colors duration-200">
     {gtmId && (
-        <noscript>
-          <iframe
-            src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
-            height="0"
-            width="0"
-            style="display:none;visibility:hidden"
-          />
-        </noscript>
-      )}
-    <main><slot /></main>
+      <noscript>
+        <iframe
+          src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
+          height="0"
+          width="0"
+          style="display:none;visibility:hidden"
+        />
+      </noscript>
+    )}
+    <div
+      class="mx-auto flex min-h-screen w-full max-w-[500px] flex-col bg-background shadow-2xl xl:max-w-none xl:shadow-none"
+    >
+      <main class="flex flex-1 flex-col"><slot /></main>
+    </div>
     <TailwindIndicator />
     <script src="@/scripts/eleven.ts"></script>
   </body>

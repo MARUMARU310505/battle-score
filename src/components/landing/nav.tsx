@@ -42,7 +42,7 @@ export function Nav({ user = null }: NavProps) {
 
           {user ? (
             <div className="flex items-center gap-4">
-              <span className="hidden text-muted-foreground text-sm md:inline-block">
+              <span className="hidden text-muted-foreground text-sm xl:inline-block">
                 {user.email}
               </span>
               <a
