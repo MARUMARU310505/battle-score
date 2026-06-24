@@ -1306,7 +1306,6 @@ export const server = {
             hostility: input.hostility,
             loot: input.loot,
             elimination_cause: input.eliminationCause,
-            ping: 0,
           })
           .select()
           .single();
@@ -1326,10 +1325,8 @@ export const server = {
           active_class: ps.activeClass,
           downs: ps.downs,
           kills: ps.kills,
-          deaths: 0,
           assists: ps.assists,
           revives: ps.revives,
-          primary_weapon: ps.primaryWeapon || "Ninguna",
           respawned: ps.respawned,
           end_game: ps.endGame,
           mental_state: ps.mentalState,
