@@ -456,7 +456,72 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
           <h3 className="font-bold text-foreground text-xs uppercase tracking-wider border-border/40 border-b pb-3 mb-4">
             Comparador de Operadores
           </h3>
-          <div className="overflow-x-auto">
+          {/* Vista Mobile: Tarjetas apiladas para evitar amontonamiento */}
+          <div className="block sm:hidden space-y-3">
+            {operatorStats.map((op) => {
+              const isMe = op.userId === currentUserId;
+              return (
+                <div 
+                  key={op.gamertag} 
+                  className={`rounded-lg border p-4 bg-muted/10 relative overflow-hidden transition-all hover:bg-muted/15 ${
+                    isMe ? "border-emerald-500/30 bg-emerald-500/[0.02]" : "border-border"
+                  }`}
+                >
+                  {/* Fila superior: Avatar, Nombre y KDR destacado */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <OperatorAvatar
+                        className="h-6 w-6"
+                        gamertag={op.gamertag}
+                        avatarSeed={op.avatarSeed}
+                      />
+                      <span className={`text-sm font-bold ${isMe ? "text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}>
+                        {cleanGamertag(op.gamertag)} 
+                        {isMe && (
+                          <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-mono ml-1.5">
+                            Tú
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-[9px] text-muted-foreground uppercase font-mono tracking-wider">KDR</span>
+                      <span className="text-sm font-extrabold text-primary font-mono">{op.kdr}</span>
+                    </div>
+                  </div>
+
+                  {/* Cuadrícula de estadísticas clave */}
+                  <div className="grid grid-cols-3 gap-2 border-t border-border/30 pt-3 text-center">
+                    <div>
+                      <p className="text-[9px] text-muted-foreground font-mono uppercase">Partidas</p>
+                      <p className="text-xs font-bold text-foreground font-mono mt-0.5">{op.count}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-muted-foreground font-mono uppercase">K/D/A</p>
+                      <p className="text-xs font-bold text-foreground font-mono mt-0.5">
+                        {op.kills}/{op.downs}/{op.assists}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-muted-foreground font-mono uppercase flex items-center justify-center gap-0.5">
+                        <Heart className="h-2 w-2 text-red-500 fill-red-500" /> Reanim.
+                      </p>
+                      <p className="text-xs font-bold text-emerald-400 font-mono mt-0.5">{op.revives}</p>
+                    </div>
+                  </div>
+
+                  {/* Fila inferior: Estado Mental */}
+                  <div className="mt-3 flex items-center justify-between border-t border-border/30 pt-3 text-[10px] font-mono">
+                    <span className="text-muted-foreground">Estado Mental Prom.:</span>
+                    <span className="font-semibold text-foreground">{mentalLabel(Number(op.avgMental))}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Vista Desktop: Tabla tradicional completa */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="text-muted-foreground font-mono border-border/20 border-b pb-2 text-[10px] uppercase">
@@ -464,7 +529,9 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
                   <th className="font-medium text-center pb-2">Partidas</th>
                   <th className="font-medium text-center pb-2">K/D/A</th>
                   <th className="font-medium text-center pb-2">KDR</th>
-                  <th className="font-medium text-center pb-2 flex items-center justify-center gap-1"><Heart className="h-3 w-3 text-red-500" /> Reanim.</th>
+                  <th className="font-medium text-center pb-2 flex items-center justify-center gap-1">
+                    <Heart className="h-3 w-3 text-red-500" /> Reanim.
+                  </th>
                   <th className="font-medium text-center pb-2">Estado Prom.</th>
                 </tr>
               </thead>
