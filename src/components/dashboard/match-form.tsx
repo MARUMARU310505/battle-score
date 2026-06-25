@@ -98,6 +98,10 @@ export function MatchForm({
 
   // Local state for the form inputs
   const [poi, setPoi] = useState(draft.poi || "Desconocido");
+  const [circleZone, setCircleZone] = useState(draft.circleZone || "");
+  const [deathZone, setDeathZone] = useState(draft.deathZone || "");
+  const [secondDeployZone, setSecondDeployZone] = useState(draft.secondDeployZone || "");
+  const [mapTarget, setMapTarget] = useState<"poi" | "circle" | "death" | "second_deploy">("poi");
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [placement, setPlacement] = useState(draft.placement || 1);
   const [hostility, setHostility] = useState<"Baja" | "Media" | "Alta">(
@@ -153,6 +157,9 @@ export function MatchForm({
     }
 
     setPoi(activeDraft.poi || "Desconocido");
+    setCircleZone(activeDraft.circleZone || "");
+    setDeathZone(activeDraft.deathZone || "");
+    setSecondDeployZone(activeDraft.secondDeployZone || "");
     setPlacement(activeDraft.placement || 1);
     setHostility(activeDraft.hostility || "Media");
     setLoot(activeDraft.loot || "Normal");
@@ -216,6 +223,9 @@ export function MatchForm({
       hostility,
       loot,
       eliminationCause,
+      circleZone,
+      deathZone,
+      secondDeployZone,
       playerStats,
       [field]: value,
     };
@@ -237,6 +247,23 @@ export function MatchForm({
 
     if (field === "poi") {
       setPoi(value);
+    }
+    if (field === "circleZone") {
+      setCircleZone(value);
+    }
+    if (field === "deathZone") {
+      setDeathZone(value);
+    }
+    if (field === "secondDeployZone") {
+      setSecondDeployZone(value);
+      if (value && value.trim() !== "") {
+        const updatedStats = playerStats.map((stat) => ({
+          ...stat,
+          respawned: true,
+        }));
+        setPlayerStats(updatedStats);
+        updatedDraft.playerStats = updatedStats;
+      }
     }
     if (field === "placement") {
       setPlacement(value);
@@ -298,7 +325,11 @@ export function MatchForm({
           userId: currentStat.userId || null,
           gamertag,
           isReady: !isCurrentlyReady,
-          playerStats: isCurrentlyReady ? undefined : currentStat,
+          playerStats: isCurrentlyReady
+            ? undefined
+            : secondDeployZone
+              ? { ...currentStat, respawned: true }
+              : currentStat,
         });
       if (actionError) {
         throw new Error(actionError.message || "Error al actualizar estado.");
@@ -330,6 +361,10 @@ export function MatchForm({
     setIsSavingMatch(true);
 
     try {
+      const finalPlayerStats = secondDeployZone
+        ? playerStats.map((ps) => ({ ...ps, respawned: true }))
+        : playerStats;
+
       const { error: actionError } = await actions.match.create({
         sessionId,
         poi,
@@ -337,7 +372,10 @@ export function MatchForm({
         hostility,
         loot,
         eliminationCause: placement === 1 ? "Victoria" : eliminationCause,
-        playerStats,
+        circleZone: circleZone || null,
+        deathZone: deathZone || null,
+        secondDeployZone: secondDeployZone || null,
+        playerStats: finalPlayerStats,
       });
 
       if (actionError) {
@@ -439,7 +477,10 @@ export function MatchForm({
                 variant="outline"
                 className="w-full justify-start text-left font-normal text-xs bg-background border-border text-foreground hover:bg-accent/50 disabled:bg-muted disabled:opacity-50"
                 disabled={!isOwner}
-                onClick={() => setIsMapModalOpen(true)}
+                onClick={() => {
+                  setMapTarget("poi");
+                  setIsMapModalOpen(true);
+                }}
               >
                 {isGridCode(poi)
                   ? `${poi} - ${getNearestPOI(poi)}`
@@ -544,6 +585,78 @@ export function MatchForm({
                   ))
                 )}
               </select>
+            </div>
+
+            <div>
+              <label
+                className="mb-1 block font-medium text-muted-foreground text-xs font-semibold text-slate-300"
+                htmlFor="match-circle"
+              >
+                Cierre de Círculo
+              </label>
+              <Button
+                type="button"
+                id="match-circle"
+                variant="outline"
+                className="w-full justify-start text-left font-normal text-xs bg-background border-slate-700 text-foreground hover:bg-accent/50 disabled:bg-muted disabled:opacity-50"
+                disabled={!isOwner}
+                onClick={() => {
+                  setMapTarget("circle");
+                  setIsMapModalOpen(true);
+                }}
+              >
+                {circleZone
+                  ? `${circleZone} - ${getNearestPOI(circleZone)}`
+                  : "Seleccionar en Mapa"}
+              </Button>
+            </div>
+
+            <div>
+              <label
+                className="mb-1 block font-medium text-muted-foreground text-xs font-semibold text-rose-400"
+                htmlFor="match-death"
+              >
+                Punto de Muerte (Eliminación)
+              </label>
+              <Button
+                type="button"
+                id="match-death"
+                variant="outline"
+                className="w-full justify-start text-left font-normal text-xs bg-background border-rose-950/40 text-foreground hover:bg-rose-500/10 disabled:bg-muted disabled:opacity-50"
+                disabled={!isOwner}
+                onClick={() => {
+                  setMapTarget("death");
+                  setIsMapModalOpen(true);
+                }}
+              >
+                {deathZone
+                  ? `${deathZone} - ${getNearestPOI(deathZone)}`
+                  : "Seleccionar en Mapa"}
+              </Button>
+            </div>
+
+            <div>
+              <label
+                className="mb-1 block font-medium text-amber-400 text-xs font-semibold"
+                htmlFor="match-second-deploy"
+              >
+                Segundo Redespliegue Grupal
+              </label>
+              <Button
+                type="button"
+                id="match-second-deploy"
+                variant="outline"
+                className="w-full justify-start text-left font-normal text-xs bg-background border-amber-950/40 text-foreground hover:bg-amber-500/10 disabled:bg-muted disabled:opacity-50"
+                disabled={!isOwner}
+                onClick={() => {
+                  setMapTarget("second_deploy");
+                  setIsMapModalOpen(true);
+                }}
+              >
+                {secondDeployZone
+                  ? `${secondDeployZone} - ${getNearestPOI(secondDeployZone)}`
+                  : "Seleccionar en Mapa"}
+              </Button>
             </div>
           </div>
         </div>
@@ -777,9 +890,9 @@ export function MatchForm({
                     <div className="flex flex-wrap gap-4 py-1">
                       <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-muted-foreground">
                         <input
-                          checked={stat.respawned}
+                          checked={secondDeployZone ? true : stat.respawned}
                           className="rounded border-border bg-background text-primary focus:ring-primary disabled:opacity-50"
-                          disabled={!canEditPlayer}
+                          disabled={!canEditPlayer || !!secondDeployZone}
                           onChange={(e) =>
                             handleStatChange(idx, "respawned", e.target.checked)
                           }
@@ -893,10 +1006,30 @@ export function MatchForm({
       <MapModal
         isOpen={isMapModalOpen}
         onClose={() => setIsMapModalOpen(false)}
-        selectedGrid={isGridCode(poi) ? poi : getPOIGrid(poi) || null}
+        selectedGrid={
+          mapTarget === "poi"
+            ? (isGridCode(poi) ? poi : getPOIGrid(poi) || null)
+            : mapTarget === "circle"
+              ? circleZone
+              : mapTarget === "death"
+                ? deathZone
+                : secondDeployZone
+        }
+        mode={mapTarget}
         onConfirm={(grid) => {
-          setPoi(grid);
-          handleGeneralInfoChange("poi", grid);
+          if (mapTarget === "poi") {
+            setPoi(grid);
+            handleGeneralInfoChange("poi", grid);
+          } else if (mapTarget === "circle") {
+            setCircleZone(grid);
+            handleGeneralInfoChange("circleZone", grid);
+          } else if (mapTarget === "death") {
+            setDeathZone(grid);
+            handleGeneralInfoChange("deathZone", grid);
+          } else if (mapTarget === "second_deploy") {
+            setSecondDeployZone(grid);
+            handleGeneralInfoChange("secondDeployZone", grid);
+          }
         }}
       />
     </div>

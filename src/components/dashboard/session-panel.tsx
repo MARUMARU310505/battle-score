@@ -92,6 +92,7 @@ export function SessionPanel({
   const [error, setError] = useState<string | null>(null);
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
   const [selectedPoiForMap, setSelectedPoiForMap] = useState<string | null>(null);
+  const [mapModalMode, setMapModalMode] = useState<"deploy" | "circle" | "death" | "second_deploy">("deploy");
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [subTab, setSubTab] = useState<"list" | "stats">("list");
 
@@ -544,12 +545,13 @@ export function SessionPanel({
                                   ? "¡Victoria! 🏆"
                                   : `Lugar #${match.placement}`}
                               </p>
-                              <p className="font-light text-[10px] text-muted-foreground">
-                                Drop:{" "}
+                              <div className="font-light text-[10px] text-muted-foreground flex flex-wrap items-center gap-x-1 gap-y-0.5 animate-in fade-in duration-200">
+                                <span>Drop:</span>
                                 <span
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setSelectedPoiForMap(match.poi);
+                                    setMapModalMode("deploy");
                                     setIsMapModalOpen(true);
                                   }}
                                   className="font-medium text-foreground/80 cursor-pointer hover:text-emerald-400 hover:underline transition-colors"
@@ -557,9 +559,61 @@ export function SessionPanel({
                                   {isGridCode(match.poi)
                                     ? `${match.poi} - ${getNearestPOI(match.poi)}`
                                     : match.poi}
-                                </span>{" "}
-                                • {matchDate}
-                              </p>
+                                </span>
+
+                                {match.circle_zone && (
+                                  <>
+                                    <span>• Círculo:</span>
+                                    <span
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedPoiForMap(match.circle_zone);
+                                        setMapModalMode("circle");
+                                        setIsMapModalOpen(true);
+                                      }}
+                                      className="font-medium text-foreground/80 cursor-pointer hover:text-white hover:underline transition-colors"
+                                    >
+                                      {match.circle_zone} - {getNearestPOI(match.circle_zone)}
+                                    </span>
+                                  </>
+                                )}
+
+                                {match.death_zone && (
+                                  <>
+                                    <span>• Muerte:</span>
+                                    <span
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedPoiForMap(match.death_zone);
+                                        setMapModalMode("death");
+                                        setIsMapModalOpen(true);
+                                      }}
+                                      className="font-medium text-foreground/80 cursor-pointer hover:text-rose-400 hover:underline transition-colors"
+                                    >
+                                      {match.death_zone} - {getNearestPOI(match.death_zone)}
+                                    </span>
+                                  </>
+                                )}
+
+                                {match.second_deploy_zone && (
+                                  <>
+                                    <span>• Redespliegue:</span>
+                                    <span
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedPoiForMap(match.second_deploy_zone);
+                                        setMapModalMode("second_deploy");
+                                        setIsMapModalOpen(true);
+                                      }}
+                                      className="font-medium text-foreground/80 cursor-pointer hover:text-amber-400 hover:underline transition-colors"
+                                    >
+                                      {match.second_deploy_zone} - {getNearestPOI(match.second_deploy_zone)}
+                                    </span>
+                                  </>
+                                )}
+
+                                <span>• {matchDate}</span>
+                              </div>
                             </div>
                           </div>
 
@@ -813,6 +867,7 @@ export function SessionPanel({
         }}
         selectedGrid={selectedPoiForMap && isGridCode(selectedPoiForMap) ? selectedPoiForMap : (selectedPoiForMap ? getPOIGrid(selectedPoiForMap) : null)}
         readOnly={true}
+        mode={mapModalMode}
       />
     </div>
   );
