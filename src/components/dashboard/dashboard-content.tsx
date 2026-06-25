@@ -1,5 +1,5 @@
 import { actions } from "astro:actions";
-import { BarChart3, Check, Copy, HelpCircle } from "lucide-react";
+import { BarChart3, Check, Copy } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import type { ActivePlayer } from "./squad-header";
 import { SquadSidebar } from "./squad-sidebar";
 import { SquadWizard } from "./squad-wizard";
 import { StatsView } from "./stats-view";
+import { InsightsView } from "./insights-view";
 
 interface Member {
   favorite_class: string;
@@ -475,23 +476,12 @@ export function DashboardContent({
             )}
 
             {activeTab === "insights" && (
-              <div className="rounded-lg border border-border bg-card p-6">
-                <h3 className="flex items-center gap-2 font-bold text-foreground text-sm tracking-tight">
-                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                  Recomendaciones del Coach
-                </h3>
-                <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-border border-dashed bg-background/50 p-12 text-center">
-                  <span className="mb-4 text-3xl">💡</span>
-                  <h4 className="font-semibold text-foreground text-sm">
-                    Sugerencias Tácticas
-                  </h4>
-                  <p className="mt-2 max-w-sm font-light text-muted-foreground text-xs">
-                    El Coach de Fatiga y las recomendaciones automáticas de
-                    composición de escuadrón y rotaciones de mapas se activarán
-                    en la Fase 8.
-                  </p>
-                </div>
-              </div>
+              <InsightsView
+                matches={historicalMatches}
+                activeSession={session}
+                sessionMatches={matches}
+                squad={squadState}
+              />
             )}
 
             {activeTab === "settings" && isOwner && (
