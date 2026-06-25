@@ -194,47 +194,6 @@ export function Map({ selectedGrid, onSelectGrid, readOnly = false }: MapProps) 
                     })}
                 </g>
 
-                {/* Puntos de interés (POIs) tácticos */}
-                <g style={{ pointerEvents: "none" }}>
-                    {POI_LIST.map((poi) => {
-                        const isDraft = poi.name.includes("(Borrador)");
-                        const color = isDraft ? "#ff007f" : "#00f0ff"; // Rosa de neón para borrador, cian de neón para normal
-                        const glowColor = isDraft ? "rgba(255, 0, 127, 0.2)" : "rgba(0, 240, 255, 0.15)";
-                        return (
-                            <g key={poi.name}>
-                                <circle
-                                    cx={poi.x}
-                                    cy={poi.y}
-                                    r="22"
-                                    fill={glowColor}
-                                    stroke={color}
-                                    strokeWidth="3"
-                                    className="animate-pulse"
-                                />
-                                <circle
-                                    cx={poi.x}
-                                    cy={poi.y}
-                                    r="7"
-                                    fill={color}
-                                />
-                                <text
-                                    x={poi.x + 28}
-                                    y={poi.y + 8}
-                                    fill={color}
-                                    fontSize="26"
-                                    fontWeight="bold"
-                                    fontFamily="sans-serif"
-                                    className="select-none"
-                                    style={{
-                                        textShadow: "2px 2px 4px rgba(0, 0, 0, 0.95), -2px -2px 4px rgba(0,0,0,0.95)"
-                                    }}
-                                >
-                                    {poi.name}
-                                </text>
-                            </g>
-                        );
-                    })}
-                </g>
 
 
                 {/* Puntos de ubicacione
