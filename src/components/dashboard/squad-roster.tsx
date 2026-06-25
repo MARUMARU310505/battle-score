@@ -1,6 +1,6 @@
 import { actions } from "astro:actions";
-import { User, UserCheck, UserMinus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { UserCheck, UserMinus } from "lucide-react";
+import { useState } from "react";
 
 export interface ActivePlayer {
   active_class: string;
@@ -32,7 +32,7 @@ interface SquadRosterProps {
 export function SquadRoster({
   activePlayers,
   onChange: _onChange,
-  originalMembers,
+  originalMembers: _originalMembers,
   isOwner = false,
   currentUserId: _currentUserId = null,
   squadId,
@@ -40,49 +40,13 @@ export function SquadRoster({
 }: SquadRosterProps) {
   const [loadingSlot, setLoadingSlot] = useState<number | null>(null);
 
-  // Local state for replacement input fields to avoid keystroke database latency
-  const [localGamertags, setLocalGamertags] = useState<Record<number, string>>(
-    () => {
-      const initial: Record<number, string> = {};
-      for (const player of activePlayers) {
-        if (player.status === "reemplazo") {
-          initial[player.slot_number] = player.gamertag;
-        }
-      }
-      return initial;
-    }
-  );
-
-  useEffect(() => {
-    setLocalGamertags((prev) => {
-      const updated = { ...prev };
-      for (const player of activePlayers) {
-        if (player.status === "reemplazo") {
-          updated[player.slot_number] = player.gamertag;
-        }
-      }
-      return updated;
-    });
-  }, [activePlayers]);
-
   const handleStatusChange = async (
     slot: number,
-    status: "titular" | "reemplazo" | "ausente"
+    status: "titular" | "ausente"
   ) => {
-    const original = originalMembers.find((m) => m.slot_number === slot);
-    let newGamertag = "";
-
     const player = activePlayers.find((p) => p.slot_number === slot);
     if (!player) {
       return;
-    }
-
-    if (status === "titular" && original) {
-      newGamertag = original.gamertag;
-    } else if (status === "reemplazo") {
-      newGamertag = player.gamertag === "Ausente" ? "" : player.gamertag;
-    } else if (status === "ausente") {
-      newGamertag = "Ausente";
     }
 
     setLoadingSlot(slot);
@@ -91,7 +55,7 @@ export function SquadRoster({
         squadId,
         slotNumber: slot,
         status,
-        gamertag: newGamertag,
+        gamertag: player.gamertag,
       });
       if (error) {
         throw error;
@@ -106,9 +70,7 @@ export function SquadRoster({
             ...prev,
             // biome-ignore lint/suspicious/noExplicitAny: m mapper uses any
             members: prev.members.map((m: any) =>
-              m.slot_number === slot
-                ? { ...m, status, gamertag: newGamertag }
-                : m
+              m.slot_number === slot ? { ...m, status } : m
             ),
           };
         });
@@ -119,41 +81,6 @@ export function SquadRoster({
       alert("Error al cambiar el estado del operador.");
     } finally {
       setLoadingSlot(null);
-    }
-  };
-
-  const handleGamertagChange = async (slot: number, gamertag: string) => {
-    setLoadingSlot(slot);
-    try {
-      const { error } = await actions.squad.updateMemberStatus({
-        squadId,
-        slotNumber: slot,
-        status: "reemplazo",
-        gamertag,
-      });
-      if (error) {
-        throw error;
-      }
-      if (setSquadState) {
-        // biome-ignore lint/suspicious/noExplicitAny: state updater uses any
-        setSquadState((prev: any) => {
-          if (!prev) {
-            return null;
-          }
-          return {
-            ...prev,
-            // biome-ignore lint/suspicious/noExplicitAny: m mapper uses any
-            members: prev.members.map((m: any) =>
-              m.slot_number === slot ? { ...m, gamertag } : m
-            ),
-          };
-        });
-      }
-    } catch (err) {
-      console.error("Error updating replacement gamertag:", err);
-    } finally {
-      setLoadingSlot(slot);
-      setTimeout(() => setLoadingSlot(null), 300); // Small delay to indicate completion
     }
   };
 
@@ -172,7 +99,6 @@ export function SquadRoster({
         {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy mapping function */}
         {activePlayers.map((player) => {
           const isAbsent = player.status === "ausente";
-          const isSub = player.status === "reemplazo";
           const isSlotLoading = loadingSlot === player.slot_number;
 
           return (
@@ -220,38 +146,7 @@ export function SquadRoster({
                   </span>
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold text-foreground text-sm">
-                      {isSub ? (
-                        <input
-                          className="rounded-md border border-border bg-background px-2 py-0.5 font-normal font-sans text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-75"
-                          disabled={!isOwner || isSlotLoading}
-                          onBlur={() => {
-                            handleGamertagChange(
-                              player.slot_number,
-                              localGamertags[player.slot_number] || ""
-                            );
-                          }}
-                          onChange={(e) => {
-                            setLocalGamertags((prev) => ({
-                              ...prev,
-                              [player.slot_number]: e.target.value,
-                            }));
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              handleGamertagChange(
-                                player.slot_number,
-                                localGamertags[player.slot_number] || ""
-                              );
-                              e.currentTarget.blur();
-                            }
-                          }}
-                          placeholder="Gamertag Reemplazo"
-                          type="text"
-                          value={localGamertags[player.slot_number] || ""}
-                        />
-                      ) : (
-                        player.gamertag
-                      )}
+                      {player.gamertag}
                     </h4>
                   </div>
                 </div>
@@ -273,21 +168,6 @@ export function SquadRoster({
                     >
                       <UserCheck className="h-3 w-3" />
                       Titular
-                    </button>
-                    <button
-                      className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-[10px] transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
-                        player.status === "reemplazo"
-                          ? "bg-primary text-primary-foreground"
-                          : "border border-border bg-background text-muted-foreground hover:bg-muted"
-                      }`}
-                      disabled={!isOwner || isSlotLoading}
-                      onClick={() =>
-                        handleStatusChange(player.slot_number, "reemplazo")
-                      }
-                      type="button"
-                    >
-                      <User className="h-3 w-3" />
-                      Reemplazo
                     </button>
                     <button
                       className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium text-[10px] transition-all disabled:cursor-not-allowed disabled:opacity-50 ${

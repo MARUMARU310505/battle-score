@@ -17,7 +17,7 @@ interface Member {
   is_active: boolean;
   level: number;
   slot_number: number;
-  status: "titular" | "reemplazo" | "ausente";
+  status: "titular" | "ausente";
   user_id?: string | null;
 }
 

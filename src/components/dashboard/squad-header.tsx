@@ -27,8 +27,7 @@ export function SquadHeader({ activePlayers }: SquadHeaderProps) {
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
-                  Operador #{player.slot_number}{" "}
-                  {player.status === "reemplazo" && "(Sub)"}
+                  Operador #{player.slot_number}
                 </p>
                 <h3 className="mt-0.5 truncate font-bold text-foreground text-sm">
                   {isAbsent ? "Ausente" : player.gamertag}

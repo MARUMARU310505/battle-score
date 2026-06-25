@@ -926,8 +926,8 @@ export const server = {
       input: z.object({
         squadId: z.string().uuid(),
         slotNumber: z.number().min(1).max(4),
-        status: z.enum(["titular", "reemplazo", "ausente"]),
-        gamertag: z.string(),
+        status: z.enum(["titular", "ausente"]),
+        gamertag: z.string().optional(),
       }),
       handler: async (input, context) => {
         const user = context.locals.user;
@@ -966,7 +966,6 @@ export const server = {
           .update({
             status: input.status,
             is_active: isActive,
-            gamertag: input.gamertag,
           })
           .eq("squad_id", input.squadId)
           .eq("slot_number", input.slotNumber);
