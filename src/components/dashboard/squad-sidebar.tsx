@@ -243,7 +243,7 @@ export function SquadSidebar({
         {/* Member list */}
         <div className="space-y-3">
           {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy mapping */}
-          {Array.from({ length: 4 }, (_, i) => i + 1).map((slotNumber) => {
+          {Array.from({ length: squad.slot_count || 4 }, (_, i) => i + 1).map((slotNumber) => {
             const member = squad.members.find(
               (m) => m.slot_number === slotNumber
             );

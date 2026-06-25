@@ -165,6 +165,8 @@ export function SquadWizard({
   const showOnlySlot1 = !initialSquad;
   const [step, setStep] = useState(1);
   const [squadName, setSquadName] = useState(initialSquad?.name || "");
+  const [slotCount, setSlotCount] = useState(initialSquad?.slot_count || 4);
+  const [accessCode, setAccessCode] = useState(initialSquad?.access_code || "");
   const [members, setMembers] = useState<MemberInput[]>(
     initialSquad?.members.map((m) => ({
       id: m.id,
@@ -173,32 +175,22 @@ export function SquadWizard({
       favorite_class: m.favorite_class,
       slot_number: m.slot_number,
       user_id: m.user_id,
-    })) || [
-      {
-        gamertag: profile?.gamertag || "",
-        level: profile?.level || 1,
-        favorite_class: profile?.favorite_class || "Asalto",
-        slot_number: 1,
-      },
-      {
-        gamertag: "",
-        level: 1,
-        favorite_class: "Soporte",
-        slot_number: 2,
-      },
-      {
-        gamertag: "",
-        level: 1,
-        favorite_class: "Recon",
-        slot_number: 3,
-      },
-      {
-        gamertag: "",
-        level: 1,
-        favorite_class: "Ingeniero",
-        slot_number: 4,
-      },
-    ]
+    })) ||
+      (() => {
+        const baseMember = {
+          gamertag: profile?.gamertag || "",
+          level: profile?.level || 1,
+          favorite_class: profile?.favorite_class || "Asalto",
+          slot_number: 1,
+        };
+        const otherMembers = Array.from({ length: slotCount - 1 }).map((_, i) => ({
+          gamertag: "",
+          level: 1,
+          favorite_class: CLASSES[i % CLASSES.length] || "Asalto",
+          slot_number: i + 2,
+        }));
+        return [baseMember, ...otherMembers];
+      })()
   );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -223,10 +215,34 @@ export function SquadWizard({
       setError("El nombre del escuadrón debe tener al menos 3 caracteres.");
       return;
     }
+    if (slotCount < 1 || slotCount > 8) {
+      setError("El número de slots debe estar entre 1 y 8.");
+      return;
+    }
+    // Adjust members array to match slotCount
+    setMembers((prev) => {
+      const baseMember = prev[0] || {
+        gamertag: profile?.gamertag || "",
+        level: profile?.level || 1,
+        favorite_class: profile?.favorite_class || "Asalto",
+        slot_number: 1,
+      };
+      const otherMembers = Array.from({ length: slotCount - 1 }).map((_, i) => {
+        const existing = prev[i + 1];
+        return existing
+          ? { ...existing, slot_number: i + 2 }
+          : {
+              gamertag: "",
+              level: 1,
+              favorite_class: CLASSES[i % CLASSES.length] || "Asalto",
+              slot_number: i + 2,
+            };
+      });
+      return [baseMember, ...otherMembers];
+    });
     setError(null);
     setStep(2);
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -267,7 +283,9 @@ export function SquadWizard({
         // Create mode
         const { error: actionError } = await actions.squad.create({
           name: squadName,
-          members: membersToSubmit,
+          members: membersToSubmit.slice(0, slotCount),
+          slotCount,
+          accessCode,
         });
         if (actionError) {
           throw actionError;
@@ -287,11 +305,11 @@ export function SquadWizard({
     }
   };
 
-  let subtitle = "Paso 2: Registrar integrantes (4 operadores)";
+  let subtitle = "Paso 2: Registrar integrantes";
   if (initialSquad) {
     subtitle = "Modifica el nombre de tu escuadrón";
   } else if (step === 1) {
-    subtitle = "Paso 1: Nombre de tu equipo";
+    subtitle = "Paso 1: Información básica";
   }
 
   return (
@@ -362,16 +380,26 @@ export function SquadWizard({
               className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               id="squadName"
               onChange={(e) => setSquadName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleNext();
-                }
-              }}
               placeholder="Ej. Alpha Team, Battle Score BR, etc."
               type="text"
               value={squadName}
             />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-2 block font-medium text-foreground text-sm">Número de integrantes</label>
+              <select className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground text-sm" value={slotCount} onChange={(e) => setSlotCount(Number(e.target.value))}>
+                {Array.from({ length: 8 }, (_, i) => i + 1).map((num) => (
+                  <option key={num} value={num}>
+                    {num} Operador{num > 1 ? 'es' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block font-medium text-foreground text-sm">Código de acceso</label>
+              <input className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground text-sm" value={accessCode} onChange={(e) => setAccessCode(e.target.value)} placeholder="Opcional" />
+            </div>
           </div>
           <div className="flex justify-end gap-3">
             {onCancel && (
