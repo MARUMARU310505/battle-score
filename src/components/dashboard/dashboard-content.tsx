@@ -9,6 +9,7 @@ import { SessionsHistory } from "./sessions-history";
 import type { ActivePlayer } from "./squad-roster";
 import { SquadSidebar } from "./squad-sidebar";
 import { SquadWizard } from "./squad-wizard";
+import { StatsView } from "./stats-view";
 
 interface Member {
   favorite_class: string;
@@ -94,6 +95,8 @@ export function DashboardContent({
   const [squadState, setSquadState] = useState(squad);
   const [session, setSession] = useState(activeSession);
   const [matches, setMatches] = useState(sessionMatches);
+  const [historicalMatches, setHistoricalMatches] = useState<Match[]>([]);
+  const [loadingStats, setLoadingStats] = useState(false);
 
   const [activePlayers, setActivePlayers] = useState<ActivePlayer[]>(() => {
     if (!squad) {
@@ -209,6 +212,33 @@ export function DashboardContent({
       }
       return players;
     });
+  }, [squadState, matches]);
+
+  // Load historical stats for this squad
+  useEffect(() => {
+    if (!squadState) {
+      return;
+    }
+
+    const loadStats = async () => {
+      setLoadingStats(true);
+      try {
+        const { data, error } = await actions.squad.getHistoricalStats({
+          squadId: squadState.id,
+        });
+        if (error) {
+          console.error("Error loading historical stats:", error);
+        } else if (data) {
+          setHistoricalMatches(data.matches as Match[]);
+        }
+      } catch (err) {
+        console.error("Failed to load historical stats:", err);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    loadStats();
   }, [squadState, matches]);
 
   // Real-time channel listener for Sessions
@@ -413,21 +443,52 @@ export function DashboardContent({
 
           {activeTab === "stats" && (
             <div className="rounded-lg border border-border bg-card p-6">
-              <h3 className="flex items-center gap-2 font-bold text-foreground text-sm tracking-tight">
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                Estadísticas Globales
-              </h3>
-              <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-border border-dashed bg-background/50 p-12 text-center">
-                <span className="mb-4 text-3xl">📈</span>
-                <h4 className="font-semibold text-foreground text-sm">
-                  Análisis de Rendimiento
-                </h4>
-                <p className="mt-2 max-w-sm font-light text-muted-foreground text-xs">
-                  Los gráficos de K/D, mapas más jugados, tasa de victorias y
-                  estadísticas acumuladas por clase se desbloquearán en la Fase
-                  8 con datos reales.
-                </p>
+              <div className="flex items-center justify-between border-border/40 border-b pb-4 mb-6">
+                <div>
+                  <h3 className="flex items-center gap-2 font-bold text-foreground text-sm tracking-tight">
+                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                    Estadísticas Globales
+                  </h3>
+                  <p className="font-light text-muted-foreground text-xs mt-0.5">
+                    Historial de rendimiento acumulado y análisis de supervivencia del escuadrón.
+                  </p>
+                </div>
               </div>
+
+              {loadingStats ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center text-xs text-muted-foreground">
+                  <svg
+                    aria-label="Cargando"
+                    className="h-8 w-8 animate-spin text-primary mb-3"
+                    fill="none"
+                    role="img"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <title>Cargando</title>
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                  <span>Cargando análisis tácticos del escuadrón...</span>
+                </div>
+              ) : (
+                <StatsView
+                  matches={historicalMatches}
+                  squad={squadState}
+                  currentUserId={currentUser?.id}
+                />
+              )}
             </div>
           )}
 

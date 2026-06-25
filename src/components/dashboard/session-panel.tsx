@@ -7,6 +7,7 @@ import { MatchForm } from "./match-form";
 import { SquadHeader } from "./squad-header";
 import { type ActivePlayer, SquadRoster } from "./squad-roster";
 import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
+import { SessionLiveStats } from "./session-live-stats";
 
 interface Session {
   created_at: string;
@@ -90,6 +91,7 @@ export function SessionPanel({
   const [isClosing, setIsClosing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
+  const [subTab, setSubTab] = useState<"list" | "stats">("list");
 
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -449,13 +451,34 @@ export function SessionPanel({
             </div>
           ) : (
             <div className="rounded-lg border border-border bg-card p-6">
-              <div className="flex items-center justify-between border-border/40 border-b pb-4">
-                <h3 className="font-bold text-foreground text-sm tracking-tight">
-                  Partidas de la Sesión
-                </h3>
+              <div className="flex flex-col gap-3 border-border/40 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSubTab("list")}
+                    className={`font-bold text-xs uppercase tracking-wider pb-1 border-b-2 transition-all cursor-pointer ${
+                      subTab === "list"
+                        ? "border-primary text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Partidas ({sessionMatches.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSubTab("stats")}
+                    className={`font-bold text-xs uppercase tracking-wider pb-1 border-b-2 transition-all cursor-pointer ${
+                      subTab === "stats"
+                        ? "border-primary text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Rendimiento en Vivo
+                  </button>
+                </div>
                 {isOwner && initialSession && (
                   <Button
-                    className="h-auto px-4 py-2"
+                    className="h-auto px-4 py-2 shrink-0"
                     disabled={loading}
                     onClick={handleStartRegistration}
                     size="sm"
@@ -465,7 +488,13 @@ export function SessionPanel({
                 )}
               </div>
 
-              {sessionMatches.length === 0 ? (
+              {subTab === "stats" ? (
+                <SessionLiveStats
+                  sessionMatches={sessionMatches}
+                  activePlayers={activePlayers}
+                  currentUserId={currentUser?.id}
+                />
+              ) : sessionMatches.length === 0 ? (
                 <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-border border-dashed bg-background/50 p-12 text-center">
                   <span className="mb-4 text-3xl">⚔️</span>
                   <h4 className="font-semibold text-foreground text-sm">
