@@ -67,7 +67,7 @@ export function OperatorAvatar({
       className={`shrink-0 rounded-full border border-border bg-muted ${className}`}
       height={32}
       onError={() => setError(true)}
-      src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent(seed)}`}
+      src={`https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${encodeURIComponent(seed)}`}
       width={32}
     />
   );

@@ -3,6 +3,25 @@ import { AlertCircle, Award, Loader2, User } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
+const AVATAR_PRESETS = [
+  "Felix",
+  "Aneka",
+  "Jack",
+  "Buster",
+  "Cody",
+  "Loki",
+  "Bella",
+  "Milo",
+  "Zoe",
+  "Luna",
+  "Toby",
+  "Leo",
+  "Coco",
+  "Lucky",
+  "Ginger",
+  "Max",
+];
+
 interface Profile {
   avatar_seed?: string | null;
   favorite_class: string;
@@ -33,11 +52,6 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
-  const handleRandomizeAvatar = () => {
-    const randomSeed = Math.random().toString(36).substring(2, 9);
-    setAvatarSeed(randomSeed);
-  };
 
   const isNew = !initialProfile;
 
@@ -102,7 +116,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             </p>
           </div>
 
-          <div className="flex flex-col items-center justify-center space-y-3 py-2">
+          <div className="flex flex-col items-center justify-center space-y-4 py-2 w-full">
             <div className="group relative">
               <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-primary to-accent opacity-75 blur-xs transition duration-1000 group-hover:opacity-100 group-hover:duration-200" />
               <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-border bg-card shadow-lg">
@@ -111,7 +125,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     alt="Avatar Live Preview"
                     className="h-full w-full rounded-full bg-muted object-cover"
                     height={80}
-                    src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent((avatarSeed || gamertag).trim())}`}
+                    src={`https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${encodeURIComponent((avatarSeed || gamertag).trim())}`}
                     width={80}
                   />
                 ) : (
@@ -121,18 +135,34 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                 )}
               </div>
             </div>
-            <div className="flex flex-col items-center gap-2">
+            
+            <div className="flex flex-col items-center gap-2 w-full max-w-xs">
               <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
-                Vista previa del avatar
+                Selecciona tu Avatar
               </span>
-              <Button
-                className="flex h-8 items-center gap-1.5 border-border/80 bg-background/50 px-3 font-semibold text-xs tracking-wide transition-all duration-200 hover:bg-muted"
-                onClick={handleRandomizeAvatar}
-                type="button"
-                variant="outline"
-              >
-                <span>🎲 Cambiar Avatar</span>
-              </Button>
+              <div className="grid grid-cols-4 gap-2 border border-border/40 bg-background/30 rounded-lg p-2.5 w-full">
+                {AVATAR_PRESETS.map((preset) => {
+                  const isSelected = avatarSeed === preset;
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setAvatarSeed(preset)}
+                      className={`relative aspect-square cursor-pointer rounded-md overflow-hidden border p-1 transition-all duration-200 hover:scale-105 ${
+                        isSelected
+                          ? "border-primary bg-primary/10"
+                          : "border-border bg-card/50 hover:border-border/80"
+                      }`}
+                    >
+                      <img
+                        alt={preset}
+                        className="h-full w-full rounded-full bg-muted object-cover"
+                        src={`https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${encodeURIComponent(preset)}`}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
