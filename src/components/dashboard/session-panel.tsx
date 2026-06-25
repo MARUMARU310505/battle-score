@@ -268,7 +268,7 @@ export function SessionPanel({
                 <h3 className="font-bold text-foreground text-sm tracking-tight">
                   Partidas de la Sesión
                 </h3>
-                 {initialSession.status === "active" && (
+                 {initialSession && (
                   <Button onClick={() => setIsRegisteringMatch(true)} size="sm" className="px-4 py-2 h-auto">
                     + Registrar Partida
                   </Button>
