@@ -1,3 +1,4 @@
+import { actions } from "astro:actions";
 import { User, UserCheck, UserMinus } from "lucide-react";
 
 export interface ActivePlayer {
@@ -16,7 +17,9 @@ const CLASSES = ["Asalto", "Soporte", "Recon", "Ingeniero"];
 
 interface SquadRosterProps {
   activePlayers: ActivePlayer[];
-  disabled?: boolean;
+  isOwner?: boolean;
+  currentUserId?: string | null;
+  squadId: string;
   onChange: (players: ActivePlayer[]) => void;
   originalMembers: Array<{
     gamertag: string;
@@ -29,7 +32,9 @@ export function SquadRoster({
   activePlayers,
   onChange,
   originalMembers,
-  disabled = false,
+  isOwner = false,
+  currentUserId = null,
+  squadId,
 }: SquadRosterProps) {
   const handleStatusChange = (
     slot: number,
@@ -71,7 +76,7 @@ export function SquadRoster({
     onChange(updated);
   };
 
-  const handleClassChange = (slot: number, active_class: string) => {
+  const handleClassChange = async (slot: number, active_class: string) => {
     const updated = activePlayers.map((player) => {
       if (player.slot_number !== slot) {
         return player;
@@ -79,6 +84,16 @@ export function SquadRoster({
       return { ...player, active_class };
     });
     onChange(updated);
+
+    try {
+      await actions.squad.updateMemberClass({
+        squadId,
+        slotNumber: slot,
+        favoriteClass: active_class,
+      });
+    } catch (err) {
+      console.error("Error persisting class change to DB:", err);
+    }
   };
 
   return (
@@ -96,6 +111,7 @@ export function SquadRoster({
         {activePlayers.map((player) => {
           const isAbsent = player.status === "ausente";
           const isSub = player.status === "reemplazo";
+          const canEditClass = isOwner || (player.user_id !== null && player.user_id !== undefined && player.user_id === currentUserId);
 
           return (
             <div
@@ -117,7 +133,7 @@ export function SquadRoster({
                       {isSub ? (
                         <input
                           className="rounded-md border border-border bg-background px-2 py-0.5 font-normal font-sans text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-75"
-                          disabled={disabled}
+                          disabled={!isOwner}
                           onChange={(e) =>
                             handleGamertagChange(
                               player.slot_number,
@@ -144,7 +160,7 @@ export function SquadRoster({
                           ? "bg-primary text-primary-foreground"
                           : "border border-border bg-background text-muted-foreground hover:bg-muted"
                       }`}
-                      disabled={disabled}
+                      disabled={!isOwner}
                       onClick={() =>
                         handleStatusChange(player.slot_number, "titular")
                       }
@@ -159,7 +175,7 @@ export function SquadRoster({
                           ? "bg-primary text-primary-foreground"
                           : "border border-border bg-background text-muted-foreground hover:bg-muted"
                       }`}
-                      disabled={disabled}
+                      disabled={!isOwner}
                       onClick={() =>
                         handleStatusChange(player.slot_number, "reemplazo")
                       }
@@ -174,7 +190,7 @@ export function SquadRoster({
                           ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
                           : "border border-border bg-background text-muted-foreground hover:bg-muted"
                       }`}
-                      disabled={disabled}
+                      disabled={!isOwner}
                       onClick={() =>
                         handleStatusChange(player.slot_number, "ausente")
                       }
@@ -205,7 +221,7 @@ export function SquadRoster({
                       </label>
                       <select
                         className="rounded-md border border-border bg-background px-2 py-1 font-sans text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-75"
-                        disabled={disabled}
+                        disabled={!canEditClass}
                         id={`class-select-${player.slot_number}`}
                         onChange={(e) =>
                           handleClassChange(player.slot_number, e.target.value)

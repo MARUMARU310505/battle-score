@@ -1,6 +1,6 @@
 import { actions } from "astro:actions";
 import { BarChart3, Check, Copy, HelpCircle, Trophy } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { MainTabs, type TabType } from "./main-tabs";
 import { SessionPanel } from "./session-panel";
@@ -8,6 +8,7 @@ import { SessionsHistory } from "./sessions-history";
 import type { ActivePlayer } from "./squad-roster";
 import { SquadSidebar } from "./squad-sidebar";
 import { SquadWizard } from "./squad-wizard";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
 
 interface Member {
   favorite_class: string;
@@ -85,6 +86,12 @@ export function DashboardContent({
   const [squadName, setSquadName] = useState(squad?.name || "");
   const [isSavingName, setIsSavingName] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
+
+  // Real-time synchronization states
+  const [squadState, setSquadState] = useState(squad);
+  const [session, setSession] = useState(activeSession);
+  const [matches, setMatches] = useState(sessionMatches);
+
   const [activePlayers, setActivePlayers] = useState<ActivePlayer[]>(() => {
     if (!squad) {
       return [];
@@ -121,7 +128,155 @@ export function DashboardContent({
     });
   });
 
-  const isOwner = squad?.owner_id === currentUser?.id;
+  // Recalculate and update roster player statistics when squadState or matches change
+  useEffect(() => {
+    if (!squadState) return;
+    setActivePlayers((prev) => {
+      return squadState.members.map((member) => {
+        const hasUser = member.user_id !== null && member.user_id !== undefined;
+        const prevPlayer = prev.find((p) => p.slot_number === member.slot_number);
+
+        let kills = 0;
+        let downs = 0;
+        let assists = 0;
+
+        for (const match of matches) {
+          const stats = match.player_match_stats?.find(
+            (p) => p.gamertag === member.gamertag
+          );
+          if (stats) {
+            kills += stats.kills || 0;
+            downs += stats.downs || 0;
+            assists += stats.assists || 0;
+          }
+        }
+
+        return {
+          slot_number: member.slot_number,
+          status: prevPlayer?.status || (hasUser && member.is_active ? "titular" : "ausente"),
+          gamertag: prevPlayer ? prevPlayer.gamertag : member.gamertag,
+          favorite_class: member.favorite_class,
+          active_class: prevPlayer ? prevPlayer.active_class : member.favorite_class,
+          user_id: member.user_id,
+          kills,
+          downs,
+          assists,
+        };
+      });
+    });
+  }, [squadState, matches]);
+
+  // Real-time channel listener for Sessions
+  useEffect(() => {
+    if (!squadState) return;
+    const supabase = createSupabaseBrowserClient();
+
+    const sessionsChannel = supabase
+      .channel("sessions_realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "game_sessions",
+          filter: `squad_id=eq.${squadState.id}`,
+        },
+        async () => {
+          const { data: activeSessionData } = await actions.session.getActive({
+            squadId: squadState.id,
+          });
+          setSession(activeSessionData || null);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(sessionsChannel);
+    };
+  }, [squadState?.id]);
+
+  // Real-time channel listener for Matches and Player Stats
+  useEffect(() => {
+    if (!session?.id) {
+      setMatches([]);
+      return;
+    }
+    const supabase = createSupabaseBrowserClient();
+
+    const fetchLatestMatches = async () => {
+      const { data: matchesData } = await actions.match.list({
+        sessionId: session.id,
+      });
+      setMatches(matchesData || []);
+    };
+
+    const matchesChannel = supabase
+      .channel("matches_realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "matches",
+          filter: `session_id=eq.${session.id}`,
+        },
+        () => {
+          fetchLatestMatches();
+        }
+      )
+      .subscribe();
+
+    const statsChannel = supabase
+      .channel("stats_realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "player_match_stats",
+        },
+        () => {
+          fetchLatestMatches();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(matchesChannel);
+      supabase.removeChannel(statsChannel);
+    };
+  }, [session?.id]);
+
+  // Real-time channel listener for Squad Members
+  useEffect(() => {
+    if (!squadState) return;
+    const supabase = createSupabaseBrowserClient();
+
+    const membersChannel = supabase
+      .channel("members_realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "squad_members",
+          filter: `squad_id=eq.${squadState.id}`,
+        },
+        async () => {
+          const { data: squadData } = await actions.squad.get();
+          if (squadData?.activeSquad) {
+            setSquadState(squadData.activeSquad);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(membersChannel);
+    };
+  }, [squadState?.id]);
+
+  const isOwner = squadState?.owner_id === currentUser?.id;
 
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -138,7 +293,7 @@ export function DashboardContent({
       return;
     }
     try {
-      const { error } = await actions.squad.delete({ squadId: squad.id });
+      const { error } = await actions.squad.delete({ squadId: squadState.id });
       if (error) {
         throw error;
       }
@@ -150,11 +305,11 @@ export function DashboardContent({
     }
   };
 
-  if (!squad || isCreatingNew) {
+  if (!squadState || isCreatingNew) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] flex-1 items-center justify-center bg-background p-8">
         <SquadWizard
-          onCancel={squad ? () => setIsCreatingNew(false) : undefined}
+          onCancel={squadState ? () => setIsCreatingNew(false) : undefined}
           profile={profile}
         />
       </div>
@@ -167,7 +322,7 @@ export function DashboardContent({
         allSquads={allSquads}
         currentUser={currentUser}
         onNewSquadClick={() => setIsCreatingNew(true)}
-        squad={squad}
+        squad={squadState}
       />
 
       {/* Central content area with tab navigation */}
@@ -182,11 +337,12 @@ export function DashboardContent({
           {activeTab === "active-session" && (
             <SessionPanel
               activePlayers={activePlayers}
-              initialSession={activeSession}
+              initialSession={session}
               isOwner={isOwner}
-              sessionMatches={sessionMatches}
+              sessionMatches={matches}
               setActivePlayers={setActivePlayers}
-              squad={squad}
+              squad={squadState}
+              currentUser={currentUser}
             />
           )}
 

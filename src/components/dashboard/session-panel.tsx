@@ -36,6 +36,7 @@ interface SessionPanelProps {
   sessionMatches: Match[];
   setActivePlayers: (players: ActivePlayer[]) => void;
   squad: Squad;
+  currentUser?: { id: string; email?: string } | null;
 }
 
 export function SessionPanel({
@@ -45,6 +46,7 @@ export function SessionPanel({
   activePlayers,
   setActivePlayers,
   isOwner,
+  currentUser = null,
 }: SessionPanelProps) {
   const [sessionName, setSessionName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -230,7 +232,9 @@ export function SessionPanel({
         <div className="xl:col-span-1">
           <SquadRoster
             activePlayers={activePlayers}
-            disabled={!isOwner}
+            isOwner={isOwner}
+            currentUserId={currentUser?.id}
+            squadId={squad.id}
             onChange={setActivePlayers}
             originalMembers={squad.members}
           />
@@ -252,9 +256,10 @@ export function SessionPanel({
                 onCancel={() => setIsRegisteringMatch(false)}
                 onSuccess={() => {
                   setIsRegisteringMatch(false);
-                  window.location.reload();
                 }}
                 sessionId={initialSession.id}
+                isOwner={isOwner}
+                currentUserId={currentUser?.id}
               />
             </div>
           ) : (
@@ -263,7 +268,7 @@ export function SessionPanel({
                 <h3 className="font-bold text-foreground text-sm tracking-tight">
                   Partidas de la Sesión
                 </h3>
-                {isOwner && initialSession.status === "active" && (
+                 {initialSession.status === "active" && (
                   <Button onClick={() => setIsRegisteringMatch(true)} size="sm" className="px-4 py-2 h-auto">
                     + Registrar Partida
                   </Button>
