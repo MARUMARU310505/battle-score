@@ -7,9 +7,11 @@ import {
   TrendingUp,
   Zap,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { Match } from "./dashboard-content";
 import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
+import { MapModal, isGridCode, getNearestPOI } from "@/components/map";
+
 
 interface StatsViewProps {
   currentUserId?: string | null;
@@ -19,7 +21,12 @@ interface StatsViewProps {
 }
 
 export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
+  const [selectedPoiForMap, setSelectedPoiForMap] = useState<string>("");
+  const [mapModalMode, setMapModalMode] = useState<"deploy" | "circle" | "death" | "second_deploy">("deploy");
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+
   if (!matches || matches.length === 0) {
+
     return (
       <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-border border-dashed bg-background/50 p-16 text-center">
         <span className="mb-4 text-4xl">📈</span>
@@ -407,15 +414,24 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
       {/* Drop Zone: Winner vs Death Route */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {dropZones.dropGanador && (
-          <div className="relative overflow-hidden rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-5 shadow-xs">
-            <div className="absolute top-4 right-4 rounded-full bg-emerald-500/10 p-2">
+          <div
+            onClick={() => {
+              setSelectedPoiForMap(dropZones.dropGanador.name);
+              setMapModalMode("deploy");
+              setIsMapModalOpen(true);
+            }}
+            className="relative overflow-hidden rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-5 shadow-xs cursor-pointer hover:bg-emerald-500/10 hover:border-emerald-500/40 transition-all duration-200 group"
+          >
+            <div className="absolute top-4 right-4 rounded-full bg-emerald-500/10 p-2 group-hover:bg-emerald-500/20 transition-colors">
               <Sparkles className="h-5 w-5 animate-pulse text-emerald-400" />
             </div>
             <h4 className="font-bold font-mono text-emerald-400 text-xs uppercase tracking-widest">
               🚀 El Drop Ganador
             </h4>
-            <p className="mt-2 font-bold text-foreground text-lg">
-              {dropZones.dropGanador.name}
+            <p className="mt-2 font-bold text-foreground text-lg group-hover:text-emerald-400 transition-colors">
+              {isGridCode(dropZones.dropGanador.name)
+                ? `${dropZones.dropGanador.name} - ${getNearestPOI(dropZones.dropGanador.name)}`
+                : dropZones.dropGanador.name}
             </p>
             <div className="mt-4 grid grid-cols-2 gap-4 font-mono text-xs">
               <div>
@@ -431,19 +447,31 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
                 </span>
               </div>
             </div>
+            <div className="mt-3 text-[10px] text-emerald-500/70 font-mono flex items-center gap-1 group-hover:text-emerald-400 transition-colors">
+              <span>➔ Clic para ver en el mapa</span>
+            </div>
           </div>
         )}
 
         {dropZones.rutaMuerte && (
-          <div className="relative overflow-hidden rounded-lg border border-destructive/20 bg-destructive/5 p-5 shadow-xs">
-            <div className="absolute top-4 right-4 rounded-full bg-destructive/10 p-2">
+          <div
+            onClick={() => {
+              setSelectedPoiForMap(dropZones.rutaMuerte.name);
+              setMapModalMode("death");
+              setIsMapModalOpen(true);
+            }}
+            className="relative overflow-hidden rounded-lg border border-destructive/20 bg-destructive/5 p-5 shadow-xs cursor-pointer hover:bg-destructive/10 hover:border-destructive/40 transition-all duration-200 group"
+          >
+            <div className="absolute top-4 right-4 rounded-full bg-destructive/10 p-2 group-hover:bg-destructive/20 transition-colors">
               <ShieldAlert className="h-5 w-5 text-destructive" />
             </div>
             <h4 className="font-bold font-mono text-destructive text-xs uppercase tracking-widest">
               💀 Ruta de la Muerte
             </h4>
-            <p className="mt-2 font-bold text-foreground text-lg">
-              {dropZones.rutaMuerte.name}
+            <p className="mt-2 font-bold text-foreground text-lg group-hover:text-destructive transition-colors">
+              {isGridCode(dropZones.rutaMuerte.name)
+                ? `${dropZones.rutaMuerte.name} - ${getNearestPOI(dropZones.rutaMuerte.name)}`
+                : dropZones.rutaMuerte.name}
             </p>
             <div className="mt-4 grid grid-cols-2 gap-4 font-mono text-xs">
               <div>
@@ -458,6 +486,9 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
                   {dropZones.rutaMuerte.count}
                 </span>
               </div>
+            </div>
+            <div className="mt-3 text-[10px] text-destructive/70 font-mono flex items-center gap-1 group-hover:text-destructive transition-colors">
+              <span>➔ Clic para ver en el mapa</span>
             </div>
           </div>
         )}
@@ -733,6 +764,15 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
           </div>
         </div>
       </div>
+
+      <MapModal
+        isOpen={isMapModalOpen}
+        onClose={() => setIsMapModalOpen(false)}
+        selectedZone={selectedPoiForMap}
+        mode={mapModalMode}
+        readOnly={true}
+      />
     </div>
   );
 }
+

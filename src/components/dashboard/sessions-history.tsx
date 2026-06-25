@@ -346,7 +346,7 @@ function MatchDetailList({
             >
               <div className="flex items-center gap-3">
                 <span
-                  className={`flex h-6 w-6 items-center justify-center rounded-full font-mono font-semibold text-xs ${
+                  className={`flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold ${
                     match.placement === 1
                       ? "border border-amber-500/30 bg-amber-500/20 text-amber-500"
                       : match.placement === 2
@@ -360,10 +360,14 @@ function MatchDetailList({
                 >
                   {match.placement}
                 </span>
-                <div>
-                  <p className="font-bold text-foreground text-xs">
-                    Partida #{index + 1} {match.placement === 1 && "🏆"}
-                  </p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-x-2">
+                    <span className="font-bold text-foreground text-xs">
+                      Partida #{index + 1} {match.placement === 1 && "🏆"}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground/40">•</span>
+                    <span className="text-[10px] text-muted-foreground">{matchTime}</span>
+                  </div>
                   <div className="font-light text-[10px] text-muted-foreground flex flex-wrap items-center gap-x-2.5 gap-y-1 animate-in fade-in duration-200">
                     <span className="inline-flex items-center gap-1">
                       <span className="text-muted-foreground/70">Drop:</span>
@@ -436,10 +440,6 @@ function MatchDetailList({
                       </span>
                     )}
 
-                    <span className="inline-flex items-center gap-1">
-                      <span className="text-muted-foreground/40">•</span>
-                      <span>{matchTime}</span>
-                    </span>
                   </div>
                 </div>
               </div>
