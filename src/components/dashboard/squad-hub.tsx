@@ -3,6 +3,7 @@ import {
   ArrowRight,
   Check,
   Copy,
+  Loader2,
   LogOut,
   Plus,
   Search,
@@ -83,6 +84,7 @@ export function SquadHub({
 }: SquadHubProps) {
   const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [enteringSquadId, setEnteringSquadId] = useState<string | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [foundSquad, setFoundSquad] = useState<Squad | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
@@ -171,6 +173,7 @@ export function SquadHub({
   };
 
   const handleEnterSquad = async (squadId: string) => {
+    setEnteringSquadId(squadId);
     try {
       const { error } = await actions.squad.setActive({ squadId });
       if (error) {
@@ -179,6 +182,7 @@ export function SquadHub({
       window.location.href = "/dashboard/squad";
     } catch (err) {
       console.error("Error setting active squad:", err);
+      setEnteringSquadId(null);
     }
   };
 
@@ -343,10 +347,15 @@ export function SquadHub({
                       <div className="flex gap-2">
                         <Button
                           className="h-auto flex-1 px-4 py-2 text-xs"
+                          disabled={enteringSquadId !== null}
                           onClick={() => handleEnterSquad(squad.id)}
                           size="sm"
                         >
-                          <ArrowRight className="mr-1.5 h-3.5 w-3.5" />
+                          {enteringSquadId === squad.id ? (
+                            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <ArrowRight className="mr-1.5 h-3.5 w-3.5" />
+                          )}
                           Entrar al Panel
                         </Button>
                         {!isOwner && myMemberSlot && (
@@ -408,7 +417,11 @@ export function SquadHub({
                 size="sm"
                 type="submit"
               >
-                <Search className="h-4 w-4" />
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
               </Button>
             </form>
 
