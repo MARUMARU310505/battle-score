@@ -1,5 +1,5 @@
 import { actions } from "astro:actions";
-import { BarChart3, Check, Copy, HelpCircle, Trophy } from "lucide-react";
+import { BarChart3, Check, Copy, HelpCircle } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { MainTabs, type TabType } from "./main-tabs";
@@ -88,6 +88,8 @@ export function DashboardContent({
   const [squadName, setSquadName] = useState(squad?.name || "");
   const [isSavingName, setIsSavingName] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
+  const [isOverlayLoading, setIsOverlayLoading] = useState(false);
+  const [overlayMessage, setOverlayMessage] = useState("");
 
   // Real-time synchronization states
   const [squadState, setSquadState] = useState(squad);
@@ -98,50 +100,17 @@ export function DashboardContent({
     if (!squad) {
       return [];
     }
-    return squad.members.map((member) => {
-      const hasUser = member.user_id !== null && member.user_id !== undefined;
-
-      let kills = 0;
-      let downs = 0;
-      let assists = 0;
-
-      for (const match of sessionMatches) {
-        const stats = match.player_match_stats?.find(
-          (p) => p.gamertag === member.gamertag
-        );
-        if (stats) {
-          kills += stats.kills || 0;
-          downs += stats.downs || 0;
-          assists += stats.assists || 0;
-        }
-      }
-
-      return {
-        slot_number: member.slot_number,
-        status: member.status || (hasUser && member.is_active ? "titular" : "ausente"),
-        gamertag: member.gamertag,
-        favorite_class: member.favorite_class,
-        active_class: member.favorite_class,
-        user_id: member.user_id,
-        kills,
-        downs,
-        assists,
-      };
-    });
-  });
-
-  // Recalculate and update roster player statistics when squadState or matches change
-  useEffect(() => {
-    if (!squadState) return;
-    setActivePlayers(() => {
-      return squadState.members.map((member) => {
+    const players: ActivePlayer[] = [];
+    for (let slot = 1; slot <= 4; slot++) {
+      const member = squad.members.find((m) => m.slot_number === slot);
+      if (member) {
         const hasUser = member.user_id !== null && member.user_id !== undefined;
 
         let kills = 0;
         let downs = 0;
         let assists = 0;
 
-        for (const match of matches) {
+        for (const match of sessionMatches) {
           const stats = match.player_match_stats?.find(
             (p) => p.gamertag === member.gamertag
           );
@@ -152,7 +121,7 @@ export function DashboardContent({
           }
         }
 
-        return {
+        players.push({
           slot_number: member.slot_number,
           status: member.status || (hasUser && member.is_active ? "titular" : "ausente"),
           gamertag: member.gamertag,
@@ -162,8 +131,75 @@ export function DashboardContent({
           kills,
           downs,
           assists,
-        };
-      });
+        });
+      } else {
+        players.push({
+          slot_number: slot,
+          status: "ausente",
+          gamertag: "Invitado",
+          favorite_class: "Asalto",
+          active_class: "Asalto",
+          user_id: null,
+          kills: 0,
+          downs: 0,
+          assists: 0,
+        });
+      }
+    }
+    return players;
+  });
+
+  // Recalculate and update roster player statistics when squadState or matches change
+  useEffect(() => {
+    if (!squadState) return;
+    setActivePlayers(() => {
+      const players: ActivePlayer[] = [];
+      for (let slot = 1; slot <= 4; slot++) {
+        const member = squadState.members.find((m) => m.slot_number === slot);
+        if (member) {
+          const hasUser = member.user_id !== null && member.user_id !== undefined;
+
+          let kills = 0;
+          let downs = 0;
+          let assists = 0;
+
+          for (const match of matches) {
+            const stats = match.player_match_stats?.find(
+              (p) => p.gamertag === member.gamertag
+            );
+            if (stats) {
+              kills += stats.kills || 0;
+              downs += stats.downs || 0;
+              assists += stats.assists || 0;
+            }
+          }
+
+          players.push({
+            slot_number: member.slot_number,
+            status: member.status || (hasUser && member.is_active ? "titular" : "ausente"),
+            gamertag: member.gamertag,
+            favorite_class: member.favorite_class,
+            active_class: member.favorite_class,
+            user_id: member.user_id,
+            kills,
+            downs,
+            assists,
+          });
+        } else {
+          players.push({
+            slot_number: slot,
+            status: "ausente",
+            gamertag: "Invitado",
+            favorite_class: "Asalto",
+            active_class: "Asalto",
+            user_id: null,
+            kills: 0,
+            downs: 0,
+            assists: 0,
+          });
+        }
+      }
+      return players;
     });
   }, [squadState, matches]);
 
@@ -283,6 +319,7 @@ export function DashboardContent({
   };
 
   const handleDeleteSquad = async () => {
+    if (!squadState) return;
     // biome-ignore lint/suspicious/noAlert: standard confirm
     const confirmed = confirm(
       "¿Estás seguro de que deseas eliminar este escuadrón? Esta acción es irreversible."
@@ -321,6 +358,9 @@ export function DashboardContent({
         currentUser={currentUser}
         onNewSquadClick={() => setIsCreatingNew(true)}
         squad={squadState}
+        setOverlayLoading={setIsOverlayLoading}
+        setOverlayMessage={setOverlayMessage}
+        setSquadState={setSquadState}
       />
 
       {/* Central content area with tab navigation */}
@@ -341,11 +381,14 @@ export function DashboardContent({
               setActivePlayers={setActivePlayers}
               squad={squadState}
               currentUser={currentUser}
+              setOverlayLoading={setIsOverlayLoading}
+              setOverlayMessage={setOverlayMessage}
+              setSession={setSession}
             />
           )}
 
           {activeTab === "history" && (
-            <SessionsHistory squadId={squad.id} />
+            <SessionsHistory squadId={squadState.id} />
           )}
 
           {activeTab === "stats" && (
@@ -409,13 +452,13 @@ export function DashboardContent({
 
                   <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-muted/40 px-3.5 py-2.5">
                     <span className="font-bold font-mono text-foreground text-lg tracking-wider">
-                      {squad.invite_code || "BS-PENDIENTE"}
+                      {squadState.invite_code || "BS-PENDIENTE"}
                     </span>
 
-                    {squad.invite_code && (
+                    {squadState.invite_code && (
                       <Button
                         className="flex items-center gap-1.5 text-xs px-3 py-1.5 h-auto"
-                        onClick={() => handleCopyCode(squad.invite_code || "")}
+                        onClick={() => handleCopyCode(squadState.invite_code || "")}
                         size="sm"
                         variant="outline"
                       >
@@ -452,6 +495,8 @@ export function DashboardContent({
                     }
                     try {
                       setIsSavingName(true);
+                      setIsOverlayLoading(true);
+                      setOverlayMessage("Actualizando nombre del escuadrón...");
                       const { error } = await actions.squad.update({
                         squadId: squad.id,
                         name: squadName.trim(),
@@ -459,7 +504,7 @@ export function DashboardContent({
                       if (error) {
                         throw error;
                       }
-                      window.location.reload();
+                      setSquadState(prev => prev ? { ...prev, name: squadName.trim() } : null);
                     } catch (err) {
                       console.error("Error updating squad name:", err);
                       setNameError(
@@ -467,6 +512,7 @@ export function DashboardContent({
                       );
                     } finally {
                       setIsSavingName(false);
+                      setIsOverlayLoading(false);
                     }
                   }}
                 >
@@ -533,6 +579,21 @@ export function DashboardContent({
           )}
         </main>
       </div>
+
+      {isOverlayLoading && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm transition-all duration-300">
+          <div className="flex flex-col items-center gap-4 p-6 rounded-lg bg-card border border-border shadow-lg max-w-xs text-center animate-in fade-in zoom-in-95 duration-200">
+            <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <div className="space-y-1">
+              <p className="font-bold text-foreground text-sm tracking-tight">Procesando</p>
+              <p className="text-muted-foreground text-xs font-light leading-relaxed">{overlayMessage || "Por favor espera..."}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

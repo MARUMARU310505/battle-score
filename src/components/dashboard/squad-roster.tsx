@@ -25,6 +25,8 @@ interface SquadRosterProps {
     favorite_class: string;
     slot_number: number;
   }>;
+  setOverlayLoading?: (loading: boolean) => void;
+  setOverlayMessage?: (message: string) => void;
 }
 
 const LoaderSpinner = () => (
@@ -36,11 +38,13 @@ const LoaderSpinner = () => (
 
 export function SquadRoster({
   activePlayers,
-  onChange,
+  onChange: _onChange,
   originalMembers,
   isOwner = false,
-  currentUserId = null,
+  currentUserId: _currentUserId = null,
   squadId,
+  setOverlayLoading,
+  setOverlayMessage,
 }: SquadRosterProps) {
   const [loadingSlot, setLoadingSlot] = useState<number | null>(null);
 
@@ -85,6 +89,10 @@ export function SquadRoster({
       newGamertag = "Ausente";
     }
 
+    if (setOverlayLoading && setOverlayMessage) {
+      setOverlayMessage("Actualizando alineación del roster...");
+      setOverlayLoading(true);
+    }
     setLoadingSlot(slot);
     try {
       const { error } = await actions.squad.updateMemberStatus({
@@ -100,11 +108,18 @@ export function SquadRoster({
       console.error("Error updating member status in DB:", err);
       alert("Error al cambiar el estado del operador.");
     } finally {
+      if (setOverlayLoading) {
+        setOverlayLoading(false);
+      }
       setLoadingSlot(null);
     }
   };
 
   const handleGamertagChange = async (slot: number, gamertag: string) => {
+    if (setOverlayLoading && setOverlayMessage) {
+      setOverlayMessage("Guardando gamertag de reemplazo...");
+      setOverlayLoading(true);
+    }
     setLoadingSlot(slot);
     try {
       const { error } = await actions.squad.updateMemberStatus({
@@ -119,6 +134,9 @@ export function SquadRoster({
     } catch (err) {
       console.error("Error updating replacement gamertag:", err);
     } finally {
+      if (setOverlayLoading) {
+        setOverlayLoading(false);
+      }
       setLoadingSlot(slot);
       setTimeout(() => setLoadingSlot(null), 300); // Small delay to indicate completion
     }

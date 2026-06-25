@@ -24,6 +24,9 @@ interface SquadSidebarProps {
   currentUser?: { id: string; email?: string } | null;
   onNewSquadClick: () => void;
   squad: Squad;
+  setOverlayLoading?: (loading: boolean) => void;
+  setOverlayMessage?: (message: string) => void;
+  setSquadState?: React.Dispatch<React.SetStateAction<any>>;
 }
 
 const CLASS_BADGES: Record<string, string> = {
@@ -38,6 +41,9 @@ export function SquadSidebar({
   allSquads,
   onNewSquadClick,
   currentUser = null,
+  setOverlayLoading,
+  setOverlayMessage,
+  setSquadState: _setSquadState,
 }: SquadSidebarProps) {
   const isOwner = squad.owner_id === currentUser?.id;
   const myMember = squad.members.find((m) => m.user_id === currentUser?.id);
@@ -51,6 +57,10 @@ export function SquadSidebar({
   };
 
   const handleSaveClass = async (slotNumber: number) => {
+    if (setOverlayLoading && setOverlayMessage) {
+      setOverlayMessage("Guardando clase del operador...");
+      setOverlayLoading(true);
+    }
     try {
       const { error } = await actions.squad.updateMemberClass({
         squadId: squad.id,
@@ -62,11 +72,14 @@ export function SquadSidebar({
         throw error;
       }
       setEditingSlot(null);
-      window.location.reload();
     } catch (err) {
       console.error("Error updating member class:", err);
       // biome-ignore lint/suspicious/noAlert: standard alert
       alert("Error al actualizar el rol del operador.");
+    } finally {
+      if (setOverlayLoading) {
+        setOverlayLoading(false);
+      }
     }
   };
 
@@ -74,6 +87,10 @@ export function SquadSidebar({
     slotNumber: number,
     currentActive: boolean
   ) => {
+    if (setOverlayLoading && setOverlayMessage) {
+      setOverlayMessage(currentActive ? "Desactivando operador..." : "Activando operador...");
+      setOverlayLoading(true);
+    }
     try {
       const { error } = await actions.squad.setIsActive({
         squadId: squad.id,
@@ -83,11 +100,14 @@ export function SquadSidebar({
       if (error) {
         throw error;
       }
-      window.location.reload();
     } catch (err) {
       console.error("Error toggling active state:", err);
       // biome-ignore lint/suspicious/noAlert: standard alert
       alert("Error al cambiar el estado del operador.");
+    } finally {
+      if (setOverlayLoading) {
+        setOverlayLoading(false);
+      }
     }
   };
 
@@ -156,7 +176,39 @@ export function SquadSidebar({
 
         {/* Member list */}
         <div className="space-y-3">
-          {squad.members.map((member) => {
+          {Array.from({ length: 4 }, (_, i) => i + 1).map((slotNumber) => {
+            const member = squad.members.find((m) => m.slot_number === slotNumber);
+            if (!member) {
+              return (
+                <div
+                  className="flex flex-col gap-2 rounded-lg border border-border/40 bg-background/50 p-2.5 transition-colors hover:bg-muted/30"
+                  key={`empty-${slotNumber}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border border-dashed bg-muted font-mono text-muted-foreground text-xs uppercase">
+                      {slotNumber}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="truncate font-bold text-muted-foreground text-xs italic">
+                          Slot disponible
+                        </p>
+                      </div>
+                      <div className="mt-1.5 flex items-center justify-between gap-2">
+                        <span className="rounded-full border border-border bg-muted/40 px-2 py-0.5 font-medium text-[10px] text-muted-foreground">
+                          Asalto
+                        </span>
+                        <span className="shrink-0 rounded border border-amber-500/20 bg-amber-500/10 px-1 py-0.2 font-mono font-semibold text-[9px] text-amber-500 uppercase">
+                          Invitación
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
             const hasUser =
               member.user_id !== null && member.user_id !== undefined;
 

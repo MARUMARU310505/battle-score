@@ -24,6 +24,8 @@ interface MatchFormProps {
   session: any;
   isOwner?: boolean;
   currentUserId?: string | null;
+  setOverlayLoading?: (loading: boolean) => void;
+  setOverlayMessage?: (message: string) => void;
 }
 
 const LoaderSpinner = () => (
@@ -33,6 +35,20 @@ const LoaderSpinner = () => (
   </svg>
 );
 
+const ELIMINATION_CAUSES = [
+  "Ninguna (Victoria)",
+  "Encuentro Directo (Gunfight)",
+  "Flanqueo",
+  "Sniper / Larga Distancia",
+  "Tercero en Discordia (Third Party)",
+  "Emboscada",
+  "Falta de Rotación / Gas",
+  "Ataque Aéreo / Rachas",
+  "Falta de Recursos (Placas/Balas)",
+  "Desconexión / AFK",
+  "Otro"
+];
+
 export function MatchForm({
   session,
   activePlayers,
@@ -40,6 +56,8 @@ export function MatchForm({
   onSuccess,
   isOwner = false,
   currentUserId = null,
+  setOverlayLoading,
+  setOverlayMessage,
 }: MatchFormProps) {
   const sessionId = session.id;
   const [loading, setLoading] = useState(false);
@@ -67,10 +85,16 @@ export function MatchForm({
   // Individual Player Stats State
   const [playerStats, setPlayerStats] = useState<PlayerStatInput[]>(() => {
     const dbStats = draft.playerStats || [];
+    const linkedGamertags = activePlayers
+      .filter((p) => p.user_id !== null && p.user_id !== undefined)
+      .map((p) => p.gamertag);
+
     if (dbStats.length > 0) {
-      return dbStats;
+      return dbStats.filter((stat: any) => linkedGamertags.includes(stat.gamertag));
     }
-    const playingMembers = activePlayers.filter((p) => p.status !== "ausente");
+    const playingMembers = activePlayers.filter(
+      (p) => p.status !== "ausente" && p.user_id !== null && p.user_id !== undefined
+    );
     return playingMembers.map((p) => ({
       userId: p.user_id || null,
       gamertag: p.gamertag,
@@ -98,24 +122,30 @@ export function MatchForm({
 
     setPlayerStats((prev) => {
       const dbStats = activeDraft.playerStats || [];
-      return dbStats.map((dbStat: any) => {
-        const isCurrentUser = dbStat.userId === currentUserId || dbStat.gamertag === currentUserGamertag;
-        const isReadyInDb = session.ready_players?.includes(dbStat.gamertag);
+      const linkedGamertags = activePlayers
+        .filter((p) => p.user_id !== null && p.user_id !== undefined)
+        .map((p) => p.gamertag);
 
-        if (isCurrentUser && !isReadyInDb) {
-          const localMatch = prev.find((p) => p.gamertag === dbStat.gamertag);
-          return localMatch || dbStat;
-        }
+      return dbStats
+        .filter((stat: any) => linkedGamertags.includes(stat.gamertag))
+        .map((dbStat: any) => {
+          const isCurrentUser = dbStat.userId === currentUserId || dbStat.gamertag === currentUserGamertag;
+          const isReadyInDb = session.ready_players?.includes(dbStat.gamertag);
 
-        if (isOwner && !isReadyInDb) {
-          const localMatch = prev.find((p) => p.gamertag === dbStat.gamertag);
-          return localMatch || dbStat;
-        }
+          if (isCurrentUser && !isReadyInDb) {
+            const localMatch = prev.find((p) => p.gamertag === dbStat.gamertag);
+            return localMatch || dbStat;
+          }
 
-        return dbStat;
-      });
+          if (isOwner && !isReadyInDb) {
+            const localMatch = prev.find((p) => p.gamertag === dbStat.gamertag);
+            return localMatch || dbStat;
+          }
+
+          return dbStat;
+        });
     });
-  }, [session.match_registration_draft, session.ready_players, currentUserId, currentUserGamertag, isOwner]);
+  }, [session.match_registration_draft, session.ready_players, currentUserId, currentUserGamertag, isOwner, activePlayers]);
 
   const handleGeneralInfoChange = async (field: string, value: any) => {
     if (!isOwner) return;
@@ -130,15 +160,19 @@ export function MatchForm({
       [field]: value,
     };
 
-    if (field === "placement" && value === 1) {
-      updatedDraft.eliminationCause = "Ninguna";
+    if (field === "placement") {
+      updatedDraft.placement = value;
+      if (value === 1) {
+        setEliminationCause("Ninguna (Victoria)");
+        updatedDraft.eliminationCause = "Ninguna (Victoria)";
+      } else if (eliminationCause === "Ninguna" || eliminationCause === "Ninguna (Victoria)" || eliminationCause === "Victoria") {
+        setEliminationCause("Encuentro Directo (Gunfight)");
+        updatedDraft.eliminationCause = "Encuentro Directo (Gunfight)";
+      }
     }
 
     if (field === "poi") setPoi(value);
-    if (field === "placement") {
-      setPlacement(value);
-      if (value === 1) setEliminationCause("Ninguna");
-    }
+    if (field === "placement") setPlacement(value);
     if (field === "hostility") setHostility(value);
     if (field === "loot") setLoot(value);
     if (field === "eliminationCause") setEliminationCause(value);
@@ -163,7 +197,7 @@ export function MatchForm({
       updated[index] = {
         ...updated[index],
         [field]: value,
-      };
+      } as PlayerStatInput;
       return updated;
     });
   };
@@ -173,6 +207,10 @@ export function MatchForm({
     setLoadingPlayer(gamertag);
     setLoading(true);
     setError(null);
+    if (setOverlayLoading && setOverlayMessage) {
+      setOverlayMessage(isCurrentlyReady ? "Modificando estadísticas..." : "Confirmando estado Listo...");
+      setOverlayLoading(true);
+    }
     try {
       const { error: actionError } = await actions.session.togglePlayerReady({
         sessionId,
@@ -188,6 +226,9 @@ export function MatchForm({
       console.error("Error toggling ready status:", err);
       setError(err instanceof Error ? err.message : "Error al cambiar el estado de listo.");
     } finally {
+      if (setOverlayLoading) {
+        setOverlayLoading(false);
+      }
       setLoading(false);
       setLoadingPlayer(null);
     }
@@ -201,6 +242,10 @@ export function MatchForm({
     }
     setError(null);
     setLoading(true);
+    if (setOverlayLoading && setOverlayMessage) {
+      setOverlayMessage("Guardando partida y estadísticas...");
+      setOverlayLoading(true);
+    }
 
     try {
       const { error: actionError } = await actions.match.create({
@@ -225,6 +270,10 @@ export function MatchForm({
           ? err.message
           : "Ocurrió un error al registrar la partida."
       );
+    } finally {
+      if (setOverlayLoading) {
+        setOverlayLoading(false);
+      }
       setLoading(false);
     }
   };
@@ -345,19 +394,23 @@ export function MatchForm({
               >
                 Causa de Aniquilación
               </label>
-              <input
-                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
+              <select
+                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
                 disabled={!isOwner || placement === 1}
                 id="match-cause"
                 onChange={(e) => handleGeneralInfoChange("eliminationCause", e.target.value)}
-                placeholder={
-                  placement === 1
-                    ? "Ninguna (Victoria)"
-                    : "Ej. Flanqueo, Sniper, etc."
-                }
-                type="text"
-                value={placement === 1 ? "Ninguna" : eliminationCause}
-              />
+                value={placement === 1 ? "Ninguna (Victoria)" : eliminationCause}
+              >
+                {placement === 1 ? (
+                  <option value="Ninguna (Victoria)">Ninguna (Victoria)</option>
+                ) : (
+                  ELIMINATION_CAUSES.filter((c) => c !== "Ninguna (Victoria)").map((cause) => (
+                    <option key={cause} value={cause}>
+                      {cause}
+                    </option>
+                  ))
+                )}
+              </select>
             </div>
           </div>
         </div>
@@ -386,33 +439,31 @@ export function MatchForm({
                 >
                   <div className="flex flex-col gap-2 border-border/40 border-b pb-2 sm:flex-row sm:items-center sm:justify-between">
                     {/* Row 1: Player Name, Tú, Class Select */}
-                    <div className="flex items-center justify-between sm:justify-start gap-2">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-bold text-foreground text-xs">
-                          {stat.gamertag}
-                        </span>
-                        {isCurrentUser && (
-                          <span className="rounded bg-primary px-1.5 py-0.5 text-[8px] font-semibold text-primary-foreground uppercase">Tú</span>
-                        )}
-                        <select
-                          className="rounded border border-border bg-background px-2 py-0.5 font-sans text-foreground text-[10px] focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50 font-mono"
-                          disabled={!canEditPlayer}
-                          onChange={(e) =>
-                            handleStatChange(idx, "activeClass", e.target.value)
-                          }
-                          value={stat.activeClass}
-                        >
-                          {["Asalto", "Soporte", "Recon", "Ingeniero"].map((cls) => (
-                            <option key={cls} value={cls}>
-                              {cls}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-foreground text-xs">
+                        {stat.gamertag}
+                      </span>
+                      {isCurrentUser && (
+                        <span className="rounded bg-primary px-1.5 py-0.5 text-[8px] font-semibold text-primary-foreground uppercase">Tú</span>
+                      )}
+                      <select
+                        className="rounded border border-border bg-background px-2 py-0.5 font-sans text-foreground text-[10px] focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50 font-mono"
+                        disabled={!canEditPlayer}
+                        onChange={(e) =>
+                          handleStatChange(idx, "activeClass", e.target.value)
+                        }
+                        value={stat.activeClass}
+                      >
+                        {["Asalto", "Soporte", "Recon", "Ingeniero"].map((cls) => (
+                          <option key={cls} value={cls}>
+                            {cls}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     {/* Row 2: Status & Action Button */}
-                    <div className="flex items-center justify-between sm:justify-end gap-2">
+                    <div className="flex items-center gap-2 flex-wrap sm:justify-end">
                       {isPlayerReady ? (
                         <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[9px] font-semibold text-green-500 border border-green-500/20">Listo 🎯</span>
                       ) : (

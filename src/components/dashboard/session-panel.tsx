@@ -12,6 +12,9 @@ interface Session {
   id: string;
   name: string;
   squad_id: string;
+  is_registering_match?: boolean;
+  ready_players?: string[];
+  match_registration_draft?: any;
 }
 
 interface SquadMember {
@@ -37,6 +40,9 @@ interface SessionPanelProps {
   setActivePlayers: (players: ActivePlayer[]) => void;
   squad: Squad;
   currentUser?: { id: string; email?: string } | null;
+  setOverlayLoading?: (loading: boolean) => void;
+  setOverlayMessage?: (message: string) => void;
+  setSession?: (session: any) => void;
 }
 
 const LoaderSpinner = () => (
@@ -54,11 +60,13 @@ export function SessionPanel({
   setActivePlayers,
   isOwner,
   currentUser = null,
+  setOverlayLoading,
+  setOverlayMessage,
+  setSession,
 }: SessionPanelProps) {
   const [sessionName, setSessionName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isRegisteringMatch, setIsRegisteringMatch] = useState(false);
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
 
   const handleCreateSession = async (e: React.FormEvent) => {
@@ -69,9 +77,13 @@ export function SessionPanel({
     }
     setError(null);
     setLoading(true);
+    if (setOverlayLoading && setOverlayMessage) {
+      setOverlayMessage("Iniciando nueva sesión de juego...");
+      setOverlayLoading(true);
+    }
 
     try {
-      const { error: actionError } = await actions.session.create({
+      const { data, error: actionError } = await actions.session.create({
         name: sessionName,
         squadId: squad.id,
       });
@@ -80,13 +92,19 @@ export function SessionPanel({
         throw actionError;
       }
 
-      window.location.reload();
+      if (setSession && data) {
+        setSession(data);
+      }
     } catch (err) {
       console.error(err);
       setError(
         err instanceof Error ? err.message : "Error al iniciar sesión de juego"
       );
+    } finally {
       setLoading(false);
+      if (setOverlayLoading) {
+        setOverlayLoading(false);
+      }
     }
   };
 
@@ -96,6 +114,10 @@ export function SessionPanel({
     }
     setError(null);
     setLoading(true);
+    if (setOverlayLoading && setOverlayMessage) {
+      setOverlayMessage("Finalizando y guardando sesión de juego...");
+      setOverlayLoading(true);
+    }
 
     try {
       const { error: actionError } = await actions.session.close({
@@ -106,13 +128,19 @@ export function SessionPanel({
         throw actionError;
       }
 
-      window.location.reload();
+      if (setSession) {
+        setSession(null);
+      }
     } catch (err) {
       console.error(err);
       setError(
         err instanceof Error ? err.message : "Error al cerrar sesión de juego"
       );
+    } finally {
       setLoading(false);
+      if (setOverlayLoading) {
+        setOverlayLoading(false);
+      }
     }
   };
 
@@ -120,9 +148,13 @@ export function SessionPanel({
     if (!initialSession) return;
     setLoading(true);
     setError(null);
+    if (setOverlayLoading && setOverlayMessage) {
+      setOverlayMessage("Iniciando registro de partida...");
+      setOverlayLoading(true);
+    }
     try {
       const playersForDraft = activePlayers
-        .filter((p) => p.status !== "ausente")
+        .filter((p) => p.status !== "ausente" && p.user_id !== null && p.user_id !== undefined)
         .map((p) => ({
           userId: p.user_id || null,
           gamertag: p.gamertag,
@@ -135,11 +167,17 @@ export function SessionPanel({
       if (actionError) {
         throw new Error(actionError.message || "Error al iniciar el registro.");
       }
+      if (setSession && data) {
+        setSession(data);
+      }
     } catch (err) {
       console.error("Error starting match registration:", err);
       setError(err instanceof Error ? err.message : "Error al iniciar el registro de partida.");
     } finally {
       setLoading(false);
+      if (setOverlayLoading) {
+        setOverlayLoading(false);
+      }
     }
   };
 
@@ -147,6 +185,10 @@ export function SessionPanel({
     if (!initialSession) return;
     setLoading(true);
     setError(null);
+    if (setOverlayLoading && setOverlayMessage) {
+      setOverlayMessage("Cancelando registro de partida...");
+      setOverlayLoading(true);
+    }
     try {
       const { data, error: actionError } = await actions.session.cancelMatchRegistration({
         sessionId: initialSession.id,
@@ -154,11 +196,17 @@ export function SessionPanel({
       if (actionError) {
         throw new Error(actionError.message || "Error al cancelar el registro.");
       }
+      if (setSession && data) {
+        setSession(data);
+      }
     } catch (err) {
       console.error("Error cancelling match registration:", err);
       setError(err instanceof Error ? err.message : "Error al cancelar el registro de partida.");
     } finally {
       setLoading(false);
+      if (setOverlayLoading) {
+        setOverlayLoading(false);
+      }
     }
   };
 
@@ -306,6 +354,8 @@ export function SessionPanel({
             squadId={squad.id}
             onChange={setActivePlayers}
             originalMembers={squad.members}
+            setOverlayLoading={setOverlayLoading}
+            setOverlayMessage={setOverlayMessage}
           />
         </div>
 
@@ -337,6 +387,8 @@ export function SessionPanel({
                 session={initialSession}
                 isOwner={isOwner}
                 currentUserId={currentUser?.id}
+                setOverlayLoading={setOverlayLoading}
+                setOverlayMessage={setOverlayMessage}
               />
             </div>
           ) : (
