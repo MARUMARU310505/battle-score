@@ -28,6 +28,36 @@ interface SquadSidebarProps {
   squad: Squad;
 }
 
+export function OperatorAvatar({
+  gamertag,
+  className = "h-8 w-8",
+}: {
+  gamertag: string;
+  className?: string;
+}) {
+  const [error, setError] = useState(false);
+  const initials = gamertag.slice(0, 2).toUpperCase();
+
+  if (error) {
+    return (
+      <div
+        className={`flex shrink-0 items-center justify-center rounded-full border border-border bg-muted font-bold font-mono text-foreground text-xs uppercase ${className}`}
+      >
+        {initials}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      alt={gamertag}
+      className={`shrink-0 rounded-full border border-border bg-muted ${className}`}
+      onError={() => setError(true)}
+      src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent(gamertag)}`}
+    />
+  );
+}
+
 const CLASS_BADGES: Record<string, string> = {
   Asalto: "🚀 Asalto",
   Soporte: "🛡️ Soporte",
@@ -375,9 +405,10 @@ export function SquadSidebar({
                   </div>
                 )}
                 <div className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted font-bold font-mono text-foreground text-xs uppercase">
-                    {member.gamertag.slice(0, 2)}
-                  </div>
+                  <OperatorAvatar
+                    className="h-8 w-8"
+                    gamertag={member.gamertag}
+                  />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-1">

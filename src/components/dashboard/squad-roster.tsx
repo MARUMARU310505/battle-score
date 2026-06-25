@@ -1,6 +1,7 @@
 import { actions } from "astro:actions";
 import { UserCheck, UserMinus } from "lucide-react";
 import { useState } from "react";
+import { OperatorAvatar } from "./squad-sidebar";
 
 export interface ActivePlayer {
   active_class: string;
@@ -145,6 +146,13 @@ export function SquadRoster({
                     Operador #{player.slot_number}
                   </span>
                   <div className="flex items-center gap-2">
+                    {player.user_id !== null &&
+                      player.user_id !== undefined && (
+                        <OperatorAvatar
+                          className="h-5 w-5"
+                          gamertag={player.gamertag}
+                        />
+                      )}
                     <h4
                       className={`font-semibold text-sm ${player.user_id === currentUserId ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
                     >

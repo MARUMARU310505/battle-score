@@ -1,4 +1,5 @@
 import type { ActivePlayer } from "./squad-roster";
+import { OperatorAvatar } from "./squad-sidebar";
 
 interface SquadHeaderProps {
   activePlayers: ActivePlayer[];
@@ -109,11 +110,19 @@ export function SquadHeader({
                 <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
                   Operador #{player.slot_number}
                 </p>
-                <h3
-                  className={`mt-0.5 truncate font-bold text-sm ${isMe ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
-                >
-                  {isAbsent ? "Ausente" : player.gamertag} {isMe && "(Tú)"}
-                </h3>
+                <div className="mt-0.5 flex items-center gap-2">
+                  {!isAbsent && (
+                    <OperatorAvatar
+                      className="h-6 w-6"
+                      gamertag={player.gamertag}
+                    />
+                  )}
+                  <h3
+                    className={`truncate font-bold text-sm ${isMe ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
+                  >
+                    {isAbsent ? "Ausente" : player.gamertag} {isMe && "(Tú)"}
+                  </h3>
+                </div>
                 {/* MVP / Mochila Badge */}
                 {!isAbsent && player.slot_number === mvpSlot && (
                   <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 font-bold font-mono text-[9px] text-amber-500 uppercase tracking-wider">

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-
+import { OperatorAvatar } from "./squad-sidebar";
 import { SquadWizard } from "./squad-wizard";
 
 export interface SquadMember {
@@ -291,12 +291,23 @@ export function SquadHub({
                                 }`}
                                 key={member.id}
                               >
-                                <span
-                                  className={`max-w-[120px] truncate ${isMe ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-muted-foreground"}`}
-                                >
-                                  {member.slot_number === 1 ? "👑 " : "👤 "}
-                                  {member.gamertag} {isMe && "(Tú)"}
-                                </span>
+                                <div className="flex min-w-0 items-center gap-2">
+                                  {member.slot_number === 1 ? (
+                                    <span className="shrink-0" title="Creador">
+                                      👑
+                                    </span>
+                                  ) : (
+                                    <OperatorAvatar
+                                      className="h-4.5 w-4.5"
+                                      gamertag={member.gamertag}
+                                    />
+                                  )}
+                                  <span
+                                    className={`truncate ${isMe ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-muted-foreground"}`}
+                                  >
+                                    {member.gamertag} {isMe && "(Tú)"}
+                                  </span>
+                                </div>
                                 <div className="flex shrink-0 items-center gap-1.5">
                                   <span className="text-[10px] text-muted-foreground/80">
                                     Nivel {member.level}

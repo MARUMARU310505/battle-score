@@ -85,6 +85,30 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             </p>
           </div>
 
+          <div className="flex flex-col items-center justify-center space-y-2 py-2">
+            <div className="group relative">
+              <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-primary to-accent opacity-75 blur-xs transition duration-1000 group-hover:opacity-100 group-hover:duration-200" />
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-border bg-card shadow-lg">
+                {gamertag.trim() ? (
+                  <img
+                    alt="Avatar Live Preview"
+                    className="h-full w-full rounded-full bg-muted object-cover"
+                    height={80}
+                    src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent(gamertag.trim())}`}
+                    width={80}
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-muted font-bold font-mono text-foreground text-lg uppercase">
+                    ?
+                  </div>
+                )}
+              </div>
+            </div>
+            <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+              Vista previa del avatar
+            </span>
+          </div>
+
           <form className="space-y-4" onSubmit={handleSubmit}>
             {error && (
               <div className="flex animate-shake items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-destructive text-sm">

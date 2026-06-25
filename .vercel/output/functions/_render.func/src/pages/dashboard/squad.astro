@@ -27,7 +27,7 @@ if (!squad) {
   return Astro.redirect("/dashboard");
 }
 
-let activeSession: Record<string, any> | null = null;
+let activeSession: any = null;
 let sessionMatches: any[] = [];
 const { data: sessionData } = await Astro.callAction(
   actions.session.getActive,

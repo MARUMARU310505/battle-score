@@ -6,6 +6,7 @@ import type { Match, PlayerMatchStats } from "./dashboard-content";
 import { MatchForm } from "./match-form";
 import { SquadHeader } from "./squad-header";
 import { type ActivePlayer, SquadRoster } from "./squad-roster";
+import { OperatorAvatar } from "./squad-sidebar";
 
 interface Session {
   created_at: string;
@@ -606,9 +607,17 @@ export function SessionPanel({
                                           <td
                                             className={`py-2 font-semibold ${stat.user_id === currentUser?.id ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
                                           >
-                                            {stat.gamertag}{" "}
-                                            {stat.user_id === currentUser?.id &&
-                                              "(Tú)"}
+                                            <div className="flex items-center gap-1.5">
+                                              <OperatorAvatar
+                                                className="h-5 w-5"
+                                                gamertag={stat.gamertag}
+                                              />
+                                              <span>
+                                                {stat.gamertag}{" "}
+                                                {stat.user_id ===
+                                                  currentUser?.id && "(Tú)"}
+                                              </span>
+                                            </div>
                                           </td>
                                           <td className="py-2 text-center">
                                             <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-primary">
@@ -677,13 +686,19 @@ export function SessionPanel({
                                       {/* Header of Player Card */}
                                       <div className="flex items-center justify-between border-border/20 border-b pb-2">
                                         <div className="flex items-center gap-2">
-                                          <span
-                                            className={`font-bold ${stat.user_id === currentUser?.id ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
-                                          >
-                                            {stat.gamertag}{" "}
-                                            {stat.user_id === currentUser?.id &&
-                                              "(Tú)"}
-                                          </span>
+                                          <div className="flex items-center gap-1.5">
+                                            <OperatorAvatar
+                                              className="h-5 w-5"
+                                              gamertag={stat.gamertag}
+                                            />
+                                            <span
+                                              className={`font-bold ${stat.user_id === currentUser?.id ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
+                                            >
+                                              {stat.gamertag}{" "}
+                                              {stat.user_id ===
+                                                currentUser?.id && "(Tú)"}
+                                            </span>
+                                          </div>
                                           <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-primary">
                                             {stat.active_class}
                                           </span>
