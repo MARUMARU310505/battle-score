@@ -219,7 +219,7 @@ export function SquadWizard({
       setError("El número de slots debe estar entre 1 y 8.");
       return;
     }
-    // Adjust members array to match slotCount
+    // Only keep the leader (slot 1) — empty slots are just a count, not real members
     setMembers((prev) => {
       const baseMember = prev[0] || {
         gamertag: profile?.gamertag || "",
@@ -227,18 +227,7 @@ export function SquadWizard({
         favorite_class: profile?.favorite_class || "Asalto",
         slot_number: 1,
       };
-      const otherMembers = Array.from({ length: slotCount - 1 }).map((_, i) => {
-        const existing = prev[i + 1];
-        return existing
-          ? { ...existing, slot_number: i + 2 }
-          : {
-            gamertag: "",
-            level: 1,
-            favorite_class: CLASSES[i % CLASSES.length] || "Asalto",
-            slot_number: i + 2,
-          };
-      });
-      return [baseMember, ...otherMembers];
+      return [baseMember];
     });
     setError(null);
     setStep(2);
@@ -256,16 +245,8 @@ export function SquadWizard({
       }
     }
 
-    const membersToSubmit = members.map((m) => {
-      if (m.slot_number === 1) {
-        return m;
-      }
-      return {
-        ...m,
-        gamertag: m.gamertag.trim() || `Operador ${m.slot_number}`,
-        level: m.level || 1,
-      };
-    });
+    // Only submit the leader (slot 1) — empty slots are tracked via slotCount only
+    const membersToSubmit = members.filter((m) => m.slot_number === 1);
 
     setLoading(false);
     try {
@@ -283,7 +264,7 @@ export function SquadWizard({
         // Create mode
         const { error: actionError } = await actions.squad.create({
           name: squadName,
-          members: membersToSubmit.slice(0, slotCount),
+          members: membersToSubmit,
           slotCount,
           accessCode,
         });
