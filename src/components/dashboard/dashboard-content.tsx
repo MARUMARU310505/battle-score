@@ -1,6 +1,6 @@
 import { actions } from "astro:actions";
 import { BarChart3, Check, Copy, HelpCircle, Trophy } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { MainTabs, type TabType } from "./main-tabs";
 import { SessionPanel } from "./session-panel";
@@ -80,6 +80,7 @@ export function DashboardContent({
   currentUser = null,
   profile = null,
 }: DashboardContentProps) {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("active-session");
   const [copiedCode, setCopiedCode] = useState(false);
@@ -169,7 +170,6 @@ export function DashboardContent({
   // Real-time channel listener for Sessions
   useEffect(() => {
     if (!squadState) return;
-    const supabase = createSupabaseBrowserClient();
 
     const sessionsChannel = supabase
       .channel("sessions_realtime")
@@ -193,7 +193,7 @@ export function DashboardContent({
     return () => {
       supabase.removeChannel(sessionsChannel);
     };
-  }, [squadState?.id]);
+  }, [squadState?.id, supabase]);
 
   // Real-time channel listener for Matches and Player Stats
   useEffect(() => {
@@ -201,7 +201,6 @@ export function DashboardContent({
       setMatches([]);
       return;
     }
-    const supabase = createSupabaseBrowserClient();
 
     const fetchLatestMatches = async () => {
       const { data: matchesData } = await actions.match.list({
@@ -245,12 +244,11 @@ export function DashboardContent({
       supabase.removeChannel(matchesChannel);
       supabase.removeChannel(statsChannel);
     };
-  }, [session?.id]);
+  }, [session?.id, supabase]);
 
   // Real-time channel listener for Squad Members
   useEffect(() => {
     if (!squadState) return;
-    const supabase = createSupabaseBrowserClient();
 
     const membersChannel = supabase
       .channel("members_realtime")
@@ -274,7 +272,7 @@ export function DashboardContent({
     return () => {
       supabase.removeChannel(membersChannel);
     };
-  }, [squadState?.id]);
+  }, [squadState?.id, supabase]);
 
   const isOwner = !!(currentUser?.id && squadState?.owner_id && squadState.owner_id === currentUser.id);
 
