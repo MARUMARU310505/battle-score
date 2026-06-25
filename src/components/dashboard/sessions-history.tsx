@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from "react";
 import type { Match, PlayerMatchStats } from "./dashboard-content";
 import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
+import { MapModal, isGridCode, getNearestPOI, getPOIGrid } from "@/components/map";
 
 interface HistorySession {
   avg_placement: number;
@@ -316,6 +317,8 @@ function MatchDetailList({
   currentUserId: string | null;
 }) {
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
+  const [selectedPoiForMap, setSelectedPoiForMap] = useState<string | null>(null);
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
   return (
     <div className="space-y-2">
@@ -362,9 +365,18 @@ function MatchDetailList({
                   </p>
                   <p className="font-light text-[10px] text-muted-foreground">
                     Drop:{" "}
-                    <span className="font-medium text-foreground/80">
-                      {match.poi}
-                    </span>{" "}
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedPoiForMap(match.poi);
+                      setIsMapModalOpen(true);
+                    }}
+                    className="font-medium text-foreground/80 cursor-pointer hover:text-emerald-400 hover:underline transition-colors"
+                  >
+                    {isGridCode(match.poi)
+                      ? `${match.poi} - ${getNearestPOI(match.poi)}`
+                      : match.poi}
+                  </span>{" "}
                     • {matchTime}
                   </p>
                 </div>
@@ -587,6 +599,15 @@ function MatchDetailList({
           </div>
         );
       })}
+      <MapModal
+        isOpen={isMapModalOpen}
+        onClose={() => {
+          setIsMapModalOpen(false);
+          setSelectedPoiForMap(null);
+        }}
+        selectedGrid={selectedPoiForMap && isGridCode(selectedPoiForMap) ? selectedPoiForMap : (selectedPoiForMap ? getPOIGrid(selectedPoiForMap) : null)}
+        readOnly={true}
+      />
     </div>
   );
 }

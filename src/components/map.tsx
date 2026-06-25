@@ -1,311 +1,189 @@
-export function Map() {
-    return (
-        <div className="w-full h-full relative">
-            <div className="w-full h-full">
-                <img className="w-full h-full object-cover" src="/images/bf-br-map-better.png" alt="" />
-            </div>
-            <svg width="2800" height="2860" viewBox="0 0 2800 2860" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                <rect width="2800" height="2860" fill="url(#pattern0_3324_7)" />
+import { useState } from "react";
+import { X, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-                {/* Cuadricula de ubicaciones */}
-                {/* la glomenlatura es 1 para la fila y .01, .02... para el numero de columna y esto es usando fill-opacity, este contendor debe lleva hidden ya que no se muestra en pantalla solo es para dejar contancia de como funcionan la ubicaciones */}
-                {/* los cuadros que tienen stroke="white" no se debe poner hidden ya que este es el marcador visual, o sea lo que el usuario vera */}
+export interface POI {
+  name: string;
+  x: number;
+  y: number;
+}
 
-                <g clip-path="url(#clip0_3324_7)">
-                    <rect width="224.167" height="229.167" fill="white" fill-opacity="0.0101" />
-                    <rect x="0.5" y="0.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(234.167)" fill="white" fill-opacity="0.0102" />
-                    <rect x="234.667" y="0.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(468.333)" fill="white" fill-opacity="0.0103" />
-                    <rect x="468.833" y="0.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(702.5)" fill="white" fill-opacity="0.0104" />
-                    <rect x="703" y="0.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(936.667)" fill="white" fill-opacity="0.0105" />
-                    <rect x="937.167" y="0.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1170.83)" fill="white" fill-opacity="0.0106" />
-                    <rect x="1171.33" y="0.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1405)" fill="white" fill-opacity="0.0107" />
-                    <rect x="1405.5" y="0.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1639.17)" fill="white" fill-opacity="0.0108" />
-                    <rect x="1639.67" y="0.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1873.33)" fill="white" fill-opacity="0.0109" />
-                    <rect x="1873.83" y="0.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2107.5)" fill="white" fill-opacity="0.011" />
-                    <rect x="2108" y="0.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2341.67)" fill="white" fill-opacity="0.0111" />
-                    <rect x="2342.17" y="0.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2575.83)" fill="white" fill-opacity="0.0112" />
-                    <rect x="2576.33" y="0.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(0 239.167)" fill="white" fill-opacity="0.0201" />
-                    <rect x="0.5" y="239.667" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(234.167 239.167)" fill="white" fill-opacity="0.0202" />
-                    <rect x="234.667" y="239.667" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(468.333 239.167)" fill="white" fill-opacity="0.0203" />
-                    <rect x="468.833" y="239.667" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(702.5 239.167)" fill="white" fill-opacity="0.0204" />
-                    <rect x="703" y="239.667" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(936.667 239.167)" fill="white" fill-opacity="0.0205" />
-                    <rect x="937.167" y="239.667" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1170.83 239.167)" fill="white" fill-opacity="0.0206" />
-                    <rect x="1171.33" y="239.667" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1405 239.167)" fill="white" fill-opacity="0.0207" />
-                    <rect x="1405.5" y="239.667" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1639.17 239.167)" fill="white" fill-opacity="0.0208" />
-                    <rect x="1639.67" y="239.667" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1873.33 239.167)" fill="white" fill-opacity="0.0209" />
-                    <rect x="1873.83" y="239.667" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2107.5 239.167)" fill="white" fill-opacity="0.021" />
-                    <rect x="2108" y="239.667" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2341.67 239.167)" fill="white" fill-opacity="0.0211" />
-                    <rect x="2342.17" y="239.667" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2575.83 239.167)" fill="white" fill-opacity="0.0212" />
-                    <rect x="2576.33" y="239.667" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(0 478.333)" fill="white" fill-opacity="0.0301" />
-                    <rect x="0.5" y="478.833" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(234.167 478.333)" fill="white" fill-opacity="0.0302" />
-                    <rect x="234.667" y="478.833" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(468.333 478.333)" fill="white" fill-opacity="0.0303" />
-                    <rect x="468.833" y="478.833" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(702.5 478.333)" fill="white" fill-opacity="0.0304" />
-                    <rect x="703" y="478.833" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(936.667 478.333)" fill="white" fill-opacity="0.0305" />
-                    <rect x="937.167" y="478.833" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1170.83 478.333)" fill="white" fill-opacity="0.0306" />
-                    <rect x="1171.33" y="478.833" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1405 478.333)" fill="white" fill-opacity="0.0307" />
-                    <rect x="1405.5" y="478.833" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1639.17 478.333)" fill="white" fill-opacity="0.0308" />
-                    <rect x="1639.67" y="478.833" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1873.33 478.333)" fill="white" fill-opacity="0.0309" />
-                    <rect x="1873.83" y="478.833" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2107.5 478.333)" fill="white" fill-opacity="0.031" />
-                    <rect x="2108" y="478.833" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2341.67 478.333)" fill="white" fill-opacity="0.0311" />
-                    <rect x="2342.17" y="478.833" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2575.83 478.333)" fill="white" fill-opacity="0.0312" />
-                    <rect x="2576.33" y="478.833" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(0 717.5)" fill="white" fill-opacity="0.0401" />
-                    <rect x="0.5" y="718" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(234.167 717.5)" fill="white" fill-opacity="0.0402" />
-                    <rect x="234.667" y="718" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(468.333 717.5)" fill="white" fill-opacity="0.0403" />
-                    <rect x="468.833" y="718" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(702.5 717.5)" fill="white" fill-opacity="0.0404" />
-                    <rect x="703" y="718" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(936.667 717.5)" fill="white" fill-opacity="0.0405" />
-                    <rect x="937.167" y="718" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1170.83 717.5)" fill="white" fill-opacity="0.0406" />
-                    <rect x="1171.33" y="718" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1405 717.5)" fill="white" fill-opacity="0.0407" />
-                    <rect x="1405.5" y="718" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1639.17 717.5)" fill="white" fill-opacity="0.0408" />
-                    <rect x="1639.67" y="718" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1873.33 717.5)" fill="white" fill-opacity="0.0409" />
-                    <rect x="1873.83" y="718" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2107.5 717.5)" fill="white" fill-opacity="0.041" />
-                    <rect x="2108" y="718" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2341.67 717.5)" fill="white" fill-opacity="0.0411" />
-                    <rect x="2342.17" y="718" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2575.83 717.5)" fill="white" fill-opacity="0.0412" />
-                    <rect x="2576.33" y="718" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(0 956.667)" fill="white" fill-opacity="0.0501" />
-                    <rect x="0.5" y="957.167" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(234.167 956.667)" fill="white" fill-opacity="0.0502" />
-                    <rect x="234.667" y="957.167" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(468.333 956.667)" fill="white" fill-opacity="0.0503" />
-                    <rect x="468.833" y="957.167" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(702.5 956.667)" fill="white" fill-opacity="0.0504" />
-                    <rect x="703" y="957.167" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(936.667 956.667)" fill="white" fill-opacity="0.0505" />
-                    <rect x="937.167" y="957.167" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1170.83 956.667)" fill="white" fill-opacity="0.0506" />
-                    <rect x="1171.33" y="957.167" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1405 956.667)" fill="white" fill-opacity="0.0507" />
-                    <rect x="1405.5" y="957.167" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1639.17 956.667)" fill="white" fill-opacity="0.0508" />
-                    <rect x="1639.67" y="957.167" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1873.33 956.667)" fill="white" fill-opacity="0.0509" />
-                    <rect x="1873.83" y="957.167" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2107.5 956.667)" fill="white" fill-opacity="0.051" />
-                    <rect x="2108" y="957.167" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2341.67 956.667)" fill="white" fill-opacity="0.0511" />
-                    <rect x="2342.17" y="957.167" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2575.83 956.667)" fill="white" fill-opacity="0.0512" />
-                    <rect x="2576.33" y="957.167" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(0 1195.83)" fill="white" fill-opacity="0.0601" />
-                    <rect x="0.5" y="1196.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(234.167 1195.83)" fill="white" fill-opacity="0.0602" />
-                    <rect x="234.667" y="1196.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(468.333 1195.83)" fill="white" fill-opacity="0.0603" />
-                    <rect x="468.833" y="1196.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(702.5 1195.83)" fill="white" fill-opacity="0.0604" />
-                    <rect x="703" y="1196.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(936.667 1195.83)" fill="white" fill-opacity="0.0605" />
-                    <rect x="937.167" y="1196.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1170.83 1195.83)" fill="white" fill-opacity="0.0606" />
-                    <rect x="1171.33" y="1196.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1405 1195.83)" fill="white" fill-opacity="0.0607" />
-                    <rect x="1405.5" y="1196.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1639.17 1195.83)" fill="white" fill-opacity="0.0608" />
-                    <rect x="1639.67" y="1196.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1873.33 1195.83)" fill="white" fill-opacity="0.0609" />
-                    <rect x="1873.83" y="1196.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2107.5 1195.83)" fill="white" fill-opacity="0.061" />
-                    <rect x="2108" y="1196.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2341.67 1195.83)" fill="white" fill-opacity="0.0611" />
-                    <rect x="2342.17" y="1196.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2575.83 1195.83)" fill="white" fill-opacity="0.0612" />
-                    <rect x="2576.33" y="1196.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(0 1435)" fill="white" fill-opacity="0.0701" />
-                    <rect x="0.5" y="1435.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(234.167 1435)" fill="white" fill-opacity="0.0702" />
-                    <rect x="234.667" y="1435.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(468.333 1435)" fill="white" fill-opacity="0.0703" />
-                    <rect x="468.833" y="1435.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(702.5 1435)" fill="white" fill-opacity="0.0704" />
-                    <rect x="703" y="1435.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(936.667 1435)" fill="white" fill-opacity="0.0705" />
-                    <rect x="937.167" y="1435.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1170.83 1435)" fill="white" fill-opacity="0.0706" />
-                    <rect x="1171.33" y="1435.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1405 1435)" fill="white" fill-opacity="0.0707" />
-                    <rect x="1405.5" y="1435.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1639.17 1435)" fill="white" fill-opacity="0.0708" />
-                    <rect x="1639.67" y="1435.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1873.33 1435)" fill="white" fill-opacity="0.0709" />
-                    <rect x="1873.83" y="1435.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2107.5 1435)" fill="white" fill-opacity="0.071" />
-                    <rect x="2108" y="1435.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2341.67 1435)" fill="white" fill-opacity="0.0711" />
-                    <rect x="2342.17" y="1435.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2575.83 1435)" fill="white" fill-opacity="0.0712" />
-                    <rect x="2576.33" y="1435.5" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(0 1674.17)" fill="white" fill-opacity="0.0801" />
-                    <rect x="0.5" y="1674.67" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(234.167 1674.17)" fill="white" fill-opacity="0.0802" />
-                    <rect x="234.667" y="1674.67" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(468.333 1674.17)" fill="white" fill-opacity="0.0803" />
-                    <rect x="468.833" y="1674.67" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(702.5 1674.17)" fill="white" fill-opacity="0.0804" />
-                    <rect x="703" y="1674.67" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(936.667 1674.17)" fill="white" fill-opacity="0.0805" />
-                    <rect x="937.167" y="1674.67" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1170.83 1674.17)" fill="white" fill-opacity="0.0806" />
-                    <rect x="1171.33" y="1674.67" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1405 1674.17)" fill="white" fill-opacity="0.0807" />
-                    <rect x="1405.5" y="1674.67" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1639.17 1674.17)" fill="white" fill-opacity="0.0808" />
-                    <rect x="1639.67" y="1674.67" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1873.33 1674.17)" fill="white" fill-opacity="0.0809" />
-                    <rect x="1873.83" y="1674.67" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2107.5 1674.17)" fill="white" fill-opacity="0.081" />
-                    <rect x="2108" y="1674.67" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2341.67 1674.17)" fill="white" fill-opacity="0.0811" />
-                    <rect x="2342.17" y="1674.67" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2575.83 1674.17)" fill="white" fill-opacity="0.0812" />
-                    <rect x="2576.33" y="1674.67" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(0 1913.33)" fill="white" fill-opacity="0.0901" />
-                    <rect x="0.5" y="1913.83" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(234.167 1913.33)" fill="white" fill-opacity="0.0902" />
-                    <rect x="234.667" y="1913.83" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(468.333 1913.33)" fill="white" fill-opacity="0.0903" />
-                    <rect x="468.833" y="1913.83" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(702.5 1913.33)" fill="white" fill-opacity="0.0904" />
-                    <rect x="703" y="1913.83" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(936.667 1913.33)" fill="white" fill-opacity="0.0905" />
-                    <rect x="937.167" y="1913.83" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1170.83 1913.33)" fill="white" fill-opacity="0.0906" />
-                    <rect x="1171.33" y="1913.83" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1405 1913.33)" fill="white" fill-opacity="0.0907" />
-                    <rect x="1405.5" y="1913.83" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1639.17 1913.33)" fill="white" fill-opacity="0.0908" />
-                    <rect x="1639.67" y="1913.83" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1873.33 1913.33)" fill="white" fill-opacity="0.0909" />
-                    <rect x="1873.83" y="1913.83" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2107.5 1913.33)" fill="white" fill-opacity="0.091" />
-                    <rect x="2108" y="1913.83" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2341.67 1913.33)" fill="white" fill-opacity="0.0911" />
-                    <rect x="2342.17" y="1913.83" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2575.83 1913.33)" fill="white" fill-opacity="0.0912" />
-                    <rect x="2576.33" y="1913.83" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(0 2152.5)" fill="white" fill-opacity="0.1001" />
-                    <rect x="0.5" y="2153" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(234.167 2152.5)" fill="white" fill-opacity="0.1002" />
-                    <rect x="234.667" y="2153" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(468.333 2152.5)" fill="white" fill-opacity="0.1003" />
-                    <rect x="468.833" y="2153" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(702.5 2152.5)" fill="white" fill-opacity="0.1004" />
-                    <rect x="703" y="2153" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(936.667 2152.5)" fill="white" fill-opacity="0.1005" />
-                    <rect x="937.167" y="2153" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1170.83 2152.5)" fill="white" fill-opacity="0.1006" />
-                    <rect x="1171.33" y="2153" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1405 2152.5)" fill="white" fill-opacity="0.1007" />
-                    <rect x="1405.5" y="2153" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1639.17 2152.5)" fill="white" fill-opacity="0.1008" />
-                    <rect x="1639.67" y="2153" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1873.33 2152.5)" fill="white" fill-opacity="0.1009" />
-                    <rect x="1873.83" y="2153" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2107.5 2152.5)" fill="white" fill-opacity="0.101" />
-                    <rect x="2108" y="2153" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2341.67 2152.5)" fill="white" fill-opacity="0.1011" />
-                    <rect x="2342.17" y="2153" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2575.83 2152.5)" fill="white" fill-opacity="0.1012" />
-                    <rect x="2576.33" y="2153" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(0 2391.67)" fill="white" fill-opacity="0.1101" />
-                    <rect x="0.5" y="2392.17" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(234.167 2391.67)" fill="white" fill-opacity="0.1102" />
-                    <rect x="234.667" y="2392.17" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(468.333 2391.67)" fill="white" fill-opacity="0.1103" />
-                    <rect x="468.833" y="2392.17" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(702.5 2391.67)" fill="white" fill-opacity="0.1104" />
-                    <rect x="703" y="2392.17" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(936.667 2391.67)" fill="white" fill-opacity="0.1105" />
-                    <rect x="937.167" y="2392.17" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1170.83 2391.67)" fill="white" fill-opacity="0.1106" />
-                    <rect x="1171.33" y="2392.17" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1405 2391.67)" fill="white" fill-opacity="0.1107" />
-                    <rect x="1405.5" y="2392.17" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1639.17 2391.67)" fill="white" fill-opacity="0.1108" />
-                    <rect x="1639.67" y="2392.17" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1873.33 2391.67)" fill="white" fill-opacity="0.1109" />
-                    <rect x="1873.83" y="2392.17" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2107.5 2391.67)" fill="white" fill-opacity="0.111" />
-                    <rect x="2108" y="2392.17" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2341.67 2391.67)" fill="white" fill-opacity="0.1111" />
-                    <rect x="2342.17" y="2392.17" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2575.83 2391.67)" fill="white" fill-opacity="0.1112" />
-                    <rect x="2576.33" y="2392.17" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(0 2630.83)" fill="white" fill-opacity="0.1201" />
-                    <rect x="0.5" y="2631.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(234.167 2630.83)" fill="white" fill-opacity="0.1202" />
-                    <rect x="234.667" y="2631.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(468.333 2630.83)" fill="white" fill-opacity="0.1203" />
-                    <rect x="468.833" y="2631.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(702.5 2630.83)" fill="white" fill-opacity="0.1204" />
-                    <rect x="703" y="2631.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(936.667 2630.83)" fill="white" fill-opacity="0.1205" />
-                    <rect x="937.167" y="2631.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1170.83 2630.83)" fill="white" fill-opacity="0.1206" />
-                    <rect x="1171.33" y="2631.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1405 2630.83)" fill="white" fill-opacity="0.1207" />
-                    <rect x="1405.5" y="2631.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1639.17 2630.83)" fill="white" fill-opacity="0.1208" />
-                    <rect x="1639.67" y="2631.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(1873.33 2630.83)" fill="white" fill-opacity="0.1209" />
-                    <rect x="1873.83" y="2631.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2107.5 2630.83)" fill="white" fill-opacity="0.121" />
-                    <rect x="2108" y="2631.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2341.67 2630.83)" fill="white" fill-opacity="0.1211" />
-                    <rect x="2342.17" y="2631.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
-                    <rect width="224.167" height="229.167" transform="translate(2575.83 2630.83)" fill="white" fill-opacity="0.1212" />
-                    <rect x="2576.33" y="2631.33" width="223.167" height="228.167" fill="black" fill-opacity="0.1" stroke="white" />
+export const POI_LIST: POI[] = [
+  { name: "Vista Hills", x: 759.5, y: 616 },
+  { name: "Marina", x: 226, y: 697 },
+  { name: "Evacuación", x: 254.5, y: 1044 },
+  { name: "Crashsite", x: 869, y: 917 },
+  { name: "Downtown", x: 534.5, y: 1319 },
+  { name: "Ocean Park", x: 234, y: 1490 },
+  { name: "Boulevard", x: 572, y: 1678 },
+  { name: "Defense Line", x: 1259, y: 1707 },
+  { name: "Hydroponics", x: 1686.5, y: 1519 },
+  { name: "Radar Station", x: 2584, y: 1609 },
+  { name: "RedSec Orphanage", x: 2148, y: 1833 },
+  { name: "Security Gate", x: 1588, y: 2041 },
+  { name: "Evacuación B", x: 1261.5, y: 2418 },
+  { name: "Lighthouse", x: 288, y: 2115 },
+  { name: "Terminal de Carga", x: 2518, y: 2230 },
+  { name: "Aeropuerto", x: 2115, y: 629 },
+  { name: "Complejo de Pruebas", x: 2539, y: 877 },
+  { name: "Golfo de Maniobras", x: 1293.5, y: 733 }
+];
+
+export function isGridCode(str: string): boolean {
+  return /^[A-L]([1-9]|1[0-2])$/i.test(str);
+}
+
+export function getGridCenter(gridCode: string) {
+  if (!gridCode) return null;
+  const colLetter = gridCode.charAt(0).toUpperCase();
+  const col = colLetter.charCodeAt(0) - 64; // A -> 1
+  const row = parseInt(gridCode.slice(1), 10);
+  
+  if (isNaN(col) || isNaN(row) || col < 1 || col > 12 || row < 1 || row > 12) {
+    return null;
+  }
+  
+  const cellWidth = 224.167;
+  const cellHeight = 229.167;
+  const colGap = 10;
+  const rowGap = 10;
+  
+  const x = (col - 1) * (cellWidth + colGap) + cellWidth / 2;
+  const y = (row - 1) * (cellHeight + rowGap) + cellHeight / 2;
+  return { x, y };
+}
+
+export function getNearestPOI(gridCode: string): string {
+  const center = getGridCenter(gridCode);
+  if (!center) return "Desconocido";
+  
+  let nearestName = "Desconocido";
+  let minDistance = Infinity;
+  
+  for (const poi of POI_LIST) {
+    const dist = Math.hypot(center.x - poi.x, center.y - poi.y);
+    if (dist < minDistance) {
+      minDistance = dist;
+      nearestName = poi.name;
+    }
+  }
+  return nearestName;
+}
+
+export function getPOIGrid(poiName: string): string {
+  const cleanName = poiName.trim().toLowerCase();
+  const found = POI_LIST.find(p => p.name.toLowerCase() === cleanName);
+  if (!found) return "";
+  
+  let nearestGrid = "A1";
+  let minDistance = Infinity;
+  
+  for (let r = 1; r <= 12; r++) {
+    for (let c = 1; c <= 12; c++) {
+      const colLetter = String.fromCharCode(64 + c);
+      const grid = `${colLetter}${r}`;
+      const center = getGridCenter(grid)!;
+      const dist = Math.hypot(center.x - found.x, center.y - found.y);
+      if (dist < minDistance) {
+        minDistance = dist;
+        nearestGrid = grid;
+      }
+    }
+  }
+  return nearestGrid;
+}
+
+interface MapProps {
+  selectedGrid?: string | null;
+  onSelectGrid?: (grid: string) => void;
+  readOnly?: boolean;
+}
+
+export function Map({ selectedGrid, onSelectGrid, readOnly = false }: MapProps) {
+  const cellWidth = 224.167;
+  const cellHeight = 229.167;
+  const colGap = 10;
+  const rowGap = 10;
+
+  return (
+    <div className="w-full h-full relative">
+      <div className="w-full h-full pointer-events-none">
+        <img className="w-full h-full object-cover" src="/images/bf-br-map-better.png" alt="Tactical Map" />
+      </div>
+      <svg
+        width="2800"
+        height="2860"
+        viewBox="0 0 2800 2860"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlnsXlink="http://www.w3.org/1999/xlink"
+        className="absolute inset-0 w-full h-full"
+      >
+        <rect width="2800" height="2860" fill="url(#pattern0_3324_7)" />
+        
+        {/* Cuadricula de ubicaciones interactiva */}
+        <g clipPath="url(#clip0_3324_7)">
+          {Array.from({ length: 12 }).map((_, rIdx) => {
+            const row = rIdx + 1;
+            const y = rIdx * (cellHeight + rowGap);
+            return Array.from({ length: 12 }).map((_, cIdx) => {
+              const col = cIdx + 1;
+              const x = cIdx * (cellWidth + colGap);
+              const colLetter = String.fromCharCode(65 + cIdx);
+              const gridCode = `${colLetter}${row}`;
+              const isSelected = selectedGrid === gridCode;
+
+              return (
+                <g key={gridCode} className={readOnly ? "" : "cursor-pointer group"}>
+                  {/* Transparent Click overlay */}
+                  <rect
+                    x={x}
+                    y={y}
+                    width={cellWidth}
+                    height={cellHeight}
+                    fill={isSelected ? "rgba(16, 185, 129, 0.15)" : "white"}
+                    fillOpacity={isSelected ? 1 : 0.001}
+                    className="transition-all duration-150 group-hover:fill-emerald-500/10 group-hover:fill-opacity-100"
+                    onClick={() => !readOnly && onSelectGrid?.(gridCode)}
+                  />
+                  {/* Grid Cell Border outline */}
+                  <rect
+                    x={x + 0.5}
+                    y={y + 0.5}
+                    width={cellWidth - 1}
+                    height={cellHeight - 1}
+                    fill="black"
+                    fillOpacity={isSelected ? 0.35 : 0.08}
+                    stroke={isSelected ? "#10b981" : "white"}
+                    strokeWidth={isSelected ? 4 : 1}
+                    className="transition-all duration-150 group-hover:stroke-emerald-400 group-hover:stroke-2"
+                    style={{ pointerEvents: "none" }}
+                  />
+                  {/* Grid Code Text tag */}
+                  <text
+                    x={x + 10}
+                    y={y + 25}
+                    fill={isSelected ? "#10b981" : "rgba(255, 255, 255, 0.4)"}
+                    fontSize="12"
+                    fontWeight="bold"
+                    fontFamily="monospace"
+                    className="select-none transition-all duration-150 group-hover:fill-white/80"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    {gridCode}
+                  </text>
                 </g>
+              );
+            });
+          })}
+        </g>
+
 
                 {/* Puntos de ubicacione
                 Aca podras encontrar cada punto nombrado en el mapa, quiero decir, lighthouse, area22b, etc
                 Todo esto debe desaparecer, no tiene que mostrarse al usuario, solo son marcadores para que luego los podamos sustituir por puntos o luego veremos por que diseno lo sistituiremos pero la finaliad es obtener la ubicacion y nombre  */}
 
+                <g style={{ display: 'none' }}>
                 <rect width="305" height="70" transform="translate(1141 698)" fill="black" />
                 <path d="M1188.84 728C1188.53 727.044 1188.12 726.187 1187.61 725.429C1187.1 724.662 1186.5 724.009 1185.8 723.469C1185.11 722.929 1184.33 722.517 1183.44 722.233C1182.56 721.949 1181.6 721.807 1180.55 721.807C1178.82 721.807 1177.26 722.252 1175.85 723.142C1174.43 724.032 1173.31 725.344 1172.48 727.077C1171.65 728.81 1171.23 730.936 1171.23 733.455C1171.23 735.973 1171.65 738.099 1172.49 739.832C1173.34 741.565 1174.48 742.877 1175.92 743.767C1177.36 744.657 1178.98 745.102 1180.77 745.102C1182.44 745.102 1183.91 744.747 1185.18 744.037C1186.46 743.317 1187.45 742.304 1188.16 740.997C1188.88 739.681 1189.24 738.133 1189.24 736.352L1190.32 736.58H1181.57V733.455H1192.65V736.58C1192.65 738.975 1192.14 741.059 1191.12 742.83C1190.1 744.6 1188.7 745.973 1186.91 746.949C1185.13 747.915 1183.09 748.398 1180.77 748.398C1178.2 748.398 1175.94 747.792 1173.98 746.58C1172.04 745.367 1170.53 743.644 1169.44 741.409C1168.36 739.174 1167.82 736.523 1167.82 733.455C1167.82 731.153 1168.13 729.084 1168.74 727.247C1169.37 725.401 1170.25 723.829 1171.39 722.531C1172.52 721.234 1173.87 720.24 1175.42 719.548C1176.97 718.857 1178.68 718.511 1180.55 718.511C1182.08 718.511 1183.51 718.743 1184.84 719.207C1186.17 719.662 1187.36 720.311 1188.4 721.153C1189.45 721.987 1190.33 722.986 1191.03 724.151C1191.73 725.306 1192.21 726.589 1192.48 728H1188.84ZM1223.23 733.455C1223.23 736.523 1222.67 739.174 1221.57 741.409C1220.46 743.644 1218.94 745.367 1217.01 746.58C1215.07 747.792 1212.87 748.398 1210.39 748.398C1207.91 748.398 1205.7 747.792 1203.77 746.58C1201.84 745.367 1200.32 743.644 1199.21 741.409C1198.1 739.174 1197.55 736.523 1197.55 733.455C1197.55 730.386 1198.1 727.735 1199.21 725.5C1200.32 723.265 1201.84 721.542 1203.77 720.33C1205.7 719.117 1207.91 718.511 1210.39 718.511C1212.87 718.511 1215.07 719.117 1217.01 720.33C1218.94 721.542 1220.46 723.265 1221.57 725.5C1222.67 727.735 1223.23 730.386 1223.23 733.455ZM1219.82 733.455C1219.82 730.936 1219.4 728.81 1218.56 727.077C1217.72 725.344 1216.59 724.032 1215.16 723.142C1213.74 722.252 1212.15 721.807 1210.39 721.807C1208.63 721.807 1207.03 722.252 1205.6 723.142C1204.18 724.032 1203.05 725.344 1202.21 727.077C1201.37 728.81 1200.96 730.936 1200.96 733.455C1200.96 735.973 1201.37 738.099 1202.21 739.832C1203.05 741.565 1204.18 742.877 1205.6 743.767C1207.03 744.657 1208.63 745.102 1210.39 745.102C1212.15 745.102 1213.74 744.657 1215.16 743.767C1216.59 742.877 1217.72 741.565 1218.56 739.832C1219.4 738.099 1219.82 735.973 1219.82 733.455ZM1229.15 748V718.909H1232.67V744.875H1246.2V748H1229.15ZM1251.65 748V718.909H1269.09V722.034H1255.17V731.864H1267.79V734.989H1255.17V748H1251.65ZM1309.79 728H1306.26C1306.06 726.987 1305.69 726.097 1305.17 725.33C1304.66 724.562 1304.03 723.919 1303.3 723.398C1302.57 722.867 1301.76 722.47 1300.87 722.205C1299.98 721.939 1299.05 721.807 1298.08 721.807C1296.32 721.807 1294.73 722.252 1293.3 723.142C1291.88 724.032 1290.74 725.344 1289.9 727.077C1289.07 728.81 1288.65 730.936 1288.65 733.455C1288.65 735.973 1289.07 738.099 1289.9 739.832C1290.74 741.565 1291.88 742.877 1293.3 743.767C1294.73 744.657 1296.32 745.102 1298.08 745.102C1299.05 745.102 1299.98 744.97 1300.87 744.705C1301.76 744.439 1302.57 744.046 1303.3 743.526C1304.03 742.995 1304.66 742.347 1305.17 741.58C1305.69 740.803 1306.06 739.913 1306.26 738.909H1309.79C1309.52 740.396 1309.04 741.726 1308.34 742.901C1307.64 744.075 1306.77 745.074 1305.72 745.898C1304.68 746.712 1303.51 747.332 1302.22 747.759C1300.93 748.185 1299.55 748.398 1298.08 748.398C1295.6 748.398 1293.4 747.792 1291.46 746.58C1289.53 745.367 1288.01 743.644 1286.9 741.409C1285.8 739.174 1285.24 736.523 1285.24 733.455C1285.24 730.386 1285.8 727.735 1286.9 725.5C1288.01 723.265 1289.53 721.542 1291.46 720.33C1293.4 719.117 1295.6 718.511 1298.08 718.511C1299.55 718.511 1300.93 718.724 1302.22 719.151C1303.51 719.577 1304.68 720.202 1305.72 721.026C1306.77 721.84 1307.64 722.834 1308.34 724.009C1309.04 725.173 1309.52 726.504 1309.79 728ZM1340.03 733.455C1340.03 736.523 1339.47 739.174 1338.36 741.409C1337.26 743.644 1335.74 745.367 1333.8 746.58C1331.87 747.792 1329.67 748.398 1327.18 748.398C1324.7 748.398 1322.5 747.792 1320.56 746.58C1318.63 745.367 1317.11 743.644 1316.01 741.409C1314.9 739.174 1314.34 736.523 1314.34 733.455C1314.34 730.386 1314.9 727.735 1316.01 725.5C1317.11 723.265 1318.63 721.542 1320.56 720.33C1322.5 719.117 1324.7 718.511 1327.18 718.511C1329.67 718.511 1331.87 719.117 1333.8 720.33C1335.74 721.542 1337.26 723.265 1338.36 725.5C1339.47 727.735 1340.03 730.386 1340.03 733.455ZM1336.62 733.455C1336.62 730.936 1336.19 728.81 1335.35 727.077C1334.52 725.344 1333.39 724.032 1331.96 723.142C1330.54 722.252 1328.95 721.807 1327.18 721.807C1325.42 721.807 1323.83 722.252 1322.4 723.142C1320.98 724.032 1319.85 725.344 1319 727.077C1318.17 728.81 1317.75 730.936 1317.75 733.455C1317.75 735.973 1318.17 738.099 1319 739.832C1319.85 741.565 1320.98 742.877 1322.4 743.767C1323.83 744.657 1325.42 745.102 1327.18 745.102C1328.95 745.102 1330.54 744.657 1331.96 743.767C1333.39 742.877 1334.52 741.565 1335.35 739.832C1336.19 738.099 1336.62 735.973 1336.62 733.455ZM1365.04 718.909H1368.56V738.17C1368.56 740.159 1368.09 741.935 1367.16 743.497C1366.23 745.05 1364.92 746.277 1363.22 747.176C1361.53 748.066 1359.54 748.511 1357.26 748.511C1354.97 748.511 1352.98 748.066 1351.29 747.176C1349.59 746.277 1348.28 745.05 1347.34 743.497C1346.41 741.935 1345.95 740.159 1345.95 738.17V718.909H1349.47V737.886C1349.47 739.307 1349.78 740.571 1350.41 741.679C1351.03 742.777 1351.92 743.644 1353.08 744.278C1354.24 744.903 1355.64 745.216 1357.26 745.216C1358.87 745.216 1360.27 744.903 1361.43 744.278C1362.6 743.644 1363.49 742.777 1364.1 741.679C1364.73 740.571 1365.04 739.307 1365.04 737.886V718.909ZM1375.6 748V718.909H1385.43C1387.7 718.909 1389.56 719.297 1391.02 720.074C1392.48 720.841 1393.56 721.897 1394.26 723.241C1394.96 724.586 1395.31 726.116 1395.31 727.83C1395.31 729.544 1394.96 731.063 1394.26 732.389C1393.56 733.715 1392.49 734.757 1391.04 735.514C1389.59 736.262 1387.74 736.636 1385.48 736.636H1377.53V733.455H1385.37C1386.92 733.455 1388.17 733.227 1389.12 732.773C1390.08 732.318 1390.77 731.674 1391.19 730.841C1391.63 729.998 1391.85 728.994 1391.85 727.83C1391.85 726.665 1391.63 725.647 1391.19 724.776C1390.76 723.904 1390.06 723.232 1389.11 722.759C1388.15 722.276 1386.88 722.034 1385.31 722.034H1379.12V748H1375.6ZM1389.29 734.932L1396.45 748H1392.36L1385.31 734.932H1389.29ZM1401.18 748V718.909H1418.74V722.034H1404.71V731.864H1417.83V734.989H1404.71V744.875H1418.97V748H1401.18Z" fill="white" />
                 <rect width="283" height="70" transform="translate(618 581)" fill="black" />
@@ -349,6 +227,8 @@ export function Map() {
                 <rect width="238" height="70" transform="translate(2370 1260)" fill="black" />
                 <path d="M2396.24 1284.03V1280.91H2418.06V1284.03H2408.91V1310H2405.39V1284.03H2396.24ZM2423.5 1310V1280.91H2427.02V1293.86H2442.53V1280.91H2446.06V1310H2442.53V1296.99H2427.02V1310H2423.5ZM2453.11 1310V1280.91H2470.67V1284.03H2456.63V1293.86H2469.76V1296.99H2456.63V1306.88H2470.89V1310H2453.11ZM2504.17 1288.18C2504 1286.74 2503.31 1285.62 2502.1 1284.83C2500.89 1284.03 2499.4 1283.64 2497.64 1283.64C2496.35 1283.64 2495.23 1283.84 2494.26 1284.26C2493.3 1284.68 2492.55 1285.25 2492.01 1285.98C2491.48 1286.71 2491.22 1287.54 2491.22 1288.47C2491.22 1289.24 2491.4 1289.91 2491.77 1290.47C2492.15 1291.02 2492.64 1291.48 2493.22 1291.85C2493.81 1292.21 2494.42 1292.5 2495.07 1292.74C2495.71 1292.97 2496.3 1293.15 2496.84 1293.3L2499.8 1294.09C2500.56 1294.29 2501.4 1294.56 2502.33 1294.91C2503.26 1295.27 2504.16 1295.74 2505.01 1296.35C2505.87 1296.95 2506.58 1297.71 2507.14 1298.65C2507.7 1299.59 2507.98 1300.74 2507.98 1302.1C2507.98 1303.67 2507.57 1305.09 2506.75 1306.36C2505.93 1307.63 2504.74 1308.64 2503.17 1309.39C2501.6 1310.14 2499.7 1310.51 2497.47 1310.51C2495.39 1310.51 2493.58 1310.18 2492.06 1309.5C2490.54 1308.83 2489.35 1307.89 2488.48 1306.69C2487.62 1305.49 2487.13 1304.09 2487.01 1302.5H2490.65C2490.75 1303.6 2491.12 1304.51 2491.76 1305.23C2492.41 1305.94 2493.24 1306.47 2494.23 1306.82C2495.23 1307.16 2496.31 1307.33 2497.47 1307.33C2498.81 1307.33 2500.02 1307.11 2501.09 1306.68C2502.16 1306.23 2503.01 1305.62 2503.63 1304.83C2504.26 1304.03 2504.57 1303.11 2504.57 1302.05C2504.57 1301.08 2504.3 1300.29 2503.76 1299.69C2503.22 1299.08 2502.51 1298.59 2501.63 1298.21C2500.75 1297.83 2499.8 1297.5 2498.78 1297.22L2495.2 1296.19C2492.92 1295.54 2491.12 1294.61 2489.8 1293.39C2488.47 1292.18 2487.81 1290.6 2487.81 1288.64C2487.81 1287.01 2488.25 1285.59 2489.13 1284.38C2490.02 1283.15 2491.21 1282.21 2492.71 1281.53C2494.22 1280.85 2495.9 1280.51 2497.75 1280.51C2499.63 1280.51 2501.3 1280.85 2502.75 1281.52C2504.21 1282.18 2505.37 1283.09 2506.22 1284.25C2507.08 1285.4 2507.54 1286.71 2507.58 1288.18H2504.17ZM2513.77 1310V1280.91H2531.33V1284.03H2517.3V1293.86H2530.42V1296.99H2517.3V1306.88H2531.56V1310H2513.77ZM2538.87 1310H2535.18L2545.86 1280.91H2549.5L2560.18 1310H2556.49L2547.79 1285.51H2547.57L2538.87 1310ZM2540.24 1298.64H2555.12V1301.76H2540.24V1298.64ZM2564.71 1310V1280.91H2568.23V1306.88H2581.76V1310H2564.71Z" fill="white" />
 
+                </g>
+
                 {/* iamgen de referencia pero la borre para usar un .png que lo encuentras fuera del svg */}
                 <defs>
                     <pattern id="pattern0_3324_7" patternContentUnits="objectBoundingBox" width="1" height="1">
@@ -364,3 +244,110 @@ export function Map() {
 
     )
 }
+
+interface MapModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  selectedGrid?: string | null;
+  onConfirm?: (grid: string) => void;
+  readOnly?: boolean;
+}
+
+export function MapModal({ isOpen, onClose, selectedGrid: initialSelectedGrid, onConfirm, readOnly = false }: MapModalProps) {
+  const [selectedGrid, setSelectedGrid] = useState<string | null>(initialSelectedGrid || null);
+  const [zoom, setZoom] = useState(1);
+
+  if (!isOpen) return null;
+
+  const nearestPOI = selectedGrid ? getNearestPOI(selectedGrid) : "";
+
+  const handleConfirm = () => {
+    if (selectedGrid && onConfirm) {
+      onConfirm(selectedGrid);
+    }
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-slate-950/95 text-white">
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-white">
+            {readOnly ? "Ubicación del Despliegue" : "Seleccionar Zona de Despliegue"}
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            {selectedGrid ? (
+              <span className="text-emerald-400 font-semibold">
+                Cuadrícula Seleccionada: {selectedGrid} &mdash; {nearestPOI}
+              </span>
+            ) : (
+              "Haz clic en una cuadrícula del mapa para seleccionar"
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {!readOnly && onConfirm && (
+            <Button
+              onClick={handleConfirm}
+              disabled={!selectedGrid}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
+            >
+              Confirmar Selección
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={onClose} className="text-slate-400 hover:text-white">
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Map Area */}
+      <div className="flex-1 overflow-auto relative p-4 flex items-start justify-center bg-slate-950">
+        <div 
+          className="relative transition-all duration-200 ease-out aspect-[2800/2860]"
+          style={{ 
+            width: `${100 * zoom}%`,
+            maxWidth: `${1000 * zoom}px`,
+            minWidth: '280px',
+          }}
+        >
+          <Map 
+            selectedGrid={selectedGrid} 
+            onSelectGrid={setSelectedGrid} 
+            readOnly={readOnly} 
+          />
+        </div>
+      </div>
+
+      {/* Zoom / Action Controls footer */}
+      <div className="absolute bottom-6 right-6 flex items-center gap-2 bg-slate-900/90 border border-slate-800 p-2 rounded-lg shadow-2xl backdrop-blur">
+        <Button 
+          variant="secondary" 
+          size="icon" 
+          onClick={() => setZoom(prev => Math.min(prev + 0.25, 3))}
+          className="h-9 w-9 bg-slate-800 hover:bg-slate-700 text-white border-0"
+        >
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+        <Button 
+          variant="secondary" 
+          size="icon" 
+          onClick={() => setZoom(prev => Math.max(prev - 0.25, 0.75))}
+          className="h-9 w-9 bg-slate-800 hover:bg-slate-700 text-white border-0"
+        >
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        <Button 
+          variant="secondary" 
+          size="icon" 
+          onClick={() => setZoom(1)}
+          className="h-9 w-9 bg-slate-800 hover:bg-slate-700 text-white border-0"
+        >
+          <RotateCcw className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+

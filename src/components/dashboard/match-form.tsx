@@ -2,6 +2,7 @@ import { actions } from "astro:actions";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import POIS from "@/data/pois.json";
+import { MapModal, isGridCode, getNearestPOI, getPOIGrid } from "@/components/map";
 import type { ActivePlayer } from "./squad-header";
 import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 
@@ -97,6 +98,7 @@ export function MatchForm({
 
   // Local state for the form inputs
   const [poi, setPoi] = useState(draft.poi || "Desconocido");
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [placement, setPlacement] = useState(draft.placement || 1);
   const [hostility, setHostility] = useState<"Baja" | "Media" | "Alta">(
     draft.hostility || "Media"
@@ -431,19 +433,20 @@ export function MatchForm({
               >
                 Punto de Caída (POI)
               </label>
-              <select
-                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
-                disabled={!isOwner}
+              <Button
+                type="button"
                 id="match-poi"
-                onChange={(e) => handleGeneralInfoChange("poi", e.target.value)}
-                value={poi}
+                variant="outline"
+                className="w-full justify-start text-left font-normal text-xs bg-background border-border text-foreground hover:bg-accent/50 disabled:bg-muted disabled:opacity-50"
+                disabled={!isOwner}
+                onClick={() => setIsMapModalOpen(true)}
               >
-                {POIS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
+                {isGridCode(poi)
+                  ? `${poi} - ${getNearestPOI(poi)}`
+                  : poi && poi !== "Desconocido"
+                    ? (getPOIGrid(poi) ? `${getPOIGrid(poi)} - ${poi}` : poi)
+                    : "Seleccionar en Mapa"}
+              </Button>
             </div>
 
             <div>
@@ -887,6 +890,15 @@ export function MatchForm({
           </div>
         </div>
       </form>
+      <MapModal
+        isOpen={isMapModalOpen}
+        onClose={() => setIsMapModalOpen(false)}
+        selectedGrid={isGridCode(poi) ? poi : getPOIGrid(poi) || null}
+        onConfirm={(grid) => {
+          setPoi(grid);
+          handleGeneralInfoChange("poi", grid);
+        }}
+      />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { MatchForm } from "./match-form";
 import { SessionLiveStats } from "./session-live-stats";
 import { type ActivePlayer, SquadHeader } from "./squad-header";
 import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
+import { MapModal, isGridCode, getNearestPOI, getPOIGrid } from "@/components/map";
 
 interface Session {
   created_at: string;
@@ -90,6 +91,8 @@ export function SessionPanel({
   const [isClosing, setIsClosing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
+  const [selectedPoiForMap, setSelectedPoiForMap] = useState<string | null>(null);
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [subTab, setSubTab] = useState<"list" | "stats">("list");
 
   const handleCreateSession = async (e: React.FormEvent) => {
@@ -543,8 +546,17 @@ export function SessionPanel({
                               </p>
                               <p className="font-light text-[10px] text-muted-foreground">
                                 Drop:{" "}
-                                <span className="font-medium text-foreground/80">
-                                  {match.poi}
+                                <span
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedPoiForMap(match.poi);
+                                    setIsMapModalOpen(true);
+                                  }}
+                                  className="font-medium text-foreground/80 cursor-pointer hover:text-emerald-400 hover:underline transition-colors"
+                                >
+                                  {isGridCode(match.poi)
+                                    ? `${match.poi} - ${getNearestPOI(match.poi)}`
+                                    : match.poi}
                                 </span>{" "}
                                 • {matchDate}
                               </p>
@@ -793,6 +805,15 @@ export function SessionPanel({
           )}
         </div>
       </div>
+      <MapModal
+        isOpen={isMapModalOpen}
+        onClose={() => {
+          setIsMapModalOpen(false);
+          setSelectedPoiForMap(null);
+        }}
+        selectedGrid={selectedPoiForMap && isGridCode(selectedPoiForMap) ? selectedPoiForMap : (selectedPoiForMap ? getPOIGrid(selectedPoiForMap) : null)}
+        readOnly={true}
+      />
     </div>
   );
 }
