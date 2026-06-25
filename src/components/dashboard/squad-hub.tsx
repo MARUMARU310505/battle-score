@@ -13,6 +13,10 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  NotificationProvider,
+  useNotification,
+} from "@/components/ui/notification";
 import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 import { SquadWizard } from "./squad-wizard";
 
@@ -68,12 +72,14 @@ export function SquadHubContainer({
   }
 
   return (
-    <SquadHub
-      currentUser={currentUser}
-      onNewSquadClick={() => setIsCreating(true)}
-      profile={profile}
-      squads={squads}
-    />
+    <NotificationProvider>
+      <SquadHub
+        currentUser={currentUser}
+        onNewSquadClick={() => setIsCreating(true)}
+        profile={profile}
+        squads={squads}
+      />
+    </NotificationProvider>
   );
 }
 
@@ -90,6 +96,7 @@ export function SquadHub({
   const [foundSquad, setFoundSquad] = useState<Squad | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const { confirm: confirmAction, notify } = useNotification();
 
   const [operatorClass, setOperatorClass] = useState(
     profile?.favorite_class || "Asalto"
@@ -188,8 +195,11 @@ export function SquadHub({
   };
 
   const handleLeaveSquad = async (squadId: string, slotNumber: number) => {
-    // biome-ignore lint/suspicious/noAlert: standard web confirm is fine for simplicity here
-    if (!confirm("¿Estás seguro de que deseas salir de este escuadrón?")) {
+    const confirmed = await confirmAction(
+      "¿Salir del escuadrón?",
+      "Perderás tu slot y tendrás que usar un código de invitación para volver a unirte."
+    );
+    if (!confirmed) {
       return;
     }
     try {
@@ -203,6 +213,7 @@ export function SquadHub({
       window.location.reload();
     } catch (err) {
       console.error("Error leaving squad:", err);
+      notify("error", "Error al salir del escuadrón.");
     }
   };
 
@@ -459,7 +470,9 @@ export function SquadHub({
                   {(() => {
                     const slots = Array.from({ length: 4 }, (_, i) => {
                       const slotNum = i + 1;
-                      const member = foundSquad.squad_members.find((m) => m.slot_number === slotNum);
+                      const member = foundSquad.squad_members.find(
+                        (m) => m.slot_number === slotNum
+                      );
                       return {
                         slot_number: slotNum,
                         member,
@@ -481,7 +494,8 @@ export function SquadHub({
                       <div className="space-y-2">
                         {slots.map((slotInfo) => {
                           const isClaimed = slotInfo.isClaimed;
-                          const isSelected = selectedSlot === slotInfo.slot_number;
+                          const isSelected =
+                            selectedSlot === slotInfo.slot_number;
                           let buttonStyle =
                             "border-border bg-background/50 hover:border-border/80";
                           if (isClaimed) {
@@ -491,12 +505,12 @@ export function SquadHub({
                             buttonStyle = "border-primary bg-primary/5";
                           }
 
-                          const displayGamertag = slotInfo.member 
-                            ? cleanGamertag(slotInfo.member.gamertag) 
+                          const displayGamertag = slotInfo.member
+                            ? cleanGamertag(slotInfo.member.gamertag)
                             : "Disponible";
 
-                          const displayClass = slotInfo.member 
-                            ? slotInfo.member.favorite_class 
+                          const displayClass = slotInfo.member
+                            ? slotInfo.member.favorite_class
                             : "Asalto";
 
                           return (
@@ -516,7 +530,9 @@ export function SquadHub({
                                   Operador #{slotInfo.slot_number}
                                 </span>
                                 <p className="mt-0.5 text-[10px] text-muted-foreground">
-                                  {isClaimed ? `Reclamado por: ${displayGamertag}` : `Slot disponible: ${displayGamertag}`}
+                                  {isClaimed
+                                    ? `Reclamado por: ${displayGamertag}`
+                                    : `Slot disponible: ${displayGamertag}`}
                                 </p>
                               </div>
                               <span className="shrink-0 rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground uppercase">

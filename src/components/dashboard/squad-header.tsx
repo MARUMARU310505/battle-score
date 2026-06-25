@@ -1,11 +1,13 @@
 import { actions } from "astro:actions";
 import { UserCheck, UserMinus } from "lucide-react";
 import { useState } from "react";
+import { useNotification } from "@/components/ui/notification";
 import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 
 export interface ActivePlayer {
   active_class: string;
   assists?: number;
+  avatar_seed?: string | null;
   downs?: number;
   favorite_class: string;
   gamertag: string;
@@ -13,16 +15,15 @@ export interface ActivePlayer {
   slot_number: number;
   status: "titular" | "reemplazo" | "ausente";
   user_id?: string | null;
-  avatar_seed?: string | null;
 }
 
 interface SquadHeaderProps {
   activePlayers: ActivePlayer[];
   currentUserId?: string | null;
   isOwner?: boolean;
-  squadId?: string;
   // biome-ignore lint/suspicious/noExplicitAny: React state dispatcher type
   setSquadState?: React.Dispatch<React.SetStateAction<any>>;
+  squadId?: string;
 }
 
 export function SquadHeader({
@@ -33,6 +34,7 @@ export function SquadHeader({
   setSquadState,
 }: SquadHeaderProps) {
   const [loadingSlot, setLoadingSlot] = useState<number | null>(null);
+  const { notify } = useNotification();
 
   const activePlaying = activePlayers.filter((p) => p.status !== "ausente");
   const hasAnyStats = activePlaying.some(
@@ -113,9 +115,13 @@ export function SquadHeader({
     slot: number,
     status: "titular" | "ausente"
   ) => {
-    if (!squadId) return;
+    if (!squadId) {
+      return;
+    }
     const player = activePlayers.find((p) => p.slot_number === slot);
-    if (!player) return;
+    if (!player) {
+      return;
+    }
 
     setLoadingSlot(slot);
     try {
@@ -131,7 +137,9 @@ export function SquadHeader({
       if (setSquadState) {
         // biome-ignore lint/suspicious/noExplicitAny: state updater uses any
         setSquadState((prev: any) => {
-          if (!prev) return null;
+          if (!prev) {
+            return null;
+          }
           return {
             ...prev,
             // biome-ignore lint/suspicious/noExplicitAny: m mapper uses any
@@ -143,8 +151,7 @@ export function SquadHeader({
       }
     } catch (err) {
       console.error("Error updating member status in DB:", err);
-      // biome-ignore lint/suspicious/noAlert: standard alert
-      alert("Error al cambiar el estado del operador.");
+      notify("error", "Error al cambiar el estado del operador.");
     } finally {
       setLoadingSlot(null);
     }
@@ -323,7 +330,7 @@ export function SquadHeader({
                     </button>
                   </>
                 ) : (
-                  <span className="w-full text-center rounded border border-border/30 bg-muted/40 px-2 py-1 font-mono text-[10px] text-muted-foreground/60 italic">
+                  <span className="w-full rounded border border-border/30 bg-muted/40 px-2 py-1 text-center font-mono text-[10px] text-muted-foreground/60 italic">
                     Slot disponible (Invitación)
                   </span>
                 )}

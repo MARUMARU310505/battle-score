@@ -1,13 +1,21 @@
-import type { Match, PlayerMatchStats } from "./dashboard-content";
-import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
-import { BarChart3, Compass, Heart, ShieldAlert, Sparkles, TrendingUp, Users, Zap } from "lucide-react";
+import {
+  BarChart3,
+  Compass,
+  Heart,
+  ShieldAlert,
+  Sparkles,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
 import { useMemo } from "react";
+import type { Match } from "./dashboard-content";
+import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 
 interface StatsViewProps {
+  currentUserId?: string | null;
   matches: Match[];
   // biome-ignore lint/suspicious/noExplicitAny: squad structure
   squad: any;
-  currentUserId?: string | null;
 }
 
 export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
@@ -19,7 +27,9 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
           Aún no hay estadísticas acumuladas
         </h4>
         <p className="mt-2 max-w-sm font-light text-muted-foreground text-xs leading-relaxed">
-          Las estadísticas históricas y análisis tácticos del escuadrón se generarán automáticamente conforme jueguen y registren partidas en sus sesiones.
+          Las estadísticas históricas y análisis tácticos del escuadrón se
+          generarán automáticamente conforme jueguen y registren partidas en sus
+          sesiones.
         </p>
       </div>
     );
@@ -69,7 +79,10 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
 
   // 2. Drop Zone (POI) Analysis
   const dropZones = useMemo(() => {
-    const pois: Record<string, { count: number; totalPlacement: number; wins: number }> = {};
+    const pois: Record<
+      string,
+      { count: number; totalPlacement: number; wins: number }
+    > = {};
     for (const m of matches) {
       const poi = m.poi || "Desconocido";
       if (!pois[poi]) {
@@ -89,7 +102,9 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
       winRate: (stat.wins / stat.count) * 100,
     }));
 
-    const sortedByPlacement = [...calculated].sort((a, b) => a.avgPlacement - b.avgPlacement);
+    const sortedByPlacement = [...calculated].sort(
+      (a, b) => a.avgPlacement - b.avgPlacement
+    );
     const dropGanador = sortedByPlacement[0] || null;
     const rutaMuerte = sortedByPlacement[sortedByPlacement.length - 1] || null;
 
@@ -140,11 +155,20 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
     }
 
     // Sort matches in each session by created_at ascending to get sequential index
-    const matchIndexStats: Record<number, { count: number; totalPlacement: number; totalMental: number; mentalCount: number }> = {};
+    const matchIndexStats: Record<
+      number,
+      {
+        count: number;
+        totalPlacement: number;
+        totalMental: number;
+        mentalCount: number;
+      }
+    > = {};
 
     for (const sessionMatchesList of Object.values(sessionsGroup)) {
       const sorted = [...sessionMatchesList].sort(
-        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
 
       sorted.forEach((m, idx) => {
@@ -152,7 +176,12 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
         const groupKey = matchNum >= 5 ? 5 : matchNum; // cap at 5+ for consolidation
 
         if (!matchIndexStats[groupKey]) {
-          matchIndexStats[groupKey] = { count: 0, totalPlacement: 0, totalMental: 0, mentalCount: 0 };
+          matchIndexStats[groupKey] = {
+            count: 0,
+            totalPlacement: 0,
+            totalMental: 0,
+            mentalCount: 0,
+          };
         }
 
         matchIndexStats[groupKey].count++;
@@ -169,19 +198,31 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
       });
     }
 
-    const result = Object.entries(matchIndexStats).map(([key, stat]) => ({
-      matchNum: Number(key) === 5 ? "Partida 5+" : `Partida ${key}`,
-      avgPlacement: stat.totalPlacement / stat.count,
-      avgMental: stat.mentalCount > 0 ? stat.totalMental / stat.mentalCount : 3,
-      count: stat.count,
-    })).sort((a, b) => a.matchNum.localeCompare(b.matchNum));
+    const result = Object.entries(matchIndexStats)
+      .map(([key, stat]) => ({
+        matchNum: Number(key) === 5 ? "Partida 5+" : `Partida ${key}`,
+        avgPlacement: stat.totalPlacement / stat.count,
+        avgMental:
+          stat.mentalCount > 0 ? stat.totalMental / stat.mentalCount : 3,
+        count: stat.count,
+      }))
+      .sort((a, b) => a.matchNum.localeCompare(b.matchNum));
 
     return result;
   }, [matches]);
 
   // 5. Class Efficiency Matrix
   const classStats = useMemo(() => {
-    const classes: Record<string, { count: number; kills: number; downs: number; assists: number; wins: number }> = {};
+    const classes: Record<
+      string,
+      {
+        count: number;
+        kills: number;
+        downs: number;
+        assists: number;
+        wins: number;
+      }
+    > = {};
 
     for (const m of matches) {
       const isWin = m.placement === 1;
@@ -189,7 +230,13 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
         for (const p of m.player_match_stats) {
           const cls = p.active_class || "Asalto";
           if (!classes[cls]) {
-            classes[cls] = { count: 0, kills: 0, downs: 0, assists: 0, wins: 0 };
+            classes[cls] = {
+              count: 0,
+              kills: 0,
+              downs: 0,
+              assists: 0,
+              wins: 0,
+            };
           }
           classes[cls].count++;
           classes[cls].kills += p.kills || 0;
@@ -205,7 +252,10 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
     return Object.entries(classes).map(([name, stat]) => ({
       name,
       count: stat.count,
-      kdr: stat.downs > 0 ? (stat.kills / stat.downs).toFixed(2) : stat.kills.toFixed(2),
+      kdr:
+        stat.downs > 0
+          ? (stat.kills / stat.downs).toFixed(2)
+          : stat.kills.toFixed(2),
       winRate: ((stat.wins / stat.count) * 100).toFixed(0),
       avgKills: (stat.kills / stat.count).toFixed(1),
     }));
@@ -213,16 +263,19 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
 
   // 6. Operator Comparison (Altruism, KDR, Mental State)
   const operatorStats = useMemo(() => {
-    const players: Record<string, {
-      count: number;
-      kills: number;
-      downs: number;
-      assists: number;
-      revives: number;
-      totalMental: number;
-      avatarSeed: string | null;
-      userId: string | null;
-    }> = {};
+    const players: Record<
+      string,
+      {
+        count: number;
+        kills: number;
+        downs: number;
+        assists: number;
+        revives: number;
+        totalMental: number;
+        avatarSeed: string | null;
+        userId: string | null;
+      }
+    > = {};
 
     for (const m of matches) {
       if (m.player_match_stats) {
@@ -257,106 +310,153 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
       }
     }
 
-    return Object.entries(players).map(([gamertag, stat]) => ({
-      gamertag,
-      count: stat.count,
-      kdr: stat.downs > 0 ? (stat.kills / stat.downs).toFixed(2) : stat.kills.toFixed(2),
-      kills: stat.kills,
-      downs: stat.downs,
-      assists: stat.assists,
-      revives: stat.revives,
-      avgMental: (stat.totalMental / stat.count).toFixed(1),
-      avatarSeed: stat.avatarSeed,
-      userId: stat.userId,
-    })).sort((a, b) => Number(b.kdr) - Number(a.kdr));
+    return Object.entries(players)
+      .map(([gamertag, stat]) => ({
+        gamertag,
+        count: stat.count,
+        kdr:
+          stat.downs > 0
+            ? (stat.kills / stat.downs).toFixed(2)
+            : stat.kills.toFixed(2),
+        kills: stat.kills,
+        downs: stat.downs,
+        assists: stat.assists,
+        revives: stat.revives,
+        avgMental: (stat.totalMental / stat.count).toFixed(1),
+        avatarSeed: stat.avatarSeed,
+        userId: stat.userId,
+      }))
+      .sort((a, b) => Number(b.kdr) - Number(a.kdr));
   }, [matches]);
 
   const mentalLabel = (val: number) => {
-    if (val >= 4.5) return "🔥 Concentrado";
-    if (val >= 3.5) return "🟢 Estable";
-    if (val >= 2.5) return "🟡 Cansado";
+    if (val >= 4.5) {
+      return "🔥 Concentrado";
+    }
+    if (val >= 3.5) {
+      return "🟢 Estable";
+    }
+    if (val >= 2.5) {
+      return "🟡 Cansado";
+    }
     return "🔴 Tilt / Frustrado";
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-300">
+    <div className="fade-in-50 animate-in space-y-6 duration-300">
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-lg border border-border bg-card p-4 shadow-sm relative overflow-hidden">
-          <div className="absolute right-3 top-3 opacity-15">
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm">
+          <div className="absolute top-3 right-3 opacity-15">
             <Zap className="h-6 w-6 text-primary" />
           </div>
-          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">KDR Global</p>
-          <p className="mt-1 font-bold text-2xl text-primary font-sans">{summary.globalKdr}</p>
-          <p className="text-[10px] text-muted-foreground mt-1">Bajas totales: {summary.totalKills}</p>
+          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+            KDR Global
+          </p>
+          <p className="mt-1 font-bold font-sans text-2xl text-primary">
+            {summary.globalKdr}
+          </p>
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            Bajas totales: {summary.totalKills}
+          </p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-4 shadow-sm relative overflow-hidden">
-          <div className="absolute right-3 top-3 opacity-15">
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm">
+          <div className="absolute top-3 right-3 opacity-15">
             <BarChart3 className="h-6 w-6 text-muted-foreground" />
           </div>
-          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Partidas</p>
-          <p className="mt-1 font-bold text-2xl text-foreground font-sans">{summary.totalMatches}</p>
-          <p className="text-[10px] text-muted-foreground mt-1">Sesiones de juego</p>
+          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+            Partidas
+          </p>
+          <p className="mt-1 font-bold font-sans text-2xl text-foreground">
+            {summary.totalMatches}
+          </p>
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            Sesiones de juego
+          </p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-4 shadow-sm relative overflow-hidden">
-          <div className="absolute right-3 top-3 opacity-15">
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm">
+          <div className="absolute top-3 right-3 opacity-15">
             <Compass className="h-6 w-6 text-muted-foreground" />
           </div>
-          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Puesto Promedio</p>
-          <p className="mt-1 font-bold text-2xl text-foreground font-sans">#{summary.avgPlacement}</p>
-          <p className="text-[10px] text-muted-foreground mt-1">Efectividad de zona</p>
+          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+            Puesto Promedio
+          </p>
+          <p className="mt-1 font-bold font-sans text-2xl text-foreground">
+            #{summary.avgPlacement}
+          </p>
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            Efectividad de zona
+          </p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-4 shadow-sm relative overflow-hidden">
-          <div className="absolute right-3 top-3 opacity-15">
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm">
+          <div className="absolute top-3 right-3 opacity-15">
             <TrendingUp className="h-6 w-6 text-emerald-500" />
           </div>
-          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Tasa de Victorias</p>
-          <p className="mt-1 font-bold text-2xl text-emerald-500 font-sans">{summary.winRate}%</p>
-          <p className="text-[10px] text-muted-foreground mt-1">Victorias totales: {summary.totalWins}</p>
+          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+            Tasa de Victorias
+          </p>
+          <p className="mt-1 font-bold font-sans text-2xl text-emerald-500">
+            {summary.winRate}%
+          </p>
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            Victorias totales: {summary.totalWins}
+          </p>
         </div>
       </div>
 
       {/* Drop Zone: Winner vs Death Route */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {dropZones.dropGanador && (
-          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-5 shadow-xs relative overflow-hidden">
-            <div className="absolute right-4 top-4 bg-emerald-500/10 rounded-full p-2">
-              <Sparkles className="h-5 w-5 text-emerald-400 animate-pulse" />
+          <div className="relative overflow-hidden rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-5 shadow-xs">
+            <div className="absolute top-4 right-4 rounded-full bg-emerald-500/10 p-2">
+              <Sparkles className="h-5 w-5 animate-pulse text-emerald-400" />
             </div>
-            <h4 className="font-bold text-emerald-400 text-xs uppercase tracking-widest font-mono">
+            <h4 className="font-bold font-mono text-emerald-400 text-xs uppercase tracking-widest">
               🚀 El Drop Ganador
             </h4>
-            <p className="mt-2 font-bold text-lg text-foreground">{dropZones.dropGanador.name}</p>
-            <div className="mt-4 grid grid-cols-2 gap-4 text-xs font-mono">
+            <p className="mt-2 font-bold text-foreground text-lg">
+              {dropZones.dropGanador.name}
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-4 font-mono text-xs">
               <div>
                 <span className="text-muted-foreground">Puesto Prom.:</span>{" "}
-                <span className="font-bold text-emerald-400">#{dropZones.dropGanador.avgPlacement.toFixed(1)}</span>
+                <span className="font-bold text-emerald-400">
+                  #{dropZones.dropGanador.avgPlacement.toFixed(1)}
+                </span>
               </div>
               <div>
                 <span className="text-muted-foreground">Despliegues:</span>{" "}
-                <span className="font-bold text-foreground">{dropZones.dropGanador.count}</span>
+                <span className="font-bold text-foreground">
+                  {dropZones.dropGanador.count}
+                </span>
               </div>
             </div>
           </div>
         )}
 
         {dropZones.rutaMuerte && (
-          <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-5 shadow-xs relative overflow-hidden">
-            <div className="absolute right-4 top-4 bg-destructive/10 rounded-full p-2">
+          <div className="relative overflow-hidden rounded-lg border border-destructive/20 bg-destructive/5 p-5 shadow-xs">
+            <div className="absolute top-4 right-4 rounded-full bg-destructive/10 p-2">
               <ShieldAlert className="h-5 w-5 text-destructive" />
             </div>
-            <h4 className="font-bold text-destructive text-xs uppercase tracking-widest font-mono">
+            <h4 className="font-bold font-mono text-destructive text-xs uppercase tracking-widest">
               💀 Ruta de la Muerte
             </h4>
-            <p className="mt-2 font-bold text-lg text-foreground">{dropZones.rutaMuerte.name}</p>
-            <div className="mt-4 grid grid-cols-2 gap-4 text-xs font-mono">
+            <p className="mt-2 font-bold text-foreground text-lg">
+              {dropZones.rutaMuerte.name}
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-4 font-mono text-xs">
               <div>
                 <span className="text-muted-foreground">Puesto Prom.:</span>{" "}
-                <span className="font-bold text-destructive">#{dropZones.rutaMuerte.avgPlacement.toFixed(1)}</span>
+                <span className="font-bold text-destructive">
+                  #{dropZones.rutaMuerte.avgPlacement.toFixed(1)}
+                </span>
               </div>
               <div>
                 <span className="text-muted-foreground">Despliegues:</span>{" "}
-                <span className="font-bold text-foreground">{dropZones.rutaMuerte.count}</span>
+                <span className="font-bold text-foreground">
+                  {dropZones.rutaMuerte.count}
+                </span>
               </div>
             </div>
           </div>
@@ -367,22 +467,28 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Anatomía de la Derrota */}
         <div className="rounded-lg border border-border bg-card p-5">
-          <h3 className="font-bold text-foreground text-xs uppercase tracking-wider border-border/40 border-b pb-3 mb-4">
+          <h3 className="mb-4 border-border/40 border-b pb-3 font-bold text-foreground text-xs uppercase tracking-wider">
             Anatomía de la Derrota (Causas)
           </h3>
           <div className="space-y-3.5">
             {defeatCauses.list.length === 0 ? (
-              <p className="text-xs text-muted-foreground font-light py-6 text-center">No hay derrotas registradas todavía.</p>
+              <p className="py-6 text-center font-light text-muted-foreground text-xs">
+                No hay derrotas registradas todavía.
+              </p>
             ) : (
               defeatCauses.list.map((cause) => (
                 <div key={cause.name}>
-                  <div className="flex items-center justify-between text-xs mb-1.5 font-mono">
-                    <span className="font-semibold text-foreground">{cause.name}</span>
-                    <span className="text-muted-foreground">{cause.count} ({cause.percentage.toFixed(0)}%)</span>
+                  <div className="mb-1.5 flex items-center justify-between font-mono text-xs">
+                    <span className="font-semibold text-foreground">
+                      {cause.name}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {cause.count} ({cause.percentage.toFixed(0)}%)
+                    </span>
                   </div>
-                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full bg-primary/80 rounded-full transition-all duration-500"
+                      className="h-full rounded-full bg-primary/80 transition-all duration-500"
                       style={{ width: `${cause.percentage}%` }}
                     />
                   </div>
@@ -394,24 +500,39 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
 
         {/* Fatigue Curve */}
         <div className="rounded-lg border border-border bg-card p-5">
-          <h3 className="font-bold text-foreground text-xs uppercase tracking-wider border-border/40 border-b pb-3 mb-4">
+          <h3 className="mb-4 border-border/40 border-b pb-3 font-bold text-foreground text-xs uppercase tracking-wider">
             Curva de Fatiga y Desempeño
           </h3>
           <div className="space-y-4">
             {fatigueData.map((data) => {
-              const placementPct = Math.max(0, 100 - (data.avgPlacement - 1) * 5); // visual ranking scale
+              const placementPct = Math.max(
+                0,
+                100 - (data.avgPlacement - 1) * 5
+              ); // visual ranking scale
               return (
                 <div key={data.matchNum}>
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 text-xs mb-1.5 font-mono">
-                    <span className="font-bold text-foreground">{data.matchNum}</span>
+                  <div className="mb-1.5 flex flex-col gap-1.5 font-mono text-xs sm:flex-row sm:items-center sm:justify-between">
+                    <span className="font-bold text-foreground">
+                      {data.matchNum}
+                    </span>
                     <div className="flex items-center gap-3 text-[10px]">
-                      <span>Puesto Prom.: <span className="text-primary font-bold">#{data.avgPlacement.toFixed(1)}</span></span>
-                      <span>Estado Mental: <span className="text-emerald-400 font-bold">{mentalLabel(data.avgMental)}</span></span>
+                      <span>
+                        Puesto Prom.:{" "}
+                        <span className="font-bold text-primary">
+                          #{data.avgPlacement.toFixed(1)}
+                        </span>
+                      </span>
+                      <span>
+                        Estado Mental:{" "}
+                        <span className="font-bold text-emerald-400">
+                          {mentalLabel(data.avgMental)}
+                        </span>
+                      </span>
                     </div>
                   </div>
-                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden relative">
+                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full bg-primary rounded-full transition-all duration-500"
+                      className="h-full rounded-full bg-primary transition-all duration-500"
                       style={{ width: `${placementPct}%` }}
                     />
                   </div>
@@ -426,24 +547,33 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Class stats */}
         <div className="rounded-lg border border-border bg-card p-5 lg:col-span-1">
-          <h3 className="font-bold text-foreground text-xs uppercase tracking-wider border-border/40 border-b pb-3 mb-4">
+          <h3 className="mb-4 border-border/40 border-b pb-3 font-bold text-foreground text-xs uppercase tracking-wider">
             Matriz de Especialidades
           </h3>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-mono">
+            <table className="w-full text-left font-mono text-xs">
               <thead>
-                <tr className="text-muted-foreground border-border/20 border-b pb-2">
-                  <th className="font-medium pb-2">Clase</th>
-                  <th className="font-medium text-center pb-2">KDR</th>
-                  <th className="font-medium text-center pb-2">Win %</th>
+                <tr className="border-border/20 border-b pb-2 text-muted-foreground">
+                  <th className="pb-2 font-medium">Clase</th>
+                  <th className="pb-2 text-center font-medium">KDR</th>
+                  <th className="pb-2 text-center font-medium">Win %</th>
                 </tr>
               </thead>
               <tbody>
                 {classStats.map((cls) => (
-                  <tr className="border-border/10 border-b hover:bg-muted/5" key={cls.name}>
-                    <td className="py-2.5 font-bold text-foreground">{cls.name}</td>
-                    <td className="py-2.5 text-center text-primary font-bold">{cls.kdr}</td>
-                    <td className="py-2.5 text-center font-bold">{cls.winRate}%</td>
+                  <tr
+                    className="border-border/10 border-b hover:bg-muted/5"
+                    key={cls.name}
+                  >
+                    <td className="py-2.5 font-bold text-foreground">
+                      {cls.name}
+                    </td>
+                    <td className="py-2.5 text-center font-bold text-primary">
+                      {cls.kdr}
+                    </td>
+                    <td className="py-2.5 text-center font-bold">
+                      {cls.winRate}%
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -453,67 +583,88 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
 
         {/* operator compare */}
         <div className="rounded-lg border border-border bg-card p-5 lg:col-span-2">
-          <h3 className="font-bold text-foreground text-xs uppercase tracking-wider border-border/40 border-b pb-3 mb-4">
+          <h3 className="mb-4 border-border/40 border-b pb-3 font-bold text-foreground text-xs uppercase tracking-wider">
             Comparador de Operadores
           </h3>
           {/* Vista Mobile: Tarjetas apiladas para evitar amontonamiento */}
-          <div className="block sm:hidden space-y-3">
+          <div className="block space-y-3 sm:hidden">
             {operatorStats.map((op) => {
               const isMe = op.userId === currentUserId;
               return (
-                <div 
-                  key={op.gamertag} 
-                  className={`rounded-lg border p-4 bg-muted/10 relative overflow-hidden transition-all hover:bg-muted/15 ${
-                    isMe ? "border-emerald-500/30 bg-emerald-500/[0.02]" : "border-border"
+                <div
+                  className={`relative overflow-hidden rounded-lg border bg-muted/10 p-4 transition-all hover:bg-muted/15 ${
+                    isMe
+                      ? "border-emerald-500/30 bg-emerald-500/[0.02]"
+                      : "border-border"
                   }`}
+                  key={op.gamertag}
                 >
                   {/* Fila superior: Avatar, Nombre y KDR destacado */}
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="mb-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <OperatorAvatar
+                        avatarSeed={op.avatarSeed}
                         className="h-6 w-6"
                         gamertag={op.gamertag}
-                        avatarSeed={op.avatarSeed}
                       />
-                      <span className={`text-sm font-bold ${isMe ? "text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}>
-                        {cleanGamertag(op.gamertag)} 
+                      <span
+                        className={`font-bold text-sm ${isMe ? "text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
+                      >
+                        {cleanGamertag(op.gamertag)}
                         {isMe && (
-                          <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-mono ml-1.5">
+                          <span className="ml-1.5 rounded bg-emerald-500/20 px-1.5 py-0.5 font-mono text-[9px] text-emerald-400">
                             Tú
                           </span>
                         )}
                       </span>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="text-[9px] text-muted-foreground uppercase font-mono tracking-wider">KDR</span>
-                      <span className="text-sm font-extrabold text-primary font-mono">{op.kdr}</span>
+                      <span className="font-mono text-[9px] text-muted-foreground uppercase tracking-wider">
+                        KDR
+                      </span>
+                      <span className="font-extrabold font-mono text-primary text-sm">
+                        {op.kdr}
+                      </span>
                     </div>
                   </div>
 
                   {/* Cuadrícula de estadísticas clave */}
-                  <div className="grid grid-cols-3 gap-2 border-t border-border/30 pt-3 text-center">
+                  <div className="grid grid-cols-3 gap-2 border-border/30 border-t pt-3 text-center">
                     <div>
-                      <p className="text-[9px] text-muted-foreground font-mono uppercase">Partidas</p>
-                      <p className="text-xs font-bold text-foreground font-mono mt-0.5">{op.count}</p>
+                      <p className="font-mono text-[9px] text-muted-foreground uppercase">
+                        Partidas
+                      </p>
+                      <p className="mt-0.5 font-bold font-mono text-foreground text-xs">
+                        {op.count}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-[9px] text-muted-foreground font-mono uppercase">K/D/A</p>
-                      <p className="text-xs font-bold text-foreground font-mono mt-0.5">
+                      <p className="font-mono text-[9px] text-muted-foreground uppercase">
+                        K/D/A
+                      </p>
+                      <p className="mt-0.5 font-bold font-mono text-foreground text-xs">
                         {op.kills}/{op.downs}/{op.assists}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[9px] text-muted-foreground font-mono uppercase flex items-center justify-center gap-0.5">
-                        <Heart className="h-2 w-2 text-red-500 fill-red-500" /> Reanim.
+                      <p className="flex items-center justify-center gap-0.5 font-mono text-[9px] text-muted-foreground uppercase">
+                        <Heart className="h-2 w-2 fill-red-500 text-red-500" />{" "}
+                        Reanim.
                       </p>
-                      <p className="text-xs font-bold text-emerald-400 font-mono mt-0.5">{op.revives}</p>
+                      <p className="mt-0.5 font-bold font-mono text-emerald-400 text-xs">
+                        {op.revives}
+                      </p>
                     </div>
                   </div>
 
                   {/* Fila inferior: Estado Mental */}
-                  <div className="mt-3 flex items-center justify-between border-t border-border/30 pt-3 text-[10px] font-mono">
-                    <span className="text-muted-foreground">Estado Mental Prom.:</span>
-                    <span className="font-semibold text-foreground">{mentalLabel(Number(op.avgMental))}</span>
+                  <div className="mt-3 flex items-center justify-between border-border/30 border-t pt-3 font-mono text-[10px]">
+                    <span className="text-muted-foreground">
+                      Estado Mental Prom.:
+                    </span>
+                    <span className="font-semibold text-foreground">
+                      {mentalLabel(Number(op.avgMental))}
+                    </span>
                   </div>
                 </div>
               );
@@ -521,42 +672,59 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
           </div>
 
           {/* Vista Desktop: Tabla tradicional completa */}
-          <div className="hidden sm:block overflow-x-auto">
+          <div className="hidden overflow-x-auto sm:block">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="text-muted-foreground font-mono border-border/20 border-b pb-2 text-[10px] uppercase">
-                  <th className="font-medium pb-2">Operador</th>
-                  <th className="font-medium text-center pb-2">Partidas</th>
-                  <th className="font-medium text-center pb-2">K/D/A</th>
-                  <th className="font-medium text-center pb-2">KDR</th>
-                  <th className="font-medium text-center pb-2 flex items-center justify-center gap-1">
+                <tr className="border-border/20 border-b pb-2 font-mono text-[10px] text-muted-foreground uppercase">
+                  <th className="pb-2 font-medium">Operador</th>
+                  <th className="pb-2 text-center font-medium">Partidas</th>
+                  <th className="pb-2 text-center font-medium">K/D/A</th>
+                  <th className="pb-2 text-center font-medium">KDR</th>
+                  <th className="flex items-center justify-center gap-1 pb-2 text-center font-medium">
                     <Heart className="h-3 w-3 text-red-500" /> Reanim.
                   </th>
-                  <th className="font-medium text-center pb-2">Estado Prom.</th>
+                  <th className="pb-2 text-center font-medium">Estado Prom.</th>
                 </tr>
               </thead>
               <tbody>
                 {operatorStats.map((op) => {
                   const isMe = op.userId === currentUserId;
                   return (
-                    <tr className="border-border/10 border-b hover:bg-muted/5 font-sans" key={op.gamertag}>
+                    <tr
+                      className="border-border/10 border-b font-sans hover:bg-muted/5"
+                      key={op.gamertag}
+                    >
                       <td className="py-3 font-semibold">
                         <div className="flex items-center gap-2">
                           <OperatorAvatar
+                            avatarSeed={op.avatarSeed}
                             className="h-5 w-5"
                             gamertag={op.gamertag}
-                            avatarSeed={op.avatarSeed}
                           />
-                          <span className={isMe ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}>
+                          <span
+                            className={
+                              isMe
+                                ? "font-extrabold text-emerald-500 dark:text-emerald-400"
+                                : "text-foreground"
+                            }
+                          >
                             {cleanGamertag(op.gamertag)} {isMe && "(Tú)"}
                           </span>
                         </div>
                       </td>
                       <td className="py-3 text-center font-mono">{op.count}</td>
-                      <td className="py-3 text-center font-mono text-[10px]">{op.kills}/{op.downs}/{op.assists}</td>
-                      <td className="py-3 text-center font-mono font-bold text-primary">{op.kdr}</td>
-                      <td className="py-3 text-center font-mono text-emerald-400 font-semibold">{op.revives}</td>
-                      <td className="py-3 text-center font-mono text-[10px]">{mentalLabel(Number(op.avgMental))}</td>
+                      <td className="py-3 text-center font-mono text-[10px]">
+                        {op.kills}/{op.downs}/{op.assists}
+                      </td>
+                      <td className="py-3 text-center font-bold font-mono text-primary">
+                        {op.kdr}
+                      </td>
+                      <td className="py-3 text-center font-mono font-semibold text-emerald-400">
+                        {op.revives}
+                      </td>
+                      <td className="py-3 text-center font-mono text-[10px]">
+                        {mentalLabel(Number(op.avgMental))}
+                      </td>
                     </tr>
                   );
                 })}

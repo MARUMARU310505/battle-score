@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { Match, PlayerMatchStats } from "./dashboard-content";
 import { MatchForm } from "./match-form";
+import { SessionLiveStats } from "./session-live-stats";
 import { type ActivePlayer, SquadHeader } from "./squad-header";
 import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
-import { SessionLiveStats } from "./session-live-stats";
 
 interface Session {
   created_at: string;
@@ -398,8 +398,8 @@ export function SessionPanel({
         activePlayers={activePlayers}
         currentUserId={currentUser?.id}
         isOwner={isOwner}
-        squadId={squad.id}
         setSquadState={setSquadState}
+        squadId={squad.id}
       />
 
       {/* Match registration or list (full width) */}
@@ -442,31 +442,31 @@ export function SessionPanel({
               <div className="flex flex-col gap-3 border-border/40 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   <button
-                    type="button"
-                    onClick={() => setSubTab("list")}
-                    className={`font-bold text-xs uppercase tracking-wider pb-1 border-b-2 transition-all cursor-pointer ${
+                    className={`cursor-pointer border-b-2 pb-1 font-bold text-xs uppercase tracking-wider transition-all ${
                       subTab === "list"
                         ? "border-primary text-foreground"
                         : "border-transparent text-muted-foreground hover:text-foreground"
                     }`}
+                    onClick={() => setSubTab("list")}
+                    type="button"
                   >
                     Partidas ({sessionMatches.length})
                   </button>
                   <button
-                    type="button"
-                    onClick={() => setSubTab("stats")}
-                    className={`font-bold text-xs uppercase tracking-wider pb-1 border-b-2 transition-all cursor-pointer ${
+                    className={`cursor-pointer border-b-2 pb-1 font-bold text-xs uppercase tracking-wider transition-all ${
                       subTab === "stats"
                         ? "border-primary text-foreground"
                         : "border-transparent text-muted-foreground hover:text-foreground"
                     }`}
+                    onClick={() => setSubTab("stats")}
+                    type="button"
                   >
                     Rendimiento en Vivo
                   </button>
                 </div>
                 {isOwner && initialSession && (
                   <Button
-                    className="h-auto px-4 py-2 shrink-0"
+                    className="h-auto shrink-0 px-4 py-2"
                     disabled={loading}
                     onClick={handleStartRegistration}
                     size="sm"
@@ -478,9 +478,9 @@ export function SessionPanel({
 
               {subTab === "stats" ? (
                 <SessionLiveStats
-                  sessionMatches={sessionMatches}
                   activePlayers={activePlayers}
                   currentUserId={currentUser?.id}
+                  sessionMatches={sessionMatches}
                 />
               ) : sessionMatches.length === 0 ? (
                 <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-border border-dashed bg-background/50 p-12 text-center">

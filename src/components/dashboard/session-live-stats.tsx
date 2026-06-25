@@ -1,12 +1,12 @@
-import type { Match, PlayerMatchStats } from "./dashboard-content";
-import { cleanGamertag } from "./squad-sidebar";
 import { Compass, ShieldAlert, Zap } from "lucide-react";
+import type { Match } from "./dashboard-content";
+import { cleanGamertag } from "./squad-sidebar";
 
 interface SessionLiveStatsProps {
-  sessionMatches: Match[];
   // biome-ignore lint/suspicious/noExplicitAny: active players array
   activePlayers: any[];
   currentUserId?: string | null;
+  sessionMatches: Match[];
 }
 
 export function SessionLiveStats({
@@ -22,7 +22,8 @@ export function SessionLiveStats({
           Aún no hay datos para esta sesión
         </h4>
         <p className="mt-2 max-w-sm font-light text-muted-foreground text-xs">
-          Registra al menos una partida para visualizar el rendimiento en vivo del escuadrón.
+          Registra al menos una partida para visualizar el rendimiento en vivo
+          del escuadrón.
         </p>
       </div>
     );
@@ -33,7 +34,7 @@ export function SessionLiveStats({
   let totalDowns = 0;
   let totalAssists = 0;
   let totalRevives = 0;
-  let totalMatches = sessionMatches.length;
+  const totalMatches = sessionMatches.length;
   let totalPlacements = 0;
   let totalWins = 0;
 
@@ -52,7 +53,10 @@ export function SessionLiveStats({
     }
   }
 
-  const sessionKdr = totalDowns > 0 ? (totalKills / totalDowns).toFixed(2) : totalKills.toFixed(2);
+  const sessionKdr =
+    totalDowns > 0
+      ? (totalKills / totalDowns).toFixed(2)
+      : totalKills.toFixed(2);
   const avgPlacement = (totalPlacements / totalMatches).toFixed(1);
   const winRate = ((totalWins / totalMatches) * 100).toFixed(0);
 
@@ -70,7 +74,10 @@ export function SessionLiveStats({
   }
 
   // 3. Drop Zone (POI) performance in this session
-  const poiStats: Record<string, { count: number; totalPlacement: number; wins: number }> = {};
+  const poiStats: Record<
+    string,
+    { count: number; totalPlacement: number; wins: number }
+  > = {};
   for (const m of sessionMatches) {
     const poi = m.poi || "Desconocido";
     if (!poiStats[poi]) {
@@ -98,54 +105,91 @@ export function SessionLiveStats({
 
   // Match count fatigue
   if (totalMatches >= 5) {
-    alerts.push(`🔋 Sesión Prolongada: Han completado ${totalMatches} partidas.`);
-    suggestions.push("Recomendación: Estiren las piernas, hidratación rápida y un descanso de 5 minutos antes del próximo despliegue.");
+    alerts.push(
+      `🔋 Sesión Prolongada: Han completado ${totalMatches} partidas.`
+    );
+    suggestions.push(
+      "Recomendación: Estiren las piernas, hidratación rápida y un descanso de 5 minutos antes del próximo despliegue."
+    );
   }
 
   // Mental state / Tilt check (last match)
   const lastMatch = sessionMatches[sessionMatches.length - 1];
-  if (lastMatch && lastMatch.player_match_stats && lastMatch.player_match_stats.length > 0) {
-    const mentalStates = lastMatch.player_match_stats.map((p) => p.mental_state || 3);
-    const avgMental = mentalStates.reduce((a, b) => a + b, 0) / mentalStates.length;
+  if (
+    lastMatch &&
+    lastMatch.player_match_stats &&
+    lastMatch.player_match_stats.length > 0
+  ) {
+    const mentalStates = lastMatch.player_match_stats.map(
+      (p) => p.mental_state || 3
+    );
+    const avgMental =
+      mentalStates.reduce((a, b) => a + b, 0) / mentalStates.length;
 
     if (avgMental < 3.0) {
-      alerts.push("⚠️ Alerta de Tilt / Frustración: El estado de ánimo promedio del equipo bajó de la media tras la última partida.");
-      suggestions.push("Estrategia Táctica: Cambiar a estilo defensivo. Evitar drop zones congestionadas (Hot Drops) y enfocarse en control periférico.");
+      alerts.push(
+        "⚠️ Alerta de Tilt / Frustración: El estado de ánimo promedio del equipo bajó de la media tras la última partida."
+      );
+      suggestions.push(
+        "Estrategia Táctica: Cambiar a estilo defensivo. Evitar drop zones congestionadas (Hot Drops) y enfocarse en control periférico."
+      );
     }
   }
 
   // Performance based insights
-  const worstPlacements = sessionMatches.filter((m) => m.placement >= 10).length;
+  const worstPlacements = sessionMatches.filter(
+    (m) => m.placement >= 10
+  ).length;
   if (worstPlacements >= 3) {
-    alerts.push("📉 Mala Racha: Tienen 3 o más partidas con rendimiento en Top 10+.");
-    suggestions.push("Ajuste de Composición: Revisen los roles. Aseguren al menos un Soporte (Médico) e Ingeniero para control de vehículos.");
+    alerts.push(
+      "📉 Mala Racha: Tienen 3 o más partidas con rendimiento en Top 10+."
+    );
+    suggestions.push(
+      "Ajuste de Composición: Revisen los roles. Aseguren al menos un Soporte (Médico) e Ingeniero para control de vehículos."
+    );
   }
 
   return (
-    <div className="mt-4 space-y-5 animate-in fade-in-50 duration-200">
+    <div className="fade-in-50 mt-4 animate-in space-y-5 duration-200">
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-center">
-          <p className="font-mono text-[9px] text-muted-foreground uppercase">KDR </p>
-          <p className="mt-1 font-bold text-xl text-primary font-sans">{sessionKdr}</p>
+          <p className="font-mono text-[9px] text-muted-foreground uppercase">
+            KDR{" "}
+          </p>
+          <p className="mt-1 font-bold font-sans text-primary text-xl">
+            {sessionKdr}
+          </p>
         </div>
         <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-center">
-          <p className="font-mono text-[9px] text-muted-foreground uppercase">Partidas</p>
-          <p className="mt-1 font-bold text-xl text-foreground font-sans">{totalMatches}</p>
+          <p className="font-mono text-[9px] text-muted-foreground uppercase">
+            Partidas
+          </p>
+          <p className="mt-1 font-bold font-sans text-foreground text-xl">
+            {totalMatches}
+          </p>
         </div>
         <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-center">
-          <p className="font-mono text-[9px] text-muted-foreground uppercase">Prom. Puesto</p>
-          <p className="mt-1 font-bold text-xl text-foreground font-sans">#{avgPlacement}</p>
+          <p className="font-mono text-[9px] text-muted-foreground uppercase">
+            Prom. Puesto
+          </p>
+          <p className="mt-1 font-bold font-sans text-foreground text-xl">
+            #{avgPlacement}
+          </p>
         </div>
         <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-center">
-          <p className="font-mono text-[9px] text-muted-foreground uppercase">Win Rate</p>
-          <p className="mt-1 font-bold text-xl text-emerald-500 font-sans">{winRate}%</p>
+          <p className="font-mono text-[9px] text-muted-foreground uppercase">
+            Win Rate
+          </p>
+          <p className="mt-1 font-bold font-sans text-emerald-500 text-xl">
+            {winRate}%
+          </p>
         </div>
       </div>
 
       {/* Roster Live Combat Stats */}
       <div className="rounded-lg border border-border bg-card/40 p-4">
-        <h4 className="flex items-center gap-1.5 font-bold text-foreground text-xs uppercase tracking-wider mb-3">
+        <h4 className="mb-3 flex items-center gap-1.5 font-bold text-foreground text-xs uppercase tracking-wider">
           <Zap className="h-3.5 w-3.5 text-primary" /> Combate en la Sesión
         </h4>
         <div className="space-y-2.5">
@@ -156,9 +200,11 @@ export function SessionLiveStats({
             let downs = 0;
             let assists = 0;
             let revives = 0;
-            
+
             for (const m of sessionMatches) {
-              const stat = m.player_match_stats?.find((p) => p.gamertag === player.gamertag);
+              const stat = m.player_match_stats?.find(
+                (p) => p.gamertag === player.gamertag
+              );
               if (stat) {
                 kills += stat.kills || 0;
                 downs += stat.downs || 0;
@@ -167,24 +213,35 @@ export function SessionLiveStats({
               }
             }
 
-            const kdr = downs > 0 ? (kills / downs).toFixed(2) : kills.toFixed(2);
+            const kdr =
+              downs > 0 ? (kills / downs).toFixed(2) : kills.toFixed(2);
 
             return (
-              <div className={`flex items-center justify-between rounded-md p-2 text-xs border ${isMe ? 'bg-primary/5 border-primary/20' : 'bg-background/20 border-border/40'}`} key={player.slot_number}>
+              <div
+                className={`flex items-center justify-between rounded-md border p-2 text-xs ${isMe ? "border-primary/20 bg-primary/5" : "border-border/40 bg-background/20"}`}
+                key={player.slot_number}
+              >
                 <div className="min-w-0 flex-1">
-                  <span className={`font-bold ${isMe ? 'text-emerald-400' : 'text-foreground'}`}>
+                  <span
+                    className={`font-bold ${isMe ? "text-emerald-400" : "text-foreground"}`}
+                  >
                     {cleanGamertag(player.gamertag)} {isMe && "(Tú)"}
                   </span>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    Clase activa: <span className="font-mono text-foreground">{player.active_class}</span>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">
+                    Clase activa:{" "}
+                    <span className="font-mono text-foreground">
+                      {player.active_class}
+                    </span>
                   </p>
                 </div>
-                <div className="flex items-center gap-4 text-right font-mono shrink-0">
+                <div className="flex shrink-0 items-center gap-4 text-right font-mono">
                   <div className="text-[10px]">
-                    <span className="text-muted-foreground">K/D/A:</span> {kills}/{downs}/{assists}
+                    <span className="text-muted-foreground">K/D/A:</span>{" "}
+                    {kills}/{downs}/{assists}
                   </div>
-                  <div className="text-[10px] border-l border-border/30 pl-3">
-                    <span className="text-muted-foreground">KDR:</span> <span className="font-bold text-primary">{kdr}</span>
+                  <div className="border-border/30 border-l pl-3 text-[10px]">
+                    <span className="text-muted-foreground">KDR:</span>{" "}
+                    <span className="font-bold text-primary">{kdr}</span>
                   </div>
                 </div>
               </div>
@@ -195,12 +252,13 @@ export function SessionLiveStats({
 
       {/* Dynamic Coach Recommendations (Protocolo de fatiga) */}
       <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-        <h4 className="flex items-center gap-1.5 font-bold text-primary text-xs uppercase tracking-wider mb-2.5">
+        <h4 className="mb-2.5 flex items-center gap-1.5 font-bold text-primary text-xs uppercase tracking-wider">
           <ShieldAlert className="h-4 w-4" /> Coach Táctico (Fatiga & Tilt)
         </h4>
         {alerts.length === 0 ? (
           <p className="font-light text-muted-foreground text-xs">
-            🟢 Escuadrón estable. Concentración óptima. Sigan comunicando y rotando de forma limpia.
+            🟢 Escuadrón estable. Concentración óptima. Sigan comunicando y
+            rotando de forma limpia.
           </p>
         ) : (
           <div className="space-y-3">
@@ -208,7 +266,7 @@ export function SessionLiveStats({
               <div className="space-y-1" key={idx}>
                 <p className="font-semibold text-primary text-xs">{alert}</p>
                 {suggestions[idx] && (
-                  <p className="font-light text-foreground text-xs leading-relaxed pl-4 border-l-2 border-border/60">
+                  <p className="border-border/60 border-l-2 pl-4 font-light text-foreground text-xs leading-relaxed">
                     {suggestions[idx]}
                   </p>
                 )}
@@ -220,18 +278,29 @@ export function SessionLiveStats({
 
       {/* POI Placement Leaderboard */}
       <div className="rounded-lg border border-border bg-card/40 p-4">
-        <h4 className="flex items-center gap-1.5 font-bold text-foreground text-xs uppercase tracking-wider mb-3">
-          <Compass className="h-3.5 w-3.5 text-muted-foreground" /> Drop Zones Hoy
+        <h4 className="mb-3 flex items-center gap-1.5 font-bold text-foreground text-xs uppercase tracking-wider">
+          <Compass className="h-3.5 w-3.5 text-muted-foreground" /> Drop Zones
+          Hoy
         </h4>
         <div className="space-y-2">
           {sortedPois.slice(0, 3).map((poi) => (
-            <div className="flex items-center justify-between text-xs border-border/20 border-b pb-2 last:border-0 last:pb-0" key={poi.name}>
+            <div
+              className="flex items-center justify-between border-border/20 border-b pb-2 text-xs last:border-0 last:pb-0"
+              key={poi.name}
+            >
               <div>
-                <span className="font-semibold text-foreground">{poi.name}</span>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Sembrado {poi.count} {poi.count === 1 ? 'vez' : 'veces'}</p>
+                <span className="font-semibold text-foreground">
+                  {poi.name}
+                </span>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  Sembrado {poi.count} {poi.count === 1 ? "vez" : "veces"}
+                </p>
               </div>
               <div className="text-right font-mono">
-                <span className="text-muted-foreground">Puesto Promedio:</span> <span className="font-bold text-primary">#{poi.avgPlacement.toFixed(1)}</span>
+                <span className="text-muted-foreground">Puesto Promedio:</span>{" "}
+                <span className="font-bold text-primary">
+                  #{poi.avgPlacement.toFixed(1)}
+                </span>
               </div>
             </div>
           ))}

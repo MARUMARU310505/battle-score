@@ -8,6 +8,7 @@ import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 interface PlayerStatInput {
   activeClass: string;
   assists: number;
+  avatarSeed?: string | null;
   downs: number;
   endGame: boolean;
   gamertag: string;
@@ -16,7 +17,6 @@ interface PlayerStatInput {
   respawned: boolean;
   revives: number;
   userId?: string | null;
-  avatarSeed?: string | null;
 }
 
 interface MatchFormProps {

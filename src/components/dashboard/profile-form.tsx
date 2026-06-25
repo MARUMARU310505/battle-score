@@ -39,9 +39,9 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
     : "";
   const initialSeedValue = initialProfile?.avatar_seed
     ? initialProfile.avatar_seed
-    : (initialProfile?.gamertag?.includes("||")
-        ? initialProfile.gamertag.split("||")[1]
-        : initialGamertagValue);
+    : initialProfile?.gamertag?.includes("||")
+      ? initialProfile.gamertag.split("||")[1]
+      : initialGamertagValue;
 
   const [gamertag, setGamertag] = useState(initialGamertagValue);
   const [avatarSeed, setAvatarSeed] = useState(initialSeedValue);
@@ -116,7 +116,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             </p>
           </div>
 
-          <div className="flex flex-col items-center justify-center space-y-4 py-2 w-full">
+          <div className="flex w-full flex-col items-center justify-center space-y-4 py-2">
             <div className="group relative">
               <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-primary to-accent opacity-75 blur-xs transition duration-1000 group-hover:opacity-100 group-hover:duration-200" />
               <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-border bg-card shadow-lg">
@@ -135,24 +135,24 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                 )}
               </div>
             </div>
-            
-            <div className="flex flex-col items-center gap-2 w-full max-w-xs">
+
+            <div className="flex w-full max-w-xs flex-col items-center gap-2">
               <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
                 Selecciona tu Avatar
               </span>
-              <div className="grid grid-cols-4 gap-2 border border-border/40 bg-background/30 rounded-lg p-2.5 w-full">
+              <div className="grid w-full grid-cols-4 gap-2 rounded-lg border border-border/40 bg-background/30 p-2.5">
                 {AVATAR_PRESETS.map((preset) => {
                   const isSelected = avatarSeed === preset;
                   return (
                     <button
-                      key={preset}
-                      type="button"
-                      onClick={() => setAvatarSeed(preset)}
-                      className={`relative aspect-square cursor-pointer rounded-md overflow-hidden border p-1 transition-all duration-200 hover:scale-105 ${
+                      className={`relative aspect-square cursor-pointer overflow-hidden rounded-md border p-1 transition-all duration-200 hover:scale-105 ${
                         isSelected
                           ? "border-primary bg-primary/10"
                           : "border-border bg-card/50 hover:border-border/80"
                       }`}
+                      key={preset}
+                      onClick={() => setAvatarSeed(preset)}
+                      type="button"
                     >
                       <img
                         alt={preset}

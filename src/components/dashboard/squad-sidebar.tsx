@@ -1,6 +1,7 @@
 import { actions } from "astro:actions";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useNotification } from "@/components/ui/notification";
 
 interface Member {
   avatar_seed?: string | null;
@@ -93,6 +94,7 @@ export function SquadSidebar({
   const [editingSlot, setEditingSlot] = useState<number | null>(null);
   const [editClass, setEditClass] = useState("Asalto");
   const [loadingSlot, setLoadingSlot] = useState<number | null>(null);
+  const { notify, confirm: confirmAction } = useNotification();
 
   const startEditing = (member: Member) => {
     setEditingSlot(member.slot_number);
@@ -131,8 +133,7 @@ export function SquadSidebar({
       setEditingSlot(null);
     } catch (err) {
       console.error("Error updating member class:", err);
-      // biome-ignore lint/suspicious/noAlert: standard alert
-      alert("Error al actualizar el rol del operador.");
+      notify("error", "Error al actualizar el rol del operador.");
     } finally {
       setLoadingSlot(null);
     }
@@ -171,8 +172,7 @@ export function SquadSidebar({
       }
     } catch (err) {
       console.error("Error toggling active state:", err);
-      // biome-ignore lint/suspicious/noAlert: standard alert
-      alert("Error al cambiar el estado del operador.");
+      notify("error", "Error al cambiar el estado del operador.");
     } finally {
       setLoadingSlot(null);
     }
@@ -182,9 +182,9 @@ export function SquadSidebar({
     if (!myMember) {
       return;
     }
-    // biome-ignore lint/suspicious/noAlert: standard confirm
-    const confirmed = confirm(
-      "¿Estás seguro de que deseas salir de este escuadrón?"
+    const confirmed = await confirmAction(
+      "¿Salir del escuadrón?",
+      "Perderás tu slot y tendrás que usar un código de invitación para volver a unirte."
     );
     if (!confirmed) {
       return;
@@ -200,8 +200,7 @@ export function SquadSidebar({
       window.location.href = "/dashboard";
     } catch (err) {
       console.error("Error leaving squad:", err);
-      // biome-ignore lint/suspicious/noAlert: alert for user feedback
-      alert("Error al salir del escuadrón.");
+      notify("error", "Error al salir del escuadrón.");
     }
   };
 

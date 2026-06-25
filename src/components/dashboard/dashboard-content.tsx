@@ -2,6 +2,10 @@ import { actions } from "astro:actions";
 import { BarChart3, Check, Copy, HelpCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  NotificationProvider,
+  useNotification,
+} from "@/components/ui/notification";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { MainTabs, type TabType } from "./main-tabs";
 import { SessionPanel } from "./session-panel";
@@ -40,6 +44,7 @@ interface Session {
 export interface PlayerMatchStats {
   active_class: string;
   assists: number;
+  avatar_seed?: string | null;
   created_at: string;
   downs: number;
   end_game: boolean;
@@ -51,7 +56,6 @@ export interface PlayerMatchStats {
   respawned: boolean;
   revives: number;
   user_id?: string | null;
-  avatar_seed?: string | null;
 }
 
 export interface Match {
@@ -366,30 +370,6 @@ export function DashboardContent({
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const handleDeleteSquad = async () => {
-    if (!squadState) {
-      return;
-    }
-    // biome-ignore lint/suspicious/noAlert: standard confirm
-    const confirmed = confirm(
-      "¿Estás seguro de que deseas eliminar este escuadrón? Esta acción es irreversible."
-    );
-    if (!confirmed) {
-      return;
-    }
-    try {
-      const { error } = await actions.squad.delete({ squadId: squadState.id });
-      if (error) {
-        throw error;
-      }
-      window.location.href = "/dashboard";
-    } catch (err) {
-      console.error("Error deleting squad:", err);
-      // biome-ignore lint/suspicious/noAlert: alert for user feedback
-      alert("Error al eliminar el escuadrón.");
-    }
-  };
-
   if (!squadState || isCreatingNew) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] flex-1 items-center justify-center bg-background p-8">
@@ -402,265 +382,299 @@ export function DashboardContent({
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-1 flex-col bg-background xl:flex-row">
-      <SquadSidebar
-        allSquads={allSquads}
-        currentUser={currentUser}
-        onNewSquadClick={() => setIsCreatingNew(true)}
-        setSquadState={setSquadState}
-        squad={squadState}
-      />
-
-      {/* Central content area with tab navigation */}
-      <div className="flex flex-1 flex-col">
-        <MainTabs
-          activeTab={activeTab}
-          isOwner={isOwner}
-          onTabChange={setActiveTab}
+    <NotificationProvider>
+      <div className="flex min-h-[calc(100vh-4rem)] flex-1 flex-col bg-background xl:flex-row">
+        <SquadSidebar
+          allSquads={allSquads}
+          currentUser={currentUser}
+          onNewSquadClick={() => setIsCreatingNew(true)}
+          setSquadState={setSquadState}
+          squad={squadState}
         />
 
-        <main className="flex-1 p-6 pb-16 xl:p-8">
-          {activeTab === "active-session" && (
-            <SessionPanel
-              activePlayers={activePlayers}
-              currentUser={currentUser}
-              initialSession={session}
-              isOwner={isOwner}
-              sessionMatches={matches}
-              setActivePlayers={setActivePlayers}
-              setSession={setSession}
-              setSquadState={setSquadState}
-              squad={squadState}
-            />
-          )}
+        {/* Central content area with tab navigation */}
+        <div className="flex flex-1 flex-col">
+          <MainTabs
+            activeTab={activeTab}
+            isOwner={isOwner}
+            onTabChange={setActiveTab}
+          />
 
-          {activeTab === "history" && (
-            <SessionsHistory
-              currentUserId={currentUser?.id}
-              squadId={squadState.id}
-            />
-          )}
+          <main className="flex-1 p-6 pb-16 xl:p-8">
+            {activeTab === "active-session" && (
+              <SessionPanel
+                activePlayers={activePlayers}
+                currentUser={currentUser}
+                initialSession={session}
+                isOwner={isOwner}
+                sessionMatches={matches}
+                setActivePlayers={setActivePlayers}
+                setSession={setSession}
+                setSquadState={setSquadState}
+                squad={squadState}
+              />
+            )}
 
-          {activeTab === "stats" && (
-            <div className="rounded-lg border border-border bg-card p-6">
-              <div className="flex items-center justify-between border-border/40 border-b pb-4 mb-6">
-                <div>
-                  <h3 className="flex items-center gap-2 font-bold text-foreground text-sm tracking-tight">
-                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                    Estadísticas Globales
-                  </h3>
-                  <p className="font-light text-muted-foreground text-xs mt-0.5">
-                    Historial de rendimiento acumulado y análisis de supervivencia del escuadrón.
+            {activeTab === "history" && (
+              <SessionsHistory
+                currentUserId={currentUser?.id}
+                squadId={squadState.id}
+              />
+            )}
+
+            {activeTab === "stats" && (
+              <div className="rounded-lg border border-border bg-card p-6">
+                <div className="mb-6 flex items-center justify-between border-border/40 border-b pb-4">
+                  <div>
+                    <h3 className="flex items-center gap-2 font-bold text-foreground text-sm tracking-tight">
+                      <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                      Estadísticas Globales
+                    </h3>
+                    <p className="mt-0.5 font-light text-muted-foreground text-xs">
+                      Historial de rendimiento acumulado y análisis de
+                      supervivencia del escuadrón.
+                    </p>
+                  </div>
+                </div>
+
+                {loadingStats ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground text-xs">
+                    <svg
+                      aria-label="Cargando"
+                      className="mb-3 h-8 w-8 animate-spin text-primary"
+                      fill="none"
+                      role="img"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <title>Cargando</title>
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <span>Cargando análisis tácticos del escuadrón...</span>
+                  </div>
+                ) : (
+                  <StatsView
+                    currentUserId={currentUser?.id}
+                    matches={historicalMatches}
+                    squad={squadState}
+                  />
+                )}
+              </div>
+            )}
+
+            {activeTab === "insights" && (
+              <div className="rounded-lg border border-border bg-card p-6">
+                <h3 className="flex items-center gap-2 font-bold text-foreground text-sm tracking-tight">
+                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  Recomendaciones del Coach
+                </h3>
+                <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-border border-dashed bg-background/50 p-12 text-center">
+                  <span className="mb-4 text-3xl">💡</span>
+                  <h4 className="font-semibold text-foreground text-sm">
+                    Sugerencias Tácticas
+                  </h4>
+                  <p className="mt-2 max-w-sm font-light text-muted-foreground text-xs">
+                    El Coach de Fatiga y las recomendaciones automáticas de
+                    composición de escuadrón y rotaciones de mapas se activarán
+                    en la Fase 8.
                   </p>
                 </div>
               </div>
+            )}
 
-              {loadingStats ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center text-xs text-muted-foreground">
-                  <svg
-                    aria-label="Cargando"
-                    className="h-8 w-8 animate-spin text-primary mb-3"
-                    fill="none"
-                    role="img"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <title>Cargando</title>
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                  <span>Cargando análisis tácticos del escuadrón...</span>
-                </div>
-              ) : (
-                <StatsView
-                  matches={historicalMatches}
-                  squad={squadState}
-                  currentUserId={currentUser?.id}
-                />
-              )}
-            </div>
-          )}
+            {activeTab === "settings" && isOwner && (
+              <div className="rounded-lg border border-border bg-card p-6">
+                <h3 className="mb-6 flex items-center gap-2 border-border border-b pb-4 font-bold text-foreground text-sm tracking-tight">
+                  Ajustes del Escuadrón
+                </h3>
 
-          {activeTab === "insights" && (
-            <div className="rounded-lg border border-border bg-card p-6">
-              <h3 className="flex items-center gap-2 font-bold text-foreground text-sm tracking-tight">
-                <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                Recomendaciones del Coach
-              </h3>
-              <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-border border-dashed bg-background/50 p-12 text-center">
-                <span className="mb-4 text-3xl">💡</span>
-                <h4 className="font-semibold text-foreground text-sm">
-                  Sugerencias Tácticas
-                </h4>
-                <p className="mt-2 max-w-sm font-light text-muted-foreground text-xs">
-                  El Coach de Fatiga y las recomendaciones automáticas de
-                  composición de escuadrón y rotaciones de mapas se activarán en
-                  la Fase 8.
-                </p>
-              </div>
-            </div>
-          )}
+                <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                  {/* Invite Code card */}
+                  <div className="space-y-4 rounded-lg border border-border bg-background p-5">
+                    <div>
+                      <h4 className="font-semibold text-foreground text-sm">
+                        Código de Invitación
+                      </h4>
+                      <p className="mt-1 font-light text-muted-foreground text-xs leading-relaxed">
+                        Comparte este código con tus compañeros de equipo para
+                        que puedan unirse a la escuadra y reclamar sus
+                        operadores.
+                      </p>
+                    </div>
 
-          {activeTab === "settings" && isOwner && (
-            <div className="rounded-lg border border-border bg-card p-6">
-              <h3 className="mb-6 flex items-center gap-2 border-border border-b pb-4 font-bold text-foreground text-sm tracking-tight">
-                Ajustes del Escuadrón
-              </h3>
+                    <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-muted/40 px-3.5 py-2.5">
+                      <span className="font-bold font-mono text-foreground text-lg tracking-wider">
+                        {squadState.invite_code || "BS-PENDIENTE"}
+                      </span>
 
-              <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                {/* Invite Code card */}
-                <div className="space-y-4 rounded-lg border border-border bg-background p-5">
-                  <div>
-                    <h4 className="font-semibold text-foreground text-sm">
-                      Código de Invitación
-                    </h4>
-                    <p className="mt-1 font-light text-muted-foreground text-xs leading-relaxed">
-                      Comparte este código con tus compañeros de equipo para que
-                      puedan unirse a la escuadra y reclamar sus operadores.
-                    </p>
+                      {squadState.invite_code && (
+                        <Button
+                          className="flex h-auto items-center gap-1.5 px-3 py-1.5 text-xs"
+                          onClick={() =>
+                            handleCopyCode(squadState.invite_code || "")
+                          }
+                          size="sm"
+                          variant="outline"
+                        >
+                          {copiedCode ? (
+                            <>
+                              <Check className="h-3.5 w-3.5 text-green-500" />
+                              <span>Copiado</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-3.5 w-3.5" />
+                              <span>Copiar</span>
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-muted/40 px-3.5 py-2.5">
-                    <span className="font-bold font-mono text-foreground text-lg tracking-wider">
-                      {squadState.invite_code || "BS-PENDIENTE"}
-                    </span>
+                  {/* Squad Info card */}
+                  <form
+                    className="space-y-4 rounded-lg border border-border bg-background p-5"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      setNameError(null);
+                      if (!squad) {
+                        return;
+                      }
+                      if (squadName.trim().length < 3) {
+                        setNameError(
+                          "El nombre debe tener al menos 3 caracteres."
+                        );
+                        return;
+                      }
+                      try {
+                        setIsSavingName(true);
+                        const { error } = await actions.squad.update({
+                          squadId: squad.id,
+                          name: squadName.trim(),
+                        });
+                        if (error) {
+                          throw error;
+                        }
+                        setSquadState((prev) =>
+                          prev ? { ...prev, name: squadName.trim() } : null
+                        );
+                      } catch (err) {
+                        console.error("Error updating squad name:", err);
+                        setNameError(
+                          "Error al actualizar el nombre del escuadrón."
+                        );
+                      } finally {
+                        setIsSavingName(false);
+                      }
+                    }}
+                  >
+                    <div>
+                      <h4 className="font-semibold text-foreground text-sm">
+                        Nombre del Escuadrón
+                      </h4>
+                      <p className="mt-1 font-light text-muted-foreground text-xs leading-relaxed">
+                        Puedes modificar el nombre que identifica a tu escuadrón
+                        directamente aquí.
+                      </p>
+                    </div>
 
-                    {squadState.invite_code && (
+                    <div className="flex flex-col gap-2">
+                      <input
+                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-75"
+                        disabled={isSavingName}
+                        onChange={(e) => setSquadName(e.target.value)}
+                        type="text"
+                        value={squadName}
+                      />
+                      {nameError && (
+                        <p className="mt-1 font-light text-destructive text-xs">
+                          {nameError}
+                        </p>
+                      )}
                       <Button
-                        className="flex h-auto items-center gap-1.5 px-3 py-1.5 text-xs"
-                        onClick={() =>
-                          handleCopyCode(squadState.invite_code || "")
+                        className="mt-2 h-auto self-start px-4 py-2"
+                        disabled={
+                          isSavingName ||
+                          squadName.trim() === (squad?.name || "")
                         }
                         size="sm"
-                        variant="outline"
+                        type="submit"
                       >
-                        {copiedCode ? (
-                          <>
-                            <Check className="h-3.5 w-3.5 text-green-500" />
-                            <span>Copiado</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="h-3.5 w-3.5" />
-                            <span>Copiar</span>
-                          </>
-                        )}
+                        {isSavingName ? "Guardando..." : "Guardar Nombre"}
                       </Button>
-                    )}
-                  </div>
-                </div>
+                    </div>
+                  </form>
 
-                {/* Squad Info card */}
-                <form
-                  className="space-y-4 rounded-lg border border-border bg-background p-5"
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    setNameError(null);
-                    if (!squad) {
-                      return;
-                    }
-                    if (squadName.trim().length < 3) {
-                      setNameError(
-                        "El nombre debe tener al menos 3 caracteres."
-                      );
-                      return;
-                    }
-                    try {
-                      setIsSavingName(true);
-                      const { error } = await actions.squad.update({
-                        squadId: squad.id,
-                        name: squadName.trim(),
-                      });
-                      if (error) {
-                        throw error;
-                      }
-                      setSquadState((prev) =>
-                        prev ? { ...prev, name: squadName.trim() } : null
-                      );
-                    } catch (err) {
-                      console.error("Error updating squad name:", err);
-                      setNameError(
-                        "Error al actualizar el nombre del escuadrón."
-                      );
-                    } finally {
-                      setIsSavingName(false);
-                    }
-                  }}
-                >
-                  <div>
-                    <h4 className="font-semibold text-foreground text-sm">
-                      Nombre del Escuadrón
-                    </h4>
-                    <p className="mt-1 font-light text-muted-foreground text-xs leading-relaxed">
-                      Puedes modificar el nombre que identifica a tu escuadrón
-                      directamente aquí.
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <input
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-75"
-                      disabled={isSavingName}
-                      onChange={(e) => setSquadName(e.target.value)}
-                      type="text"
-                      value={squadName}
-                    />
-                    {nameError && (
-                      <p className="mt-1 font-light text-destructive text-xs">
-                        {nameError}
-                      </p>
-                    )}
-                    <Button
-                      className="mt-2 h-auto self-start px-4 py-2"
-                      disabled={
-                        isSavingName || squadName.trim() === (squad?.name || "")
-                      }
-                      size="sm"
-                      type="submit"
-                    >
-                      {isSavingName ? "Guardando..." : "Guardar Nombre"}
-                    </Button>
-                  </div>
-                </form>
-
-                {/* Danger Zone card */}
-                <div className="space-y-4 rounded-lg border border-destructive/30 bg-destructive/5 p-5 xl:col-span-2">
-                  <div>
-                    <h4 className="font-semibold text-destructive text-sm">
-                      Zona de Peligro
-                    </h4>
-                    <p className="mt-1 font-light text-muted-foreground text-xs leading-relaxed">
-                      Una vez que elimines el escuadrón, no podrás recuperar sus
-                      datos ni el historial de sesiones asociadas. Todos los
-                      slots e integrantes serán desvinculados permanentemente.
-                    </p>
-                  </div>
-
-                  <Button
-                    className="h-auto border border-destructive/20 px-4 py-2 text-destructive hover:bg-destructive/10"
-                    onClick={handleDeleteSquad}
-                    size="sm"
-                    variant="ghost"
-                  >
-                    Eliminar Escuadrón
-                  </Button>
+                  {/* Danger Zone card */}
+                  <DeleteSquadSection squadId={squadState.id} />
                 </div>
               </div>
-            </div>
-          )}
-        </main>
+            )}
+          </main>
+        </div>
       </div>
+    </NotificationProvider>
+  );
+}
+
+// ── Delete Squad Section (needs useNotification inside the provider) ──
+function DeleteSquadSection({ squadId }: { squadId: string }) {
+  const { notify, confirm: confirmAction } = useNotification();
+
+  const handleDeleteSquad = async () => {
+    const confirmed = await confirmAction(
+      "¿Eliminar escuadrón?",
+      "Esta acción es irreversible. Se perderán todas las sesiones y estadísticas del escuadrón."
+    );
+    if (!confirmed) {
+      return;
+    }
+    try {
+      const { error } = await actions.squad.delete({ squadId });
+      if (error) {
+        throw error;
+      }
+      window.location.href = "/dashboard";
+    } catch (err) {
+      console.error("Error deleting squad:", err);
+      notify("error", "Error al eliminar el escuadrón.");
+    }
+  };
+
+  return (
+    <div className="space-y-4 rounded-lg border border-destructive/30 bg-destructive/5 p-5 xl:col-span-2">
+      <div>
+        <h4 className="font-semibold text-destructive text-sm">
+          Zona de Peligro
+        </h4>
+        <p className="mt-1 font-light text-muted-foreground text-xs leading-relaxed">
+          Una vez que elimines el escuadrón, no podrás recuperar sus datos ni el
+          historial de sesiones asociadas. Todos los slots e integrantes serán
+          desvinculados permanentemente.
+        </p>
+      </div>
+
+      <Button
+        className="h-auto border border-destructive/20 px-4 py-2 text-destructive hover:bg-destructive/10"
+        onClick={handleDeleteSquad}
+        size="sm"
+        variant="ghost"
+      >
+        Eliminar Escuadrón
+      </Button>
     </div>
   );
 }
