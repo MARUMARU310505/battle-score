@@ -29,10 +29,17 @@ export function Hero() {
 
           {/* Call to action */}
           <div className="mt-10 flex items-center justify-center gap-x-6">
-            <Button className="h-11 rounded-md px-6 font-semibold text-sm" size="lg">
+            <Button
+              className="h-11 rounded-md px-6 font-semibold text-sm"
+              size="lg"
+            >
               Comenzar ahora
             </Button>
-            <Button className="h-11 rounded-md px-6 font-semibold text-sm" size="lg" variant="outline">
+            <Button
+              className="h-11 rounded-md px-6 font-semibold text-sm"
+              size="lg"
+              variant="outline"
+            >
               Saber más
             </Button>
           </div>

@@ -340,7 +340,7 @@ export function SquadHub({
                       {/* Entry buttons */}
                       <div className="flex gap-2">
                         <Button
-                          className="flex-1 text-xs py-2 h-auto px-4"
+                          className="h-auto flex-1 px-4 py-2 text-xs"
                           onClick={() => handleEnterSquad(squad.id)}
                           size="sm"
                         >
@@ -400,7 +400,12 @@ export function SquadHub({
                 type="text"
                 value={inviteCode}
               />
-              <Button disabled={loading} size="sm" type="submit" className="px-4">
+              <Button
+                className="px-4"
+                disabled={loading}
+                size="sm"
+                type="submit"
+              >
                 <Search className="h-4 w-4" />
               </Button>
             </form>

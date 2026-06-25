@@ -1,6 +1,6 @@
 import { actions } from "astro:actions";
 import { User, UserCheck, UserMinus } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export interface ActivePlayer {
   active_class: string;
@@ -16,25 +16,18 @@ export interface ActivePlayer {
 
 interface SquadRosterProps {
   activePlayers: ActivePlayer[];
-  isOwner?: boolean;
   currentUserId?: string | null;
-  squadId: string;
+  isOwner?: boolean;
   onChange: (players: ActivePlayer[]) => void;
   originalMembers: Array<{
     gamertag: string;
     favorite_class: string;
     slot_number: number;
   }>;
-  setOverlayLoading?: (loading: boolean) => void;
-  setOverlayMessage?: (message: string) => void;
+  // biome-ignore lint/suspicious/noExplicitAny: React state dispatcher type
+  setSquadState?: React.Dispatch<React.SetStateAction<any>>;
+  squadId: string;
 }
-
-const LoaderSpinner = () => (
-  <svg className="animate-spin h-3.5 w-3.5 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-  </svg>
-);
 
 export function SquadRoster({
   activePlayers,
@@ -43,21 +36,22 @@ export function SquadRoster({
   isOwner = false,
   currentUserId: _currentUserId = null,
   squadId,
-  setOverlayLoading,
-  setOverlayMessage,
+  setSquadState,
 }: SquadRosterProps) {
   const [loadingSlot, setLoadingSlot] = useState<number | null>(null);
 
   // Local state for replacement input fields to avoid keystroke database latency
-  const [localGamertags, setLocalGamertags] = useState<Record<number, string>>(() => {
-    const initial: Record<number, string> = {};
-    for (const player of activePlayers) {
-      if (player.status === "reemplazo") {
-        initial[player.slot_number] = player.gamertag;
+  const [localGamertags, setLocalGamertags] = useState<Record<number, string>>(
+    () => {
+      const initial: Record<number, string> = {};
+      for (const player of activePlayers) {
+        if (player.status === "reemplazo") {
+          initial[player.slot_number] = player.gamertag;
+        }
       }
+      return initial;
     }
-    return initial;
-  });
+  );
 
   useEffect(() => {
     setLocalGamertags((prev) => {
@@ -79,7 +73,9 @@ export function SquadRoster({
     let newGamertag = "";
 
     const player = activePlayers.find((p) => p.slot_number === slot);
-    if (!player) return;
+    if (!player) {
+      return;
+    }
 
     if (status === "titular" && original) {
       newGamertag = original.gamertag;
@@ -89,10 +85,6 @@ export function SquadRoster({
       newGamertag = "Ausente";
     }
 
-    if (setOverlayLoading && setOverlayMessage) {
-      setOverlayMessage("Actualizando alineación del roster...");
-      setOverlayLoading(true);
-    }
     setLoadingSlot(slot);
     try {
       const { error } = await actions.squad.updateMemberStatus({
@@ -104,22 +96,33 @@ export function SquadRoster({
       if (error) {
         throw error;
       }
+      if (setSquadState) {
+        // biome-ignore lint/suspicious/noExplicitAny: state updater uses any
+        setSquadState((prev: any) => {
+          if (!prev) {
+            return null;
+          }
+          return {
+            ...prev,
+            // biome-ignore lint/suspicious/noExplicitAny: m mapper uses any
+            members: prev.members.map((m: any) =>
+              m.slot_number === slot
+                ? { ...m, status, gamertag: newGamertag }
+                : m
+            ),
+          };
+        });
+      }
     } catch (err) {
       console.error("Error updating member status in DB:", err);
+      // biome-ignore lint/suspicious/noAlert: standard alert
       alert("Error al cambiar el estado del operador.");
     } finally {
-      if (setOverlayLoading) {
-        setOverlayLoading(false);
-      }
       setLoadingSlot(null);
     }
   };
 
   const handleGamertagChange = async (slot: number, gamertag: string) => {
-    if (setOverlayLoading && setOverlayMessage) {
-      setOverlayMessage("Guardando gamertag de reemplazo...");
-      setOverlayLoading(true);
-    }
     setLoadingSlot(slot);
     try {
       const { error } = await actions.squad.updateMemberStatus({
@@ -131,12 +134,24 @@ export function SquadRoster({
       if (error) {
         throw error;
       }
+      if (setSquadState) {
+        // biome-ignore lint/suspicious/noExplicitAny: state updater uses any
+        setSquadState((prev: any) => {
+          if (!prev) {
+            return null;
+          }
+          return {
+            ...prev,
+            // biome-ignore lint/suspicious/noExplicitAny: m mapper uses any
+            members: prev.members.map((m: any) =>
+              m.slot_number === slot ? { ...m, gamertag } : m
+            ),
+          };
+        });
+      }
     } catch (err) {
       console.error("Error updating replacement gamertag:", err);
     } finally {
-      if (setOverlayLoading) {
-        setOverlayLoading(false);
-      }
       setLoadingSlot(slot);
       setTimeout(() => setLoadingSlot(null), 300); // Small delay to indicate completion
     }
@@ -154,6 +169,7 @@ export function SquadRoster({
       </div>
 
       <div className="space-y-4">
+        {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy mapping function */}
         {activePlayers.map((player) => {
           const isAbsent = player.status === "ausente";
           const isSub = player.status === "reemplazo";
@@ -161,7 +177,7 @@ export function SquadRoster({
 
           return (
             <div
-              className={`rounded-lg border p-4 transition-all duration-200 relative ${
+              className={`relative overflow-hidden rounded-lg border p-4 transition-all duration-200 ${
                 isAbsent
                   ? "border-border/40 bg-card/10 opacity-70"
                   : "border-border bg-card shadow-xs"
@@ -169,8 +185,30 @@ export function SquadRoster({
               key={player.slot_number}
             >
               {isSlotLoading && (
-                <div className="absolute right-3 top-3 text-muted-foreground animate-pulse">
-                  <LoaderSpinner />
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/60 backdrop-blur-[1px]">
+                  <svg
+                    aria-label="Cargando"
+                    className="h-5 w-5 animate-spin text-primary"
+                    fill="none"
+                    role="img"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <title>Cargando</title>
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      fill="currentColor"
+                    />
+                  </svg>
                 </div>
               )}
 
@@ -186,17 +224,17 @@ export function SquadRoster({
                         <input
                           className="rounded-md border border-border bg-background px-2 py-0.5 font-normal font-sans text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-75"
                           disabled={!isOwner || isSlotLoading}
-                          onChange={(e) => {
-                            setLocalGamertags(prev => ({
-                              ...prev,
-                              [player.slot_number]: e.target.value
-                            }));
-                          }}
                           onBlur={() => {
                             handleGamertagChange(
                               player.slot_number,
                               localGamertags[player.slot_number] || ""
                             );
+                          }}
+                          onChange={(e) => {
+                            setLocalGamertags((prev) => ({
+                              ...prev,
+                              [player.slot_number]: e.target.value,
+                            }));
                           }}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {

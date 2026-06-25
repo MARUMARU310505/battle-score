@@ -1,23 +1,23 @@
 import { actions } from "astro:actions";
 import { BarChart3, Check, Copy, HelpCircle } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { MainTabs, type TabType } from "./main-tabs";
 import { SessionPanel } from "./session-panel";
 import { SessionsHistory } from "./sessions-history";
 import type { ActivePlayer } from "./squad-roster";
 import { SquadSidebar } from "./squad-sidebar";
 import { SquadWizard } from "./squad-wizard";
-import { createSupabaseBrowserClient } from "@/lib/supabase";
 
 interface Member {
   favorite_class: string;
   gamertag: string;
   id: string;
   is_active: boolean;
-  status: "titular" | "reemplazo" | "ausente";
   level: number;
   slot_number: number;
+  status: "titular" | "reemplazo" | "ausente";
   user_id?: string | null;
 }
 
@@ -88,8 +88,6 @@ export function DashboardContent({
   const [squadName, setSquadName] = useState(squad?.name || "");
   const [isSavingName, setIsSavingName] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
-  const [isOverlayLoading, setIsOverlayLoading] = useState(false);
-  const [overlayMessage, setOverlayMessage] = useState("");
 
   // Real-time synchronization states
   const [squadState, setSquadState] = useState(squad);
@@ -123,7 +121,9 @@ export function DashboardContent({
 
         players.push({
           slot_number: member.slot_number,
-          status: member.status || (hasUser && member.is_active ? "titular" : "ausente"),
+          status:
+            member.status ||
+            (hasUser && member.is_active ? "titular" : "ausente"),
           gamertag: member.gamertag,
           favorite_class: member.favorite_class,
           active_class: member.favorite_class,
@@ -151,13 +151,16 @@ export function DashboardContent({
 
   // Recalculate and update roster player statistics when squadState or matches change
   useEffect(() => {
-    if (!squadState) return;
+    if (!squadState) {
+      return;
+    }
     setActivePlayers(() => {
       const players: ActivePlayer[] = [];
       for (let slot = 1; slot <= 4; slot++) {
         const member = squadState.members.find((m) => m.slot_number === slot);
         if (member) {
-          const hasUser = member.user_id !== null && member.user_id !== undefined;
+          const hasUser =
+            member.user_id !== null && member.user_id !== undefined;
 
           let kills = 0;
           let downs = 0;
@@ -176,7 +179,9 @@ export function DashboardContent({
 
           players.push({
             slot_number: member.slot_number,
-            status: member.status || (hasUser && member.is_active ? "titular" : "ausente"),
+            status:
+              member.status ||
+              (hasUser && member.is_active ? "titular" : "ausente"),
             gamertag: member.gamertag,
             favorite_class: member.favorite_class,
             active_class: member.favorite_class,
@@ -205,7 +210,9 @@ export function DashboardContent({
 
   // Real-time channel listener for Sessions
   useEffect(() => {
-    if (!squadState) return;
+    if (!squadState) {
+      return;
+    }
 
     const sessionsChannel = supabase
       .channel("sessions_realtime")
@@ -229,7 +236,8 @@ export function DashboardContent({
     return () => {
       supabase.removeChannel(sessionsChannel);
     };
-  }, [squadState?.id, supabase]);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: realtime listener only needs squadState.id
+  }, [squadState?.id, supabase, squadState]);
 
   // Real-time channel listener for Matches and Player Stats
   useEffect(() => {
@@ -284,7 +292,9 @@ export function DashboardContent({
 
   // Real-time channel listener for Squad Members
   useEffect(() => {
-    if (!squadState) return;
+    if (!squadState) {
+      return;
+    }
 
     const membersChannel = supabase
       .channel("members_realtime")
@@ -308,9 +318,14 @@ export function DashboardContent({
     return () => {
       supabase.removeChannel(membersChannel);
     };
-  }, [squadState?.id, supabase]);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: realtime listener only needs squadState.id
+  }, [squadState?.id, supabase, squadState]);
 
-  const isOwner = !!(currentUser?.id && squadState?.owner_id && squadState.owner_id === currentUser.id);
+  const isOwner = !!(
+    currentUser?.id &&
+    squadState?.owner_id &&
+    squadState.owner_id === currentUser.id
+  );
 
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -319,7 +334,9 @@ export function DashboardContent({
   };
 
   const handleDeleteSquad = async () => {
-    if (!squadState) return;
+    if (!squadState) {
+      return;
+    }
     // biome-ignore lint/suspicious/noAlert: standard confirm
     const confirmed = confirm(
       "¿Estás seguro de que deseas eliminar este escuadrón? Esta acción es irreversible."
@@ -357,10 +374,8 @@ export function DashboardContent({
         allSquads={allSquads}
         currentUser={currentUser}
         onNewSquadClick={() => setIsCreatingNew(true)}
-        squad={squadState}
-        setOverlayLoading={setIsOverlayLoading}
-        setOverlayMessage={setOverlayMessage}
         setSquadState={setSquadState}
+        squad={squadState}
       />
 
       {/* Central content area with tab navigation */}
@@ -375,15 +390,14 @@ export function DashboardContent({
           {activeTab === "active-session" && (
             <SessionPanel
               activePlayers={activePlayers}
+              currentUser={currentUser}
               initialSession={session}
               isOwner={isOwner}
               sessionMatches={matches}
               setActivePlayers={setActivePlayers}
-              squad={squadState}
-              currentUser={currentUser}
-              setOverlayLoading={setIsOverlayLoading}
-              setOverlayMessage={setOverlayMessage}
               setSession={setSession}
+              setSquadState={setSquadState}
+              squad={squadState}
             />
           )}
 
@@ -457,8 +471,10 @@ export function DashboardContent({
 
                     {squadState.invite_code && (
                       <Button
-                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 h-auto"
-                        onClick={() => handleCopyCode(squadState.invite_code || "")}
+                        className="flex h-auto items-center gap-1.5 px-3 py-1.5 text-xs"
+                        onClick={() =>
+                          handleCopyCode(squadState.invite_code || "")
+                        }
                         size="sm"
                         variant="outline"
                       >
@@ -495,8 +511,6 @@ export function DashboardContent({
                     }
                     try {
                       setIsSavingName(true);
-                      setIsOverlayLoading(true);
-                      setOverlayMessage("Actualizando nombre del escuadrón...");
                       const { error } = await actions.squad.update({
                         squadId: squad.id,
                         name: squadName.trim(),
@@ -504,7 +518,9 @@ export function DashboardContent({
                       if (error) {
                         throw error;
                       }
-                      setSquadState(prev => prev ? { ...prev, name: squadName.trim() } : null);
+                      setSquadState((prev) =>
+                        prev ? { ...prev, name: squadName.trim() } : null
+                      );
                     } catch (err) {
                       console.error("Error updating squad name:", err);
                       setNameError(
@@ -512,7 +528,6 @@ export function DashboardContent({
                       );
                     } finally {
                       setIsSavingName(false);
-                      setIsOverlayLoading(false);
                     }
                   }}
                 >
@@ -540,7 +555,7 @@ export function DashboardContent({
                       </p>
                     )}
                     <Button
-                      className="mt-2 self-start px-4 py-2 h-auto"
+                      className="mt-2 h-auto self-start px-4 py-2"
                       disabled={
                         isSavingName || squadName.trim() === (squad?.name || "")
                       }
@@ -566,7 +581,7 @@ export function DashboardContent({
                   </div>
 
                   <Button
-                    className="border border-destructive/20 text-destructive hover:bg-destructive/10 px-4 py-2 h-auto"
+                    className="h-auto border border-destructive/20 px-4 py-2 text-destructive hover:bg-destructive/10"
                     onClick={handleDeleteSquad}
                     size="sm"
                     variant="ghost"
@@ -579,21 +594,6 @@ export function DashboardContent({
           )}
         </main>
       </div>
-
-      {isOverlayLoading && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm transition-all duration-300">
-          <div className="flex flex-col items-center gap-4 p-6 rounded-lg bg-card border border-border shadow-lg max-w-xs text-center animate-in fade-in zoom-in-95 duration-200">
-            <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <div className="space-y-1">
-              <p className="font-bold text-foreground text-sm tracking-tight">Procesando</p>
-              <p className="text-muted-foreground text-xs font-light leading-relaxed">{overlayMessage || "Por favor espera..."}</p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

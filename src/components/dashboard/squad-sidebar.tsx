@@ -23,10 +23,9 @@ interface SquadSidebarProps {
   allSquads: Array<{ id: string; name: string }>;
   currentUser?: { id: string; email?: string } | null;
   onNewSquadClick: () => void;
-  squad: Squad;
-  setOverlayLoading?: (loading: boolean) => void;
-  setOverlayMessage?: (message: string) => void;
+  // biome-ignore lint/suspicious/noExplicitAny: state dispatcher type
   setSquadState?: React.Dispatch<React.SetStateAction<any>>;
+  squad: Squad;
 }
 
 const CLASS_BADGES: Record<string, string> = {
@@ -41,15 +40,14 @@ export function SquadSidebar({
   allSquads,
   onNewSquadClick,
   currentUser = null,
-  setOverlayLoading,
-  setOverlayMessage,
-  setSquadState: _setSquadState,
+  setSquadState,
 }: SquadSidebarProps) {
   const isOwner = squad.owner_id === currentUser?.id;
   const myMember = squad.members.find((m) => m.user_id === currentUser?.id);
 
   const [editingSlot, setEditingSlot] = useState<number | null>(null);
   const [editClass, setEditClass] = useState("Asalto");
+  const [loadingSlot, setLoadingSlot] = useState<number | null>(null);
 
   const startEditing = (member: Member) => {
     setEditingSlot(member.slot_number);
@@ -57,10 +55,7 @@ export function SquadSidebar({
   };
 
   const handleSaveClass = async (slotNumber: number) => {
-    if (setOverlayLoading && setOverlayMessage) {
-      setOverlayMessage("Guardando clase del operador...");
-      setOverlayLoading(true);
-    }
+    setLoadingSlot(slotNumber);
     try {
       const { error } = await actions.squad.updateMemberClass({
         squadId: squad.id,
@@ -71,15 +66,30 @@ export function SquadSidebar({
       if (error) {
         throw error;
       }
+      if (setSquadState) {
+        // biome-ignore lint/suspicious/noExplicitAny: state updater uses any
+        setSquadState((prev: any) => {
+          if (!prev) {
+            return null;
+          }
+          return {
+            ...prev,
+            // biome-ignore lint/suspicious/noExplicitAny: m mapper uses any
+            members: prev.members.map((m: any) =>
+              m.slot_number === slotNumber
+                ? { ...m, favorite_class: editClass }
+                : m
+            ),
+          };
+        });
+      }
       setEditingSlot(null);
     } catch (err) {
       console.error("Error updating member class:", err);
       // biome-ignore lint/suspicious/noAlert: standard alert
       alert("Error al actualizar el rol del operador.");
     } finally {
-      if (setOverlayLoading) {
-        setOverlayLoading(false);
-      }
+      setLoadingSlot(null);
     }
   };
 
@@ -87,10 +97,7 @@ export function SquadSidebar({
     slotNumber: number,
     currentActive: boolean
   ) => {
-    if (setOverlayLoading && setOverlayMessage) {
-      setOverlayMessage(currentActive ? "Desactivando operador..." : "Activando operador...");
-      setOverlayLoading(true);
-    }
+    setLoadingSlot(slotNumber);
     try {
       const { error } = await actions.squad.setIsActive({
         squadId: squad.id,
@@ -100,14 +107,29 @@ export function SquadSidebar({
       if (error) {
         throw error;
       }
+      if (setSquadState) {
+        // biome-ignore lint/suspicious/noExplicitAny: state updater uses any
+        setSquadState((prev: any) => {
+          if (!prev) {
+            return null;
+          }
+          return {
+            ...prev,
+            // biome-ignore lint/suspicious/noExplicitAny: m mapper uses any
+            members: prev.members.map((m: any) =>
+              m.slot_number === slotNumber
+                ? { ...m, is_active: !currentActive }
+                : m
+            ),
+          };
+        });
+      }
     } catch (err) {
       console.error("Error toggling active state:", err);
       // biome-ignore lint/suspicious/noAlert: standard alert
       alert("Error al cambiar el estado del operador.");
     } finally {
-      if (setOverlayLoading) {
-        setOverlayLoading(false);
-      }
+      setLoadingSlot(null);
     }
   };
 
@@ -139,7 +161,7 @@ export function SquadSidebar({
   };
 
   return (
-    <aside className="flex xl:min-h-[calc(100vh-4rem)] min-h-0 w-full flex-col justify-between border-border border-r bg-card p-4 xl:w-64">
+    <aside className="flex min-h-0 w-full flex-col justify-between border-border border-r bg-card p-4 xl:min-h-[calc(100vh-4rem)] xl:w-64">
       <div className="space-y-6">
         {/* Squad Selector */}
         <div className="space-y-1.5">
@@ -176,8 +198,11 @@ export function SquadSidebar({
 
         {/* Member list */}
         <div className="space-y-3">
+          {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy mapping */}
           {Array.from({ length: 4 }, (_, i) => i + 1).map((slotNumber) => {
-            const member = squad.members.find((m) => m.slot_number === slotNumber);
+            const member = squad.members.find(
+              (m) => m.slot_number === slotNumber
+            );
             if (!member) {
               return (
                 <div
@@ -217,9 +242,36 @@ export function SquadSidebar({
             if (isEditingThisSlot) {
               return (
                 <div
-                  className="space-y-2.5 rounded-lg border border-primary/20 bg-primary/5 p-3"
+                  className="relative space-y-2.5 overflow-hidden rounded-lg border border-primary/20 bg-primary/5 p-3"
                   key={member.id}
                 >
+                  {loadingSlot === member.slot_number && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/60 backdrop-blur-[1px]">
+                      <svg
+                        aria-label="Cargando"
+                        className="h-5 w-5 animate-spin text-primary"
+                        fill="none"
+                        role="img"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <title>Cargando</title>
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="font-mono font-semibold text-[9px] text-primary uppercase">
                       Clase de {member.gamertag}
@@ -292,9 +344,36 @@ export function SquadSidebar({
 
             return (
               <div
-                className="flex flex-col gap-2 rounded-lg border border-border/40 bg-background/50 p-2.5 transition-colors hover:bg-muted/30"
+                className="relative flex flex-col gap-2 overflow-hidden rounded-lg border border-border/40 bg-background/50 p-2.5 transition-colors hover:bg-muted/30"
                 key={member.id}
               >
+                {loadingSlot === member.slot_number && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/60 backdrop-blur-[1px]">
+                    <svg
+                      aria-label="Cargando"
+                      className="h-5 w-5 animate-spin text-primary"
+                      fill="none"
+                      role="img"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <title>Cargando</title>
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </div>
+                )}
                 <div className="flex items-start gap-3">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted font-bold font-mono text-foreground text-xs uppercase">
                     {member.gamertag.slice(0, 2)}

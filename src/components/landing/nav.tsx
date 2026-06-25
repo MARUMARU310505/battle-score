@@ -30,7 +30,7 @@ export function Nav({ user = null }: NavProps) {
           <a className="flex items-center space-x-2" href="/">
             <span className="font-bold text-foreground text-xl tracking-tight">
               Battle Score
-              <span className="ml-1.5 border-border border-l pl-1.5 font-light font-sans text-muted-foreground text-sm uppercase xl:inline-block hidden">
+              <span className="ml-1.5 hidden border-border border-l pl-1.5 font-light font-sans text-muted-foreground text-sm uppercase xl:inline-block">
                 BR Analytics
               </span>
             </span>

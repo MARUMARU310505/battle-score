@@ -33,15 +33,16 @@ export function SessionsHistory({ squadId }: SessionsHistoryProps) {
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [detailLoading, setDetailLoading] = useState<string | null>(null);
-  const [sessionMatches, setSessionMatches] = useState<
-    Record<string, Match[]>
-  >({});
+  const [sessionMatches, setSessionMatches] = useState<Record<string, Match[]>>(
+    {}
+  );
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const { data, error: actionError } =
-          await actions.session.getHistory({ squadId });
+        const { data, error: actionError } = await actions.session.getHistory({
+          squadId,
+        });
 
         if (actionError) {
           throw actionError;
@@ -71,8 +72,9 @@ export function SessionsHistory({ squadId }: SessionsHistoryProps) {
     if (!sessionMatches[sessionId]) {
       setDetailLoading(sessionId);
       try {
-        const { data, error: actionError } =
-          await actions.session.getDetail({ sessionId });
+        const { data, error: actionError } = await actions.session.getDetail({
+          sessionId,
+        });
 
         if (actionError) {
           throw actionError;
@@ -109,8 +111,8 @@ export function SessionsHistory({ squadId }: SessionsHistoryProps) {
       return "—";
     }
     const ms = new Date(end).getTime() - new Date(start).getTime();
-    const hours = Math.floor(ms / 3600000);
-    const minutes = Math.floor((ms % 3600000) / 60000);
+    const hours = Math.floor(ms / 3_600_000);
+    const minutes = Math.floor((ms % 3_600_000) / 60_000);
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }
@@ -165,7 +167,7 @@ export function SessionsHistory({ squadId }: SessionsHistoryProps) {
           Sesiones Anteriores
         </h3>
         <span className="font-mono text-muted-foreground text-xs">
-          {sessions.length} sesión{sessions.length !== 1 ? "es" : ""}
+          {sessions.length} sesión{sessions.length === 1 ? "" : "es"}
         </span>
       </div>
 
@@ -321,22 +323,20 @@ function MatchDetailList({ matches }: { matches: Match[] }) {
             {/* Match Summary */}
             <button
               className="flex w-full cursor-pointer items-center justify-between p-3 text-left transition-colors hover:bg-muted/10"
-              onClick={() =>
-                setExpandedMatchId(isExpanded ? null : match.id)
-              }
+              onClick={() => setExpandedMatchId(isExpanded ? null : match.id)}
               type="button"
             >
               <div className="flex items-center gap-3">
                 <span
                   className={`flex h-6 w-6 items-center justify-center rounded-full font-mono font-semibold text-xs ${
                     match.placement === 1
-                      ? "border border-amber-500/30 bg-amber-500/20 text-amber-500 border"
+                      ? "border border-amber-500/30 bg-amber-500/20 text-amber-500"
                       : match.placement === 2
-                        ? "border border-slate-300/40 bg-slate-300/20 text-slate-400 dark:text-slate-300 border"
+                        ? "border border-slate-300/40 bg-slate-300/20 text-slate-400 dark:text-slate-300"
                         : match.placement === 3
-                          ? "border border-amber-700/30 bg-amber-700/20 text-amber-700 dark:text-amber-600 border"
+                          ? "border border-amber-700/30 bg-amber-700/20 text-amber-700 dark:text-amber-600"
                           : match.placement === 4 || match.placement === 5
-                            ? "border border-blue-500/30 bg-blue-500/20 text-blue-500 border"
+                            ? "border border-blue-500/30 bg-blue-500/20 text-blue-500"
                             : "bg-muted text-muted-foreground"
                   }`}
                 >
@@ -344,8 +344,7 @@ function MatchDetailList({ matches }: { matches: Match[] }) {
                 </span>
                 <div>
                   <p className="font-bold text-foreground text-xs">
-                    Partida #{index + 1}{" "}
-                    {match.placement === 1 && "🏆"}
+                    Partida #{index + 1} {match.placement === 1 && "🏆"}
                   </p>
                   <p className="font-light text-[10px] text-muted-foreground">
                     Drop:{" "}
@@ -385,7 +384,7 @@ function MatchDetailList({ matches }: { matches: Match[] }) {
                 </div>
 
                 {/* Desktop View */}
-                <div className="hidden xl:block overflow-x-auto">
+                <div className="hidden overflow-x-auto xl:block">
                   <table className="w-full text-left font-sans text-xs">
                     <thead>
                       <tr className="border-border/30 border-b font-mono text-[10px] text-muted-foreground uppercase">
@@ -402,10 +401,7 @@ function MatchDetailList({ matches }: { matches: Match[] }) {
                         (stat: PlayerMatchStats) => {
                           const k = stat.kills || 0;
                           const d = stat.downs || 0;
-                          const kdr =
-                            d > 0
-                              ? (k / d).toFixed(2)
-                              : k.toFixed(2);
+                          const kdr = d > 0 ? (k / d).toFixed(2) : k.toFixed(2);
 
                           const mentalColors = [
                             "text-red-500",
@@ -416,10 +412,7 @@ function MatchDetailList({ matches }: { matches: Match[] }) {
                           ];
 
                           return (
-                            <tr
-                              className="hover:bg-muted/5"
-                              key={stat.id}
-                            >
+                            <tr className="hover:bg-muted/5" key={stat.id}>
                               <td className="py-2 font-semibold text-foreground">
                                 {stat.gamertag}
                               </td>
@@ -455,93 +448,103 @@ function MatchDetailList({ matches }: { matches: Match[] }) {
                 </div>
 
                 {/* Mobile View */}
-                <div className="block xl:hidden space-y-2.5">
-                  {match.player_match_stats?.map(
-                    (stat: PlayerMatchStats) => {
-                      const k = stat.kills || 0;
-                      const d = stat.downs || 0;
-                      const kdr =
-                        d > 0
-                          ? (k / d).toFixed(2)
-                          : k.toFixed(2);
+                <div className="block space-y-2.5 xl:hidden">
+                  {match.player_match_stats?.map((stat: PlayerMatchStats) => {
+                    const k = stat.kills || 0;
+                    const d = stat.downs || 0;
+                    const kdr = d > 0 ? (k / d).toFixed(2) : k.toFixed(2);
 
-                      const mentalColors = [
-                        "text-red-500 bg-red-500/10 border-red-500/20",
-                        "text-amber-500 bg-amber-500/10 border-amber-500/20",
-                        "text-blue-500 bg-blue-500/10 border-blue-500/20",
-                        "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
-                        "text-green-500 bg-green-500/10 border-green-500/20",
-                      ];
+                    const mentalColors = [
+                      "text-red-500 bg-red-500/10 border-red-500/20",
+                      "text-amber-500 bg-amber-500/10 border-amber-500/20",
+                      "text-blue-500 bg-blue-500/10 border-blue-500/20",
+                      "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
+                      "text-green-500 bg-green-500/10 border-green-500/20",
+                    ];
 
-                      const mentalLabels = [
-                        "Tilt 😡",
-                        "Fatiga 🥱",
-                        "Normal 😐",
-                        "Concentrado 🎯",
-                        "Excelente 🔥",
-                      ];
-                      const mentalLabel = mentalLabels[stat.mental_state - 1] || `${stat.mental_state}`;
+                    const mentalLabels = [
+                      "Tilt 😡",
+                      "Fatiga 🥱",
+                      "Normal 😐",
+                      "Concentrado 🎯",
+                      "Excelente 🔥",
+                    ];
+                    const mentalLabel =
+                      mentalLabels[stat.mental_state - 1] ||
+                      `${stat.mental_state}`;
 
-                      return (
-                        <div
-                          className="rounded-lg border border-border/50 bg-background/20 p-3 text-xs"
-                          key={stat.id}
-                        >
-                          {/* Header of Player Card */}
-                          <div className="flex items-center justify-between border-b border-border/20 pb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-foreground">
-                                {stat.gamertag}
-                              </span>
-                              <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-primary">
-                                {stat.active_class}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Stats Grid */}
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-2 text-[11px]">
-                            <div className="flex justify-between items-center">
-                              <span className="text-muted-foreground font-light">K/D/A (KDR):</span>
-                              <span className="font-mono font-semibold text-foreground">
-                                {k}/{d}/{stat.assists} <span className="text-muted-foreground text-[9px]">({kdr})</span>
-                              </span>
-                            </div>
-                            
-                            <div className="flex justify-between items-center">
-                              <span className="text-muted-foreground font-light">Reanimaciones:</span>
-                              <span className="font-mono font-semibold text-foreground">
-                                {stat.revives}
-                              </span>
-                            </div>
-
-                            <div className="flex justify-between items-center">
-                              <span className="text-muted-foreground font-light font-sans">Reaparecido:</span>
-                              <span className="font-semibold text-foreground">
-                                {stat.respawned ? "Sí ✅" : "No ❌"}
-                              </span>
-                            </div>
-
-                            <div className="flex justify-between items-center">
-                              <span className="text-muted-foreground font-light font-sans">Fase Final:</span>
-                              <span className="font-semibold text-foreground">
-                                {stat.end_game ? "Sí ✅" : "No ❌"}
-                              </span>
-                            </div>
-
-                            <div className="flex justify-between items-center col-span-2 border-t border-border/10 pt-2 mt-1">
-                              <span className="text-muted-foreground font-light font-sans">Estado Mental:</span>
-                              <span
-                                className={`rounded px-1.5 py-0.5 font-sans text-[10px] font-semibold border ${mentalColors[stat.mental_state - 1]}`}
-                              >
-                                {mentalLabel}
-                              </span>
-                            </div>
+                    return (
+                      <div
+                        className="rounded-lg border border-border/50 bg-background/20 p-3 text-xs"
+                        key={stat.id}
+                      >
+                        {/* Header of Player Card */}
+                        <div className="flex items-center justify-between border-border/20 border-b pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-foreground">
+                              {stat.gamertag}
+                            </span>
+                            <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-primary">
+                              {stat.active_class}
+                            </span>
                           </div>
                         </div>
-                      );
-                    }
-                  )}
+
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-2 text-[11px]">
+                          <div className="flex items-center justify-between">
+                            <span className="font-light text-muted-foreground">
+                              K/D/A (KDR):
+                            </span>
+                            <span className="font-mono font-semibold text-foreground">
+                              {k}/{d}/{stat.assists}{" "}
+                              <span className="text-[9px] text-muted-foreground">
+                                ({kdr})
+                              </span>
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="font-light text-muted-foreground">
+                              Reanimaciones:
+                            </span>
+                            <span className="font-mono font-semibold text-foreground">
+                              {stat.revives}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="font-light font-sans text-muted-foreground">
+                              Reaparecido:
+                            </span>
+                            <span className="font-semibold text-foreground">
+                              {stat.respawned ? "Sí ✅" : "No ❌"}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="font-light font-sans text-muted-foreground">
+                              Fase Final:
+                            </span>
+                            <span className="font-semibold text-foreground">
+                              {stat.end_game ? "Sí ✅" : "No ❌"}
+                            </span>
+                          </div>
+
+                          <div className="col-span-2 mt-1 flex items-center justify-between border-border/10 border-t pt-2">
+                            <span className="font-light font-sans text-muted-foreground">
+                              Estado Mental:
+                            </span>
+                            <span
+                              className={`rounded border px-1.5 py-0.5 font-sans font-semibold text-[10px] ${mentalColors[stat.mental_state - 1]}`}
+                            >
+                              {mentalLabel}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

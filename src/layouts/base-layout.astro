@@ -44,7 +44,9 @@ const gtmId = BUSINESS_CONFIG.googleTagManager?.id;
         : ""}
     />
   </head>
-  <body class="flex min-h-screen flex-col bg-muted/20 text-foreground antialiased transition-colors duration-200">
+  <body
+    class="flex min-h-screen flex-col bg-muted/20 text-foreground antialiased transition-colors duration-200"
+  >
     {gtmId && (
       <noscript>
         <iframe

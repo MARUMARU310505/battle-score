@@ -933,7 +933,10 @@ export const server = {
         const user = context.locals.user;
         const supabase = context.locals.supabase;
         if (!(user && supabase)) {
-          throw new ActionError({ code: "UNAUTHORIZED", message: "Inicie sesión" });
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión",
+          });
         }
 
         const { data: squad, error: squadError } = await supabase
@@ -943,18 +946,24 @@ export const server = {
           .maybeSingle();
 
         if (squadError || !squad) {
-          throw new ActionError({ code: "NOT_FOUND", message: "Escuadrón no encontrado" });
+          throw new ActionError({
+            code: "NOT_FOUND",
+            message: "Escuadrón no encontrado",
+          });
         }
 
         if (squad.owner_id !== user.id) {
-          throw new ActionError({ code: "UNAUTHORIZED", message: "Solo el líder del escuadrón puede cambiar el estado" });
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Solo el líder del escuadrón puede cambiar el estado",
+          });
         }
 
         const isActive = input.status !== "ausente";
 
         const { error } = await supabase
           .from("squad_members")
-          .update({ 
+          .update({
             status: input.status,
             is_active: isActive,
             gamertag: input.gamertag,
@@ -964,7 +973,10 @@ export const server = {
 
         if (error) {
           console.error("Error updating member status in DB:", error);
-          throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Error al cambiar el estado en base de datos" });
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Error al cambiar el estado en base de datos",
+          });
         }
 
         return { success: true };
@@ -1218,7 +1230,10 @@ export const server = {
         const user = context.locals.user;
         const supabase = context.locals.supabase;
         if (!(user && supabase)) {
-          throw new ActionError({ code: "UNAUTHORIZED", message: "Inicie sesión" });
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión",
+          });
         }
 
         const initialDraft = {
@@ -1254,7 +1269,10 @@ export const server = {
 
         if (error) {
           console.error("Error starting match registration:", error);
-          throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error.message,
+          });
         }
         return data;
       },
@@ -1268,7 +1286,10 @@ export const server = {
         const user = context.locals.user;
         const supabase = context.locals.supabase;
         if (!(user && supabase)) {
-          throw new ActionError({ code: "UNAUTHORIZED", message: "Inicie sesión" });
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión",
+          });
         }
 
         const { data, error } = await supabase
@@ -1284,7 +1305,10 @@ export const server = {
 
         if (error) {
           console.error("Error cancelling match registration:", error);
-          throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error.message,
+          });
         }
         return data;
       },
@@ -1299,7 +1323,10 @@ export const server = {
         const user = context.locals.user;
         const supabase = context.locals.supabase;
         if (!(user && supabase)) {
-          throw new ActionError({ code: "UNAUTHORIZED", message: "Inicie sesión" });
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión",
+          });
         }
 
         const { data, error } = await supabase
@@ -1313,7 +1340,10 @@ export const server = {
 
         if (error) {
           console.error("Error updating match registration draft:", error);
-          throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error.message,
+          });
         }
         return data;
       },
@@ -1331,7 +1361,10 @@ export const server = {
         const user = context.locals.user;
         const supabase = context.locals.supabase;
         if (!(user && supabase)) {
-          throw new ActionError({ code: "UNAUTHORIZED", message: "Inicie sesión" });
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Inicie sesión",
+          });
         }
 
         const { data: session, error: getError } = await supabase
@@ -1341,15 +1374,20 @@ export const server = {
           .single();
 
         if (getError || !session) {
-          throw new ActionError({ code: "NOT_FOUND", message: "Sesión no encontrada" });
+          throw new ActionError({
+            code: "NOT_FOUND",
+            message: "Sesión no encontrada",
+          });
         }
 
         let readyPlayers: string[] = [];
         try {
           readyPlayers = Array.isArray(session.ready_players)
             ? session.ready_players
-            : (typeof session.ready_players === "string" ? JSON.parse(session.ready_players) : []);
-        } catch (e) {
+            : typeof session.ready_players === "string"
+              ? JSON.parse(session.ready_players)
+              : [];
+        } catch {
           readyPlayers = [];
         }
 
@@ -1363,9 +1401,11 @@ export const server = {
         }
 
         let updatedDraft = session.match_registration_draft;
-        if (input.playerStats && updatedDraft && updatedDraft.playerStats) {
+        if (input.playerStats && updatedDraft?.playerStats) {
           const statsList = [...updatedDraft.playerStats];
-          const playerIndex = statsList.findIndex((p: any) => p.gamertag === input.gamertag);
+          const playerIndex = statsList.findIndex(
+            (p: any) => p.gamertag === input.gamertag
+          );
           if (playerIndex !== -1) {
             statsList[playerIndex] = {
               ...statsList[playerIndex],
@@ -1390,7 +1430,10 @@ export const server = {
 
         if (error) {
           console.error("Error toggling player ready:", error);
-          throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error.message,
+          });
         }
         return data;
       },
@@ -1439,7 +1482,10 @@ export const server = {
               .eq("session_id", session.id);
 
             if (matchesError) {
-              console.error("Error fetching matches for session:", matchesError);
+              console.error(
+                "Error fetching matches for session:",
+                matchesError
+              );
               return {
                 ...session,
                 match_count: 0,
