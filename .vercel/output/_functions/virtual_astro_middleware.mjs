@@ -1,7 +1,7 @@
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"46f9c79581e3621fd00edd9e90763fed8129f248"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="02dededa-af48-4310-891c-46ca488e802a",e._sentryDebugIdIdentifier="sentry-dbid-02dededa-af48-4310-891c-46ca488e802a");}catch(e){}}();import { e as defineMiddleware, af as sequence } from './chunks/params-and-props_C_MUS_JW.mjs';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{};e.SENTRY_RELEASE={id:"9ae64c8afd338efbfe8b2be798182d2f20d2e584"};var n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="02dededa-af48-4310-891c-46ca488e802a",e._sentryDebugIdIdentifier="sentry-dbid-02dededa-af48-4310-891c-46ca488e802a");}catch(e){}}();import { e as defineMiddleware, af as sequence } from './chunks/params-and-props_CfaR-7F2.mjs';
 import 'piccolore';
 import 'clsx';
-import { c as createSupabaseServerClient } from './chunks/supabase_l8DuMrCy.mjs';
+import { c as createSupabaseServerClient } from './chunks/supabase_C6JIrkW9.mjs';
 import { onRequest as onRequest$2 } from '@sentry/astro/middleware';
 
 const onRequest$1 = defineMiddleware(async (context, next) => {
