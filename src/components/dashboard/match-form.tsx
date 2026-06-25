@@ -26,6 +26,13 @@ interface MatchFormProps {
   currentUserId?: string | null;
 }
 
+const LoaderSpinner = () => (
+  <svg className="animate-spin -ml-1 mr-2 h-3.5 w-3.5 text-current inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  </svg>
+);
+
 export function MatchForm({
   session,
   activePlayers,
@@ -36,6 +43,7 @@ export function MatchForm({
 }: MatchFormProps) {
   const sessionId = session.id;
   const [loading, setLoading] = useState(false);
+  const [loadingPlayer, setLoadingPlayer] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const draft = session.match_registration_draft || {
@@ -162,21 +170,26 @@ export function MatchForm({
 
   const handleToggleReady = async (gamertag: string, currentStat: PlayerStatInput) => {
     const isCurrentlyReady = session.ready_players?.includes(gamertag);
+    setLoadingPlayer(gamertag);
     setLoading(true);
     setError(null);
     try {
-      await actions.session.togglePlayerReady({
+      const { error: actionError } = await actions.session.togglePlayerReady({
         sessionId,
         userId: currentStat.userId || null,
         gamertag,
         isReady: !isCurrentlyReady,
         playerStats: !isCurrentlyReady ? currentStat : undefined,
       });
+      if (actionError) {
+        throw new Error(actionError.message || "Error al actualizar estado.");
+      }
     } catch (err) {
       console.error("Error toggling ready status:", err);
-      setError("Error al cambiar el estado de listo.");
+      setError(err instanceof Error ? err.message : "Error al cambiar el estado de listo.");
     } finally {
       setLoading(false);
+      setLoadingPlayer(null);
     }
   };
 
@@ -371,38 +384,55 @@ export function MatchForm({
                   }`}
                   key={stat.gamertag}
                 >
-                  <div className="flex items-center justify-between border-border/40 border-b pb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-foreground text-xs flex items-center gap-1.5">
-                        {stat.gamertag}
+                  <div className="flex flex-col gap-2 border-border/40 border-b pb-2 sm:flex-row sm:items-center sm:justify-between">
+                    {/* Row 1: Player Name, Tú, Class Select */}
+                    <div className="flex items-center justify-between sm:justify-start gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-foreground text-xs">
+                          {stat.gamertag}
+                        </span>
                         {isCurrentUser && (
                           <span className="rounded bg-primary px-1.5 py-0.5 text-[8px] font-semibold text-primary-foreground uppercase">Tú</span>
                         )}
-                      </span>
+                        <select
+                          className="rounded border border-border bg-background px-2 py-0.5 font-sans text-foreground text-[10px] focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50 font-mono"
+                          disabled={!canEditPlayer}
+                          onChange={(e) =>
+                            handleStatChange(idx, "activeClass", e.target.value)
+                          }
+                          value={stat.activeClass}
+                        >
+                          {["Asalto", "Soporte", "Recon", "Ingeniero"].map((cls) => (
+                            <option key={cls} value={cls}>
+                              {cls}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Row 2: Status & Action Button */}
+                    <div className="flex items-center justify-between sm:justify-end gap-2">
                       {isPlayerReady ? (
                         <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[9px] font-semibold text-green-500 border border-green-500/20">Listo 🎯</span>
                       ) : (
                         <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[9px] font-semibold text-amber-500 border border-amber-500/20">Llenando...</span>
                       )}
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                      <span className="rounded bg-muted px-2 py-0.5 font-mono text-[9px] text-muted-foreground">
-                        {stat.activeClass}
-                      </span>
                       {(isOwner || isCurrentUser) && (
                         <Button
                           type="button"
                           onClick={() => handleToggleReady(stat.gamertag, stat)}
                           disabled={loading}
                           variant={isPlayerReady ? "outline" : "default"}
-                          className={`h-6 px-2 text-[10px] font-medium transition-all ${
+                          className={`h-6 px-2 text-[10px] font-medium transition-all flex items-center gap-1 ${
                             isPlayerReady 
                               ? "border-amber-500/30 text-amber-500 hover:bg-amber-500/10" 
                               : "bg-green-600 hover:bg-green-700 text-white"
                           }`}
                           size="sm"
                         >
+                          {loadingPlayer === stat.gamertag && <LoaderSpinner />}
                           {isPlayerReady ? "Modificar" : "Marcar Listo"}
                         </Button>
                       )}
@@ -604,7 +634,14 @@ export function MatchForm({
                   Cancelar
                 </Button>
                 <Button disabled={loading || !allReady} type="submit">
-                  {loading ? "Guardando..." : "Guardar Partida"}
+                  {loading ? (
+                    <>
+                      <LoaderSpinner />
+                      Guardando...
+                    </>
+                  ) : (
+                    "Guardar Partida"
+                  )}
                 </Button>
               </>
             ) : (

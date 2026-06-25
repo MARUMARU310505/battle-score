@@ -921,6 +921,55 @@ export const server = {
         return { success: true };
       },
     }),
+    updateMemberStatus: defineAction({
+      accept: "json",
+      input: z.object({
+        squadId: z.string().uuid(),
+        slotNumber: z.number().min(1).max(4),
+        status: z.enum(["titular", "reemplazo", "ausente"]),
+        gamertag: z.string(),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({ code: "UNAUTHORIZED", message: "Inicie sesión" });
+        }
+
+        const { data: squad, error: squadError } = await supabase
+          .from("squads")
+          .select("owner_id")
+          .eq("id", input.squadId)
+          .maybeSingle();
+
+        if (squadError || !squad) {
+          throw new ActionError({ code: "NOT_FOUND", message: "Escuadrón no encontrado" });
+        }
+
+        if (squad.owner_id !== user.id) {
+          throw new ActionError({ code: "UNAUTHORIZED", message: "Solo el líder del escuadrón puede cambiar el estado" });
+        }
+
+        const isActive = input.status !== "ausente";
+
+        const { error } = await supabase
+          .from("squad_members")
+          .update({ 
+            status: input.status,
+            is_active: isActive,
+            gamertag: input.gamertag,
+          })
+          .eq("squad_id", input.squadId)
+          .eq("slot_number", input.slotNumber);
+
+        if (error) {
+          console.error("Error updating member status in DB:", error);
+          throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: "Error al cambiar el estado en base de datos" });
+        }
+
+        return { success: true };
+      },
+    }),
     updateMemberClass: defineAction({
       accept: "json",
       input: z.object({

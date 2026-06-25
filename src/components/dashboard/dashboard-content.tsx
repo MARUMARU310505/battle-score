@@ -15,6 +15,7 @@ interface Member {
   gamertag: string;
   id: string;
   is_active: boolean;
+  status: "titular" | "reemplazo" | "ausente";
   level: number;
   slot_number: number;
   user_id?: string | null;
@@ -117,7 +118,7 @@ export function DashboardContent({
 
       return {
         slot_number: member.slot_number,
-        status: hasUser && member.is_active ? "titular" : "ausente",
+        status: member.status || (hasUser && member.is_active ? "titular" : "ausente"),
         gamertag: member.gamertag,
         favorite_class: member.favorite_class,
         active_class: member.favorite_class,
@@ -132,10 +133,9 @@ export function DashboardContent({
   // Recalculate and update roster player statistics when squadState or matches change
   useEffect(() => {
     if (!squadState) return;
-    setActivePlayers((prev) => {
+    setActivePlayers(() => {
       return squadState.members.map((member) => {
         const hasUser = member.user_id !== null && member.user_id !== undefined;
-        const prevPlayer = prev.find((p) => p.slot_number === member.slot_number);
 
         let kills = 0;
         let downs = 0;
@@ -154,10 +154,10 @@ export function DashboardContent({
 
         return {
           slot_number: member.slot_number,
-          status: prevPlayer?.status || (hasUser && member.is_active ? "titular" : "ausente"),
-          gamertag: prevPlayer ? prevPlayer.gamertag : member.gamertag,
+          status: member.status || (hasUser && member.is_active ? "titular" : "ausente"),
+          gamertag: member.gamertag,
           favorite_class: member.favorite_class,
-          active_class: prevPlayer ? prevPlayer.active_class : member.favorite_class,
+          active_class: member.favorite_class,
           user_id: member.user_id,
           kills,
           downs,
