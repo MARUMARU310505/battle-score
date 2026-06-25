@@ -24,13 +24,13 @@ export function Nav({ user = null }: NavProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-border border-b bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 xl:px-6 xl:px-8">
+      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 xl:px-6 xl:px-8">
         {/* Logo */}
         <div className="flex items-center gap-2">
           <a className="flex items-center space-x-2" href="/">
             <span className="font-bold text-foreground text-xl tracking-tight">
               Battle Score
-              <span className="ml-1.5 border-border border-l pl-1.5 font-light font-sans text-muted-foreground text-sm uppercase">
+              <span className="ml-1.5 border-border border-l pl-1.5 font-light font-sans text-muted-foreground text-sm uppercase xl:inline-block hidden">
                 BR Analytics
               </span>
             </span>

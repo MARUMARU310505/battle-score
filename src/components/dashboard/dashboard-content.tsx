@@ -178,7 +178,7 @@ export function DashboardContent({
           onTabChange={setActiveTab}
         />
 
-        <main className="flex-1 p-6 xl:p-8">
+        <main className="flex-1 p-6 pb-16 xl:p-8">
           {activeTab === "active-session" && (
             <SessionPanel
               activePlayers={activePlayers}
@@ -260,7 +260,7 @@ export function DashboardContent({
 
                     {squad.invite_code && (
                       <Button
-                        className="flex h-8 items-center gap-1.5 text-xs"
+                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 h-auto"
                         onClick={() => handleCopyCode(squad.invite_code || "")}
                         size="sm"
                         variant="outline"
@@ -340,7 +340,7 @@ export function DashboardContent({
                       </p>
                     )}
                     <Button
-                      className="mt-2 self-start"
+                      className="mt-2 self-start px-4 py-2 h-auto"
                       disabled={
                         isSavingName || squadName.trim() === (squad?.name || "")
                       }
@@ -366,7 +366,7 @@ export function DashboardContent({
                   </div>
 
                   <Button
-                    className="border border-destructive/20 text-destructive hover:bg-destructive/10"
+                    className="border border-destructive/20 text-destructive hover:bg-destructive/10 px-4 py-2 h-auto"
                     onClick={handleDeleteSquad}
                     size="sm"
                     variant="ghost"

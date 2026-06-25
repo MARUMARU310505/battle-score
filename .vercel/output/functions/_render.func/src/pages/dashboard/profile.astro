@@ -25,7 +25,7 @@ const { data: profile } = await Astro.callAction(actions.profile.get, {});
   <div class="flex flex-1 flex-col">
     <Nav user={user} client:load />
 
-    <main class="flex flex-1 items-center justify-center p-4 md:p-8">
+    <main class="flex flex-1 items-center justify-center p-4 xl:p-8">
       <ProfileForm initialProfile={profile} client:load />
     </main>
   </div>

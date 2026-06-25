@@ -119,7 +119,7 @@ export function SquadSidebar({
   };
 
   return (
-    <aside className="flex min-h-[calc(100vh-4rem)] w-full flex-col justify-between border-border border-r bg-card p-4 xl:w-64">
+    <aside className="flex xl:min-h-[calc(100vh-4rem)] min-h-0 w-full flex-col justify-between border-border border-r bg-card p-4 xl:w-64">
       <div className="space-y-6">
         {/* Squad Selector */}
         <div className="space-y-1.5">

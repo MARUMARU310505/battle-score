@@ -203,7 +203,7 @@ export function SessionPanel({
         </div>
         {isOwner && (
           <Button
-            className="flex items-center gap-1.5"
+            className="flex items-center gap-1.5 px-4 py-2 h-auto"
             disabled={loading}
             onClick={handleCloseSession}
             size="sm"
@@ -264,7 +264,7 @@ export function SessionPanel({
                   Partidas de la Sesión
                 </h3>
                 {isOwner && initialSession.status === "active" && (
-                  <Button onClick={() => setIsRegisteringMatch(true)} size="sm">
+                  <Button onClick={() => setIsRegisteringMatch(true)} size="sm" className="px-4 py-2 h-auto">
                     + Registrar Partida
                   </Button>
                 )}
@@ -361,7 +361,8 @@ export function SessionPanel({
                               </div>
                             </div>
 
-                            <div className="overflow-x-auto">
+                            {/* Desktop View */}
+                            <div className="hidden xl:block overflow-x-auto">
                               <table className="w-full text-left font-sans text-xs">
                                 <thead>
                                   <tr className="border-border/30 border-b font-mono text-[10px] text-muted-foreground uppercase">
@@ -434,6 +435,72 @@ export function SessionPanel({
                                   )}
                                 </tbody>
                               </table>
+                            </div>
+
+                            {/* Mobile View */}
+                            <div className="block xl:hidden space-y-2.5">
+                              {match.player_match_stats?.map(
+                                (stat: PlayerMatchStats) => {
+                                  const k = stat.kills || 0;
+                                  const d = stat.downs || 0;
+                                  const kdr =
+                                    d > 0
+                                      ? (k / d).toFixed(2)
+                                      : k.toFixed(2);
+
+                                  const mentalColors = [
+                                    "text-red-500 bg-red-500/10 border-red-500/20",
+                                    "text-amber-500 bg-amber-500/10 border-amber-500/20",
+                                    "text-blue-500 bg-blue-500/10 border-blue-500/20",
+                                    "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
+                                    "text-green-500 bg-green-500/10 border-green-500/20",
+                                  ];
+
+                                  return (
+                                    <div
+                                      className="rounded-lg border border-border/50 bg-background/20 p-3 text-xs"
+                                      key={stat.id}
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <span className="font-semibold text-foreground">
+                                          {stat.gamertag}
+                                        </span>
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-primary">
+                                            {stat.active_class}
+                                          </span>
+                                          <span
+                                            className={`rounded-full border px-1.5 py-0.2 font-mono text-[9px] font-bold ${mentalColors[stat.mental_state - 1]}`}
+                                          >
+                                            Mente: {stat.mental_state}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      <div className="mt-2.5 grid grid-cols-3 gap-2 border-border/20 border-t pt-2.5 font-mono text-[10px] text-muted-foreground">
+                                        <div>
+                                          <span className="font-sans text-foreground">K/D/A:</span>
+                                          <div className="mt-0.5 font-semibold text-foreground/90">
+                                            {k}/{d}/{stat.assists} ({kdr})
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <span className="font-sans text-foreground">Downs/Rev:</span>
+                                          <div className="mt-0.5 font-semibold text-foreground/90">
+                                            {stat.downs}/{stat.revives}
+                                          </div>
+                                        </div>
+                                        <div className="text-right">
+                                          <span className="font-sans text-foreground">Resp/Fin:</span>
+                                          <div className="mt-0.5 font-semibold text-foreground/90">
+                                            {stat.respawned ? "✅" : "❌"}/{stat.end_game ? "✅" : "❌"}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                              )}
                             </div>
                           </div>
                         )}
