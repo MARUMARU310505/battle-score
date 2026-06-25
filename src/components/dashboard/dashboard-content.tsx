@@ -276,7 +276,7 @@ export function DashboardContent({
     };
   }, [squadState?.id]);
 
-  const isOwner = squadState?.owner_id === currentUser?.id;
+  const isOwner = !!(currentUser?.id && squadState?.owner_id && squadState.owner_id === currentUser.id);
 
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);

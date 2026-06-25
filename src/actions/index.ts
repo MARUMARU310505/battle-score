@@ -1153,6 +1153,199 @@ export const server = {
         return session;
       },
     }),
+    startMatchRegistration: defineAction({
+      accept: "json",
+      input: z.object({
+        sessionId: z.string().uuid(),
+        players: z.array(
+          z.object({
+            userId: z.string().uuid().nullable().optional(),
+            gamertag: z.string(),
+            activeClass: z.string(),
+          })
+        ),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({ code: "UNAUTHORIZED", message: "Inicie sesión" });
+        }
+
+        const initialDraft = {
+          poi: "Desconocido",
+          placement: 1,
+          hostility: "Media",
+          loot: "Normal",
+          eliminationCause: "Ninguna",
+          playerStats: input.players.map((p) => ({
+            userId: p.userId || null,
+            gamertag: p.gamertag,
+            activeClass: p.activeClass,
+            downs: 0,
+            kills: 0,
+            assists: 0,
+            revives: 0,
+            respawned: false,
+            endGame: false,
+            mentalState: 3,
+          })),
+        };
+
+        const { data, error } = await supabase
+          .from("game_sessions")
+          .update({
+            is_registering_match: true,
+            ready_players: [],
+            match_registration_draft: initialDraft,
+          })
+          .eq("id", input.sessionId)
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Error starting match registration:", error);
+          throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+        }
+        return data;
+      },
+    }),
+    cancelMatchRegistration: defineAction({
+      accept: "json",
+      input: z.object({
+        sessionId: z.string().uuid(),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({ code: "UNAUTHORIZED", message: "Inicie sesión" });
+        }
+
+        const { data, error } = await supabase
+          .from("game_sessions")
+          .update({
+            is_registering_match: false,
+            ready_players: [],
+            match_registration_draft: null,
+          })
+          .eq("id", input.sessionId)
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Error cancelling match registration:", error);
+          throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+        }
+        return data;
+      },
+    }),
+    updateMatchRegistrationDraft: defineAction({
+      accept: "json",
+      input: z.object({
+        sessionId: z.string().uuid(),
+        draft: z.any(),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({ code: "UNAUTHORIZED", message: "Inicie sesión" });
+        }
+
+        const { data, error } = await supabase
+          .from("game_sessions")
+          .update({
+            match_registration_draft: input.draft,
+          })
+          .eq("id", input.sessionId)
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Error updating match registration draft:", error);
+          throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+        }
+        return data;
+      },
+    }),
+    togglePlayerReady: defineAction({
+      accept: "json",
+      input: z.object({
+        sessionId: z.string().uuid(),
+        userId: z.string().nullable().optional(),
+        gamertag: z.string(),
+        isReady: z.boolean(),
+        playerStats: z.any().optional(),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        const supabase = context.locals.supabase;
+        if (!(user && supabase)) {
+          throw new ActionError({ code: "UNAUTHORIZED", message: "Inicie sesión" });
+        }
+
+        const { data: session, error: getError } = await supabase
+          .from("game_sessions")
+          .select("ready_players, match_registration_draft")
+          .eq("id", input.sessionId)
+          .single();
+
+        if (getError || !session) {
+          throw new ActionError({ code: "NOT_FOUND", message: "Sesión no encontrada" });
+        }
+
+        let readyPlayers: string[] = [];
+        try {
+          readyPlayers = Array.isArray(session.ready_players)
+            ? session.ready_players
+            : (typeof session.ready_players === "string" ? JSON.parse(session.ready_players) : []);
+        } catch (e) {
+          readyPlayers = [];
+        }
+
+        const playerKey = input.gamertag;
+        if (input.isReady) {
+          if (!readyPlayers.includes(playerKey)) {
+            readyPlayers.push(playerKey);
+          }
+        } else {
+          readyPlayers = readyPlayers.filter((k) => k !== playerKey);
+        }
+
+        let updatedDraft = session.match_registration_draft;
+        if (input.playerStats && updatedDraft && updatedDraft.playerStats) {
+          const statsList = [...updatedDraft.playerStats];
+          const playerIndex = statsList.findIndex((p: any) => p.gamertag === input.gamertag);
+          if (playerIndex !== -1) {
+            statsList[playerIndex] = {
+              ...statsList[playerIndex],
+              ...input.playerStats,
+            };
+            updatedDraft = {
+              ...updatedDraft,
+              playerStats: statsList,
+            };
+          }
+        }
+
+        const { data, error } = await supabase
+          .from("game_sessions")
+          .update({
+            ready_players: readyPlayers,
+            match_registration_draft: updatedDraft,
+          })
+          .eq("id", input.sessionId)
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Error toggling player ready:", error);
+          throw new ActionError({ code: "INTERNAL_SERVER_ERROR", message: error.message });
+        }
+        return data;
+      },
+    }),
     getHistory: defineAction({
       accept: "json",
       input: z.object({

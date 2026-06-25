@@ -1,5 +1,5 @@
 import { actions } from "astro:actions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import POIS from "@/data/pois.json";
 import type { ActivePlayer } from "./squad-roster";
@@ -21,36 +21,50 @@ interface MatchFormProps {
   activePlayers: ActivePlayer[];
   onCancel: () => void;
   onSuccess: () => void;
-  sessionId: string;
+  session: any;
   isOwner?: boolean;
   currentUserId?: string | null;
 }
 
 export function MatchForm({
-  sessionId,
+  session,
   activePlayers,
   onCancel,
   onSuccess,
   isOwner = false,
   currentUserId = null,
 }: MatchFormProps) {
+  const sessionId = session.id;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter out absent players for the stats registration
-  const playingMembers = activePlayers.filter((p) => p.status !== "ausente");
+  const draft = session.match_registration_draft || {
+    poi: "Desconocido",
+    placement: 1,
+    hostility: "Media",
+    loot: "Normal",
+    eliminationCause: "Ninguna",
+    playerStats: [],
+  };
 
-  // Match General Info State
-  const [poi, setPoi] = useState("Desconocido");
-  const [placement, setPlacement] = useState(1);
-  const [hostility, setHostility] = useState<"Baja" | "Media" | "Alta">("Media");
-  const [loot, setLoot] = useState<"Malo" | "Normal" | "Excelente">("Normal");
-  const [eliminationCause, setEliminationCause] = useState("Ninguna");
+  // Local state for the form inputs
+  const [poi, setPoi] = useState(draft.poi || "Desconocido");
+  const [placement, setPlacement] = useState(draft.placement || 1);
+  const [hostility, setHostility] = useState<"Baja" | "Media" | "Alta">(draft.hostility || "Media");
+  const [loot, setLoot] = useState<"Malo" | "Normal" | "Excelente">(draft.loot || "Normal");
+  const [eliminationCause, setEliminationCause] = useState(draft.eliminationCause || "Ninguna");
+
+  const currentUserGamertag = activePlayers.find((p) => p.user_id === currentUserId)?.gamertag || null;
 
   // Individual Player Stats State
-  const [playerStats, setPlayerStats] = useState<PlayerStatInput[]>(() =>
-    playingMembers.map((p) => ({
-      userId: p.user_id,
+  const [playerStats, setPlayerStats] = useState<PlayerStatInput[]>(() => {
+    const dbStats = draft.playerStats || [];
+    if (dbStats.length > 0) {
+      return dbStats;
+    }
+    const playingMembers = activePlayers.filter((p) => p.status !== "ausente");
+    return playingMembers.map((p) => ({
+      userId: p.user_id || null,
       gamertag: p.gamertag,
       activeClass: p.active_class,
       downs: 0,
@@ -60,8 +74,76 @@ export function MatchForm({
       respawned: false,
       endGame: false,
       mentalState: 3,
-    }))
-  );
+    }));
+  });
+
+  // Sync state from database updates (realtime)
+  useEffect(() => {
+    const activeDraft = session.match_registration_draft;
+    if (!activeDraft) return;
+
+    setPoi(activeDraft.poi || "Desconocido");
+    setPlacement(activeDraft.placement || 1);
+    setHostility(activeDraft.hostility || "Media");
+    setLoot(activeDraft.loot || "Normal");
+    setEliminationCause(activeDraft.eliminationCause || "Ninguna");
+
+    setPlayerStats((prev) => {
+      const dbStats = activeDraft.playerStats || [];
+      return dbStats.map((dbStat: any) => {
+        const isCurrentUser = dbStat.userId === currentUserId || dbStat.gamertag === currentUserGamertag;
+        const isReadyInDb = session.ready_players?.includes(dbStat.gamertag);
+
+        if (isCurrentUser && !isReadyInDb) {
+          const localMatch = prev.find((p) => p.gamertag === dbStat.gamertag);
+          return localMatch || dbStat;
+        }
+
+        if (isOwner && !isReadyInDb) {
+          const localMatch = prev.find((p) => p.gamertag === dbStat.gamertag);
+          return localMatch || dbStat;
+        }
+
+        return dbStat;
+      });
+    });
+  }, [session.match_registration_draft, session.ready_players, currentUserId, currentUserGamertag, isOwner]);
+
+  const handleGeneralInfoChange = async (field: string, value: any) => {
+    if (!isOwner) return;
+
+    const updatedDraft = {
+      poi,
+      placement,
+      hostility,
+      loot,
+      eliminationCause,
+      playerStats,
+      [field]: value,
+    };
+
+    if (field === "placement" && value === 1) {
+      updatedDraft.eliminationCause = "Ninguna";
+    }
+
+    if (field === "poi") setPoi(value);
+    if (field === "placement") {
+      setPlacement(value);
+      if (value === 1) setEliminationCause("Ninguna");
+    }
+    if (field === "hostility") setHostility(value);
+    if (field === "loot") setLoot(value);
+    if (field === "eliminationCause") setEliminationCause(value);
+
+    try {
+      await actions.session.updateMatchRegistrationDraft({
+        sessionId,
+        draft: updatedDraft,
+      });
+    } catch (err) {
+      console.error("Error updating draft general info:", err);
+    }
+  };
 
   const handleStatChange = (
     index: number,
@@ -76,6 +158,26 @@ export function MatchForm({
       };
       return updated;
     });
+  };
+
+  const handleToggleReady = async (gamertag: string, currentStat: PlayerStatInput) => {
+    const isCurrentlyReady = session.ready_players?.includes(gamertag);
+    setLoading(true);
+    setError(null);
+    try {
+      await actions.session.togglePlayerReady({
+        sessionId,
+        userId: currentStat.userId || null,
+        gamertag,
+        isReady: !isCurrentlyReady,
+        playerStats: !isCurrentlyReady ? currentStat : undefined,
+      });
+    } catch (err) {
+      console.error("Error toggling ready status:", err);
+      setError("Error al cambiar el estado de listo.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,6 +216,8 @@ export function MatchForm({
     }
   };
 
+  const allReady = playerStats.every((p) => session.ready_players?.includes(p.gamertag));
+
   return (
     <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
       <div className="mb-6 border-border/40 border-b pb-4">
@@ -149,7 +253,7 @@ export function MatchForm({
                 className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
                 disabled={!isOwner}
                 id="match-poi"
-                onChange={(e) => setPoi(e.target.value)}
+                onChange={(e) => handleGeneralInfoChange("poi", e.target.value)}
                 value={poi}
               >
                 {POIS.map((p) => (
@@ -174,10 +278,7 @@ export function MatchForm({
                 min="1"
                 onChange={(e) => {
                   const val = Number.parseInt(e.target.value, 10) || 1;
-                  setPlacement(val);
-                  if (val === 1) {
-                    setEliminationCause("Ninguna");
-                  }
+                  handleGeneralInfoChange("placement", val);
                 }}
                 type="number"
                 value={placement}
@@ -195,9 +296,7 @@ export function MatchForm({
                 className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
                 disabled={!isOwner}
                 id="match-hostility"
-                onChange={(e) =>
-                  setHostility(e.target.value as "Baja" | "Media" | "Alta")
-                }
+                onChange={(e) => handleGeneralInfoChange("hostility", e.target.value)}
                 value={hostility}
               >
                 <option value="Baja">Baja</option>
@@ -217,9 +316,7 @@ export function MatchForm({
                 className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
                 disabled={!isOwner}
                 id="match-loot"
-                onChange={(e) =>
-                  setLoot(e.target.value as "Malo" | "Normal" | "Excelente")
-                }
+                onChange={(e) => handleGeneralInfoChange("loot", e.target.value)}
                 value={loot}
               >
                 <option value="Malo">Malo</option>
@@ -239,7 +336,7 @@ export function MatchForm({
                 className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-foreground text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
                 disabled={!isOwner || placement === 1}
                 id="match-cause"
-                onChange={(e) => setEliminationCause(e.target.value)}
+                onChange={(e) => handleGeneralInfoChange("eliminationCause", e.target.value)}
                 placeholder={
                   placement === 1
                     ? "Ninguna (Victoria)"
@@ -259,27 +356,57 @@ export function MatchForm({
           </h4>
           <div className="max-h-[50vh] space-y-4 overflow-y-auto pr-1">
             {playerStats.map((stat, idx) => {
-              const canEditPlayer = isOwner || (stat.userId !== null && stat.userId !== undefined && stat.userId === currentUserId);
+              const isCurrentUser = stat.userId === currentUserId || stat.gamertag === currentUserGamertag;
+              const isPlayerReady = session.ready_players?.includes(stat.gamertag);
+              const canEditPlayer = (isOwner || isCurrentUser) && !isPlayerReady;
 
               return (
                 <div
                   className={`space-y-3 rounded-lg border p-4 transition-colors duration-200 ${
-                    canEditPlayer 
-                      ? "border-primary/20 bg-primary/5" 
-                      : "border-border/60 bg-background/30 opacity-75"
+                    isPlayerReady
+                      ? "border-green-500/20 bg-green-500/5 opacity-90"
+                      : canEditPlayer
+                        ? "border-primary/20 bg-primary/5"
+                        : "border-border/60 bg-background/30 opacity-70"
                   }`}
                   key={stat.gamertag}
                 >
                   <div className="flex items-center justify-between border-border/40 border-b pb-2">
-                    <span className="font-bold text-foreground text-xs flex items-center gap-1.5">
-                      {stat.gamertag}
-                      {stat.userId === currentUserId && (
-                        <span className="rounded bg-primary px-1.5 py-0.2 text-[8px] font-semibold text-primary-foreground uppercase">Tú</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-foreground text-xs flex items-center gap-1.5">
+                        {stat.gamertag}
+                        {isCurrentUser && (
+                          <span className="rounded bg-primary px-1.5 py-0.5 text-[8px] font-semibold text-primary-foreground uppercase">Tú</span>
+                        )}
+                      </span>
+                      {isPlayerReady ? (
+                        <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[9px] font-semibold text-green-500 border border-green-500/20">Listo 🎯</span>
+                      ) : (
+                        <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[9px] font-semibold text-amber-500 border border-amber-500/20">Llenando...</span>
                       )}
-                    </span>
-                    <span className="rounded bg-muted px-2 py-0.5 font-mono text-[9px] text-muted-foreground">
-                      {stat.activeClass}
-                    </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="rounded bg-muted px-2 py-0.5 font-mono text-[9px] text-muted-foreground">
+                        {stat.activeClass}
+                      </span>
+                      {(isOwner || isCurrentUser) && (
+                        <Button
+                          type="button"
+                          onClick={() => handleToggleReady(stat.gamertag, stat)}
+                          disabled={loading}
+                          variant={isPlayerReady ? "outline" : "default"}
+                          className={`h-6 px-2 text-[10px] font-medium transition-all ${
+                            isPlayerReady 
+                              ? "border-amber-500/30 text-amber-500 hover:bg-amber-500/10" 
+                              : "bg-green-600 hover:bg-green-700 text-white"
+                          }`}
+                          size="sm"
+                        >
+                          {isPlayerReady ? "Modificar" : "Marcar Listo"}
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
@@ -464,13 +591,28 @@ export function MatchForm({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 border-border/40 border-t pt-4">
-          <Button onClick={onCancel} type="button" variant="outline">
-            Cancelar
-          </Button>
-          <Button disabled={loading} type="submit">
-            {loading ? "Guardando..." : "Guardar Partida"}
-          </Button>
+        <div className="flex flex-col items-end gap-2 border-border/40 border-t pt-4">
+          {!allReady && isOwner && (
+            <p className="text-amber-500 text-xs">
+              Esperando a que todos los operadores marquen "Listo" para registrar la partida.
+            </p>
+          )}
+          <div className="flex justify-end gap-3 w-full">
+            {isOwner ? (
+              <>
+                <Button onClick={onCancel} type="button" variant="outline">
+                  Cancelar
+                </Button>
+                <Button disabled={loading || !allReady} type="submit">
+                  {loading ? "Guardando..." : "Guardar Partida"}
+                </Button>
+              </>
+            ) : (
+              <div className="text-muted-foreground text-xs italic py-2 text-center w-full">
+                Completa tus estadísticas y haz clic en "Marcar Listo" para que el líder de la escuadra pueda guardar la partida.
+              </div>
+            )}
+          </div>
         </div>
       </form>
     </div>

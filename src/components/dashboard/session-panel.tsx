@@ -109,6 +109,52 @@ export function SessionPanel({
     }
   };
 
+  const handleStartRegistration = async () => {
+    if (!initialSession) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const playersForDraft = activePlayers
+        .filter((p) => p.status !== "ausente")
+        .map((p) => ({
+          userId: p.user_id || null,
+          gamertag: p.gamertag,
+          activeClass: p.active_class,
+        }));
+      const { data, error: actionError } = await actions.session.startMatchRegistration({
+        sessionId: initialSession.id,
+        players: playersForDraft,
+      });
+      if (actionError) {
+        throw new Error(actionError.message || "Error al iniciar el registro.");
+      }
+    } catch (err) {
+      console.error("Error starting match registration:", err);
+      setError(err instanceof Error ? err.message : "Error al iniciar el registro de partida.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelRegistration = async () => {
+    if (!initialSession) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: actionError } = await actions.session.cancelMatchRegistration({
+        sessionId: initialSession.id,
+      });
+      if (actionError) {
+        throw new Error(actionError.message || "Error al cancelar el registro.");
+      }
+    } catch (err) {
+      console.error("Error cancelling match registration:", err);
+      setError(err instanceof Error ? err.message : "Error al cancelar el registro de partida.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!initialSession) {
     if (!isOwner) {
       return (
@@ -242,22 +288,28 @@ export function SessionPanel({
 
         {/* Right Column: Match registration or list */}
         <div className="space-y-4 xl:col-span-2">
-          {isRegisteringMatch ? (
+          {initialSession.is_registering_match ? (
             <div className="space-y-4">
-              <Button
-                onClick={() => setIsRegisteringMatch(false)}
-                size="sm"
-                variant="outline"
-              >
-                Volver al Listado
-              </Button>
+              {isOwner ? (
+                <Button
+                  onClick={handleCancelRegistration}
+                  size="sm"
+                  variant="outline"
+                >
+                  Volver al Listado (Cancelar)
+                </Button>
+              ) : (
+                <div className="flex items-center justify-between rounded-md bg-amber-500/10 p-3 text-amber-500 text-xs border border-amber-500/20 font-medium">
+                  <span>El líder de la escuadra está registrando una partida. Completa tus estadísticas.</span>
+                </div>
+              )}
               <MatchForm
                 activePlayers={activePlayers}
-                onCancel={() => setIsRegisteringMatch(false)}
+                onCancel={handleCancelRegistration}
                 onSuccess={() => {
-                  setIsRegisteringMatch(false);
+                  handleCancelRegistration();
                 }}
-                sessionId={initialSession.id}
+                session={initialSession}
                 isOwner={isOwner}
                 currentUserId={currentUser?.id}
               />
@@ -268,8 +320,8 @@ export function SessionPanel({
                 <h3 className="font-bold text-foreground text-sm tracking-tight">
                   Partidas de la Sesión
                 </h3>
-                 {initialSession && (
-                  <Button onClick={() => setIsRegisteringMatch(true)} size="sm" className="px-4 py-2 h-auto">
+                 {isOwner && initialSession && (
+                  <Button onClick={handleStartRegistration} size="sm" className="px-4 py-2 h-auto">
                     + Registrar Partida
                   </Button>
                 )}
