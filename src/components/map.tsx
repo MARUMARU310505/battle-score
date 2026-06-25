@@ -11,22 +11,25 @@ export interface POI {
 export const POI_LIST: POI[] = [
     { name: "Vista Hills", x: 759.5, y: 616 },
     { name: "Marina", x: 226, y: 697 },
-    { name: "Evacuación", x: 254.5, y: 1044 },
-    { name: "Crashsite", x: 869, y: 917 },
+    { name: "Evac Alpha", x: 254.5, y: 1044 },
+    { name: "Crash site", x: 869, y: 917 },
     { name: "Downtown", x: 534.5, y: 1319 },
     { name: "Ocean Park", x: 234, y: 1490 },
-    { name: "Boulevard", x: 572, y: 1678 },
-    { name: "Defense Line", x: 1259, y: 1707 },
-    { name: "Hydroponics", x: 1686.5, y: 1519 },
-    { name: "Radar Station", x: 2584, y: 1609 },
-    { name: "RedSec Orphanage", x: 2148, y: 1833 },
+    { name: "Boutique District", x: 572, y: 1678 },
+    { name: "Defense Nexus", x: 1259, y: 1707 },
+    { name: "Lyndon Oilworks", x: 1686.5, y: 1519 },
+    { name: "Radar Site", x: 2584, y: 1609 },
+    { name: "Redline Storage", x: 2148, y: 1833 },
     { name: "Security Gate", x: 1588, y: 2041 },
-    { name: "Evacuación B", x: 1261.5, y: 2418 },
+    { name: "Evac Bravo", x: 1261.5, y: 2418 },
     { name: "Lighthouse", x: 288, y: 2115 },
-    { name: "Terminal de Carga", x: 2518, y: 2230 },
+    { name: "Treatment Plant", x: 2518, y: 2230 },
     { name: "Area 22B", x: 2115, y: 629 },
     { name: "Combat Training", x: 2539, y: 877 },
-    { name: "Golfo de Maniobras", x: 1293.5, y: 733 }
+    { name: "Golf Course", x: 1293.5, y: 733 },
+    { name: "Chemical Storage", x: 2039, y: 1065 },
+    { name: "Ground Zero", x: 1506.5, y: 1173 },
+    { name: "The Seal", x: 2489, y: 1295 }
 ];
 
 export function isGridCode(str: string): boolean {
@@ -164,7 +167,7 @@ export function Map({ selectedGrid, onSelectGrid, readOnly = false }: MapProps) 
                                         width={cellWidth - 1}
                                         height={cellHeight - 1}
                                         fill="black"
-                                        fillOpacity={isSelected ? (readOnly ? 0.55 : 0.35) : 0.08}
+                                        fillOpacity={isSelected ? (readOnly ? 0.12 : 0.25) : 0.08}
                                         stroke={strokeColor}
                                         strokeWidth={strokeWidth}
                                         className="transition-all duration-150 group-hover:stroke-emerald-400 group-hover:stroke-2"
@@ -188,6 +191,48 @@ export function Map({ selectedGrid, onSelectGrid, readOnly = false }: MapProps) 
                                 </g>
                             );
                         });
+                    })}
+                </g>
+
+                {/* Puntos de interés (POIs) tácticos */}
+                <g style={{ pointerEvents: "none" }}>
+                    {POI_LIST.map((poi) => {
+                        const isDraft = poi.name.includes("(Borrador)");
+                        const color = isDraft ? "#ff007f" : "#00f0ff"; // Rosa de neón para borrador, cian de neón para normal
+                        const glowColor = isDraft ? "rgba(255, 0, 127, 0.2)" : "rgba(0, 240, 255, 0.15)";
+                        return (
+                            <g key={poi.name}>
+                                <circle
+                                    cx={poi.x}
+                                    cy={poi.y}
+                                    r="22"
+                                    fill={glowColor}
+                                    stroke={color}
+                                    strokeWidth="3"
+                                    className="animate-pulse"
+                                />
+                                <circle
+                                    cx={poi.x}
+                                    cy={poi.y}
+                                    r="7"
+                                    fill={color}
+                                />
+                                <text
+                                    x={poi.x + 28}
+                                    y={poi.y + 8}
+                                    fill={color}
+                                    fontSize="26"
+                                    fontWeight="bold"
+                                    fontFamily="sans-serif"
+                                    className="select-none"
+                                    style={{
+                                        textShadow: "2px 2px 4px rgba(0, 0, 0, 0.95), -2px -2px 4px rgba(0,0,0,0.95)"
+                                    }}
+                                >
+                                    {poi.name}
+                                </text>
+                            </g>
+                        );
                     })}
                 </g>
 
@@ -329,9 +374,9 @@ export function MapModal({ isOpen, onClose, selectedGrid: initialSelectedGrid, o
             </div>
 
             {/* Map Area */}
-            <div className={`flex-1 overflow-auto relative p-4 bg-slate-950 flex ${zoom === 1 ? 'items-center justify-center' : 'items-start justify-start'}`}>
+            <div className="flex-1 overflow-auto relative p-4 bg-slate-950 flex">
                 <div
-                    className="relative transition-all duration-200 ease-out aspect-[2800/2860] flex-shrink-0"
+                    className="relative transition-all duration-200 ease-out aspect-[2800/2860] flex-shrink-0 m-auto"
                     style={{
                         width: `calc(min(90vw, 75vh) * ${zoom})`,
                         minWidth: `${300 * zoom}px`,
