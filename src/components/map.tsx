@@ -132,6 +132,17 @@ export function Map({ selectedGrid, onSelectGrid, readOnly = false }: MapProps) 
               const colLetter = String.fromCharCode(65 + cIdx);
               const gridCode = `${colLetter}${row}`;
               const isSelected = selectedGrid === gridCode;
+              const hasSelection = !!selectedGrid;
+              
+              const strokeColor = isSelected 
+                ? "#10b981" 
+                : (readOnly && hasSelection ? "rgba(255, 255, 255, 0.03)" : "rgba(255, 255, 255, 0.3)");
+                
+              const strokeWidth = isSelected 
+                ? (readOnly ? 8 : 4) 
+                : 1;
+
+              const showText = !readOnly || !hasSelection || isSelected;
 
               return (
                 <g key={gridCode} className={readOnly ? "" : "cursor-pointer group"}>
@@ -141,7 +152,7 @@ export function Map({ selectedGrid, onSelectGrid, readOnly = false }: MapProps) 
                     y={y}
                     width={cellWidth}
                     height={cellHeight}
-                    fill={isSelected ? "rgba(16, 185, 129, 0.15)" : "white"}
+                    fill={isSelected ? (readOnly ? "rgba(16, 185, 129, 0.25)" : "rgba(16, 185, 129, 0.15)") : "white"}
                     fillOpacity={isSelected ? 1 : 0.001}
                     className="transition-all duration-150 group-hover:fill-emerald-500/10 group-hover:fill-opacity-100"
                     onClick={() => !readOnly && onSelectGrid?.(gridCode)}
@@ -153,25 +164,27 @@ export function Map({ selectedGrid, onSelectGrid, readOnly = false }: MapProps) 
                     width={cellWidth - 1}
                     height={cellHeight - 1}
                     fill="black"
-                    fillOpacity={isSelected ? 0.35 : 0.08}
-                    stroke={isSelected ? "#10b981" : "white"}
-                    strokeWidth={isSelected ? 4 : 1}
+                    fillOpacity={isSelected ? (readOnly ? 0.55 : 0.35) : 0.08}
+                    stroke={strokeColor}
+                    strokeWidth={strokeWidth}
                     className="transition-all duration-150 group-hover:stroke-emerald-400 group-hover:stroke-2"
                     style={{ pointerEvents: "none" }}
                   />
                   {/* Grid Code Text tag */}
-                  <text
-                    x={x + 10}
-                    y={y + 25}
-                    fill={isSelected ? "#10b981" : "rgba(255, 255, 255, 0.4)"}
-                    fontSize="12"
-                    fontWeight="bold"
-                    fontFamily="monospace"
-                    className="select-none transition-all duration-150 group-hover:fill-white/80"
-                    style={{ pointerEvents: "none" }}
-                  >
-                    {gridCode}
-                  </text>
+                  {showText && (
+                    <text
+                      x={x + 10}
+                      y={y + 25}
+                      fill={isSelected ? "#10b981" : "rgba(255, 255, 255, 0.4)"}
+                      fontSize={isSelected && readOnly ? "16" : "12"}
+                      fontWeight="bold"
+                      fontFamily="monospace"
+                      className="select-none transition-all duration-150 group-hover:fill-white/80"
+                      style={{ pointerEvents: "none" }}
+                    >
+                      {gridCode}
+                    </text>
+                  )}
                 </g>
               );
             });
@@ -271,45 +284,52 @@ export function MapModal({ isOpen, onClose, selectedGrid: initialSelectedGrid, o
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-slate-950/95 text-white">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-white">
+          <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white">
             {readOnly ? "Ubicación del Despliegue" : "Seleccionar Zona de Despliegue"}
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
             {selectedGrid ? (
               <span className="text-emerald-400 font-semibold">
-                Cuadrícula Seleccionada: {selectedGrid} &mdash; {nearestPOI}
+                Cuadrícula: {selectedGrid} &mdash; {nearestPOI}
               </span>
             ) : (
-              "Haz clic en una cuadrícula del mapa para seleccionar"
+              readOnly 
+                ? "Sin zona de despliegue registrada" 
+                : "Haz clic en una cuadrícula del mapa para seleccionar"
             )}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
           {!readOnly && onConfirm && (
             <Button
               onClick={handleConfirm}
               disabled={!selectedGrid}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 flex-1 sm:flex-initial"
             >
               Confirmar Selección
             </Button>
           )}
-          <Button variant="ghost" size="icon" onClick={onClose} className="text-slate-400 hover:text-white">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onClose} 
+            className="text-slate-400 hover:text-white h-9 w-9 ml-auto sm:ml-0"
+          >
             <X className="h-5 w-5" />
           </Button>
         </div>
       </div>
 
       {/* Map Area */}
-      <div className="flex-1 overflow-auto relative p-4 flex items-start justify-center bg-slate-950">
+      <div className={`flex-1 overflow-auto relative p-4 bg-slate-950 flex ${zoom === 1 ? 'items-center justify-center' : 'items-start justify-start'}`}>
         <div 
-          className="relative transition-all duration-200 ease-out aspect-[2800/2860]"
+          className="relative transition-all duration-200 ease-out aspect-[2800/2860] flex-shrink-0"
           style={{ 
             width: `${100 * zoom}%`,
-            maxWidth: `${1000 * zoom}px`,
-            minWidth: '280px',
+            maxWidth: zoom === 1 ? '100%' : 'none',
+            minWidth: `${300 * zoom}px`,
           }}
         >
           <Map 
@@ -321,30 +341,30 @@ export function MapModal({ isOpen, onClose, selectedGrid: initialSelectedGrid, o
       </div>
 
       {/* Zoom / Action Controls footer */}
-      <div className="absolute bottom-6 right-6 flex items-center gap-2 bg-slate-900/90 border border-slate-800 p-2 rounded-lg shadow-2xl backdrop-blur">
+      <div className="absolute bottom-6 right-6 flex items-center gap-2 bg-slate-900/95 border border-slate-800 p-2 rounded-lg shadow-2xl backdrop-blur z-10">
         <Button 
           variant="secondary" 
           size="icon" 
-          onClick={() => setZoom(prev => Math.min(prev + 0.25, 3))}
-          className="h-9 w-9 bg-slate-800 hover:bg-slate-700 text-white border-0"
+          onClick={() => setZoom(prev => Math.min(prev + 0.25, 3.5))}
+          className="h-10 w-10 sm:h-9 sm:w-9 bg-slate-800 hover:bg-slate-700 text-white border-0"
         >
-          <ZoomIn className="h-4 w-4" />
+          <ZoomIn className="h-5 w-5 sm:h-4 sm:w-4" />
         </Button>
         <Button 
           variant="secondary" 
           size="icon" 
-          onClick={() => setZoom(prev => Math.max(prev - 0.25, 0.75))}
-          className="h-9 w-9 bg-slate-800 hover:bg-slate-700 text-white border-0"
+          onClick={() => setZoom(prev => Math.max(prev - 0.25, 1))}
+          className="h-10 w-10 sm:h-9 sm:w-9 bg-slate-800 hover:bg-slate-700 text-white border-0"
         >
-          <ZoomOut className="h-4 w-4" />
+          <ZoomOut className="h-5 w-5 sm:h-4 sm:w-4" />
         </Button>
         <Button 
           variant="secondary" 
           size="icon" 
           onClick={() => setZoom(1)}
-          className="h-9 w-9 bg-slate-800 hover:bg-slate-700 text-white border-0"
+          className="h-10 w-10 sm:h-9 sm:w-9 bg-slate-800 hover:bg-slate-700 text-white border-0"
         >
-          <RotateCcw className="h-4 w-4" />
+          <RotateCcw className="h-5 w-5 sm:h-4 sm:w-4" />
         </Button>
       </div>
     </div>
