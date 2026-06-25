@@ -330,8 +330,14 @@ function MatchDetailList({ matches }: { matches: Match[] }) {
                 <span
                   className={`flex h-6 w-6 items-center justify-center rounded-full font-mono font-semibold text-xs ${
                     match.placement === 1
-                      ? "border border-amber-500/30 bg-amber-500/20 text-amber-500"
-                      : "bg-muted text-muted-foreground"
+                      ? "border border-amber-500/30 bg-amber-500/20 text-amber-500 border"
+                      : match.placement === 2
+                        ? "border border-slate-300/40 bg-slate-300/20 text-slate-400 dark:text-slate-300 border"
+                        : match.placement === 3
+                          ? "border border-amber-700/30 bg-amber-700/20 text-amber-700 dark:text-amber-600 border"
+                          : match.placement === 4 || match.placement === 5
+                            ? "border border-blue-500/30 bg-blue-500/20 text-blue-500 border"
+                            : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {match.placement}
@@ -467,45 +473,69 @@ function MatchDetailList({ matches }: { matches: Match[] }) {
                         "text-green-500 bg-green-500/10 border-green-500/20",
                       ];
 
+                      const mentalLabels = [
+                        "Tilt 😡",
+                        "Fatiga 🥱",
+                        "Normal 😐",
+                        "Concentrado 🎯",
+                        "Excelente 🔥",
+                      ];
+                      const mentalLabel = mentalLabels[stat.mental_state - 1] || `${stat.mental_state}`;
+
                       return (
                         <div
                           className="rounded-lg border border-border/50 bg-background/20 p-3 text-xs"
                           key={stat.id}
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="font-semibold text-foreground">
-                              {stat.gamertag}
-                            </span>
-                            <div className="flex items-center gap-1.5">
+                          {/* Header of Player Card */}
+                          <div className="flex items-center justify-between border-b border-border/20 pb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-foreground">
+                                {stat.gamertag}
+                              </span>
                               <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-primary">
                                 {stat.active_class}
-                              </span>
-                              <span
-                                className={`rounded-full border px-1.5 py-0.2 font-mono text-[9px] font-bold ${mentalColors[stat.mental_state - 1]}`}
-                              >
-                                Mente: {stat.mental_state}
                               </span>
                             </div>
                           </div>
 
-                          <div className="mt-2.5 grid grid-cols-3 gap-2 border-border/20 border-t pt-2.5 font-mono text-[10px] text-muted-foreground">
-                            <div>
-                              <span className="font-sans text-foreground">K/D/A:</span>
-                              <div className="mt-0.5 font-semibold text-foreground/90">
-                                {k}/{d}/{stat.assists} ({kdr})
-                              </div>
+                          {/* Stats Grid */}
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-2 text-[11px]">
+                            <div className="flex justify-between items-center">
+                              <span className="text-muted-foreground font-light">K/D/A (KDR):</span>
+                              <span className="font-mono font-semibold text-foreground">
+                                {k}/{d}/{stat.assists} <span className="text-muted-foreground text-[9px]">({kdr})</span>
+                              </span>
                             </div>
-                            <div>
-                              <span className="font-sans text-foreground">Downs/Rev:</span>
-                              <div className="mt-0.5 font-semibold text-foreground/90">
-                                {stat.downs}/{stat.revives}
-                              </div>
+                            
+                            <div className="flex justify-between items-center">
+                              <span className="text-muted-foreground font-light">Reanimaciones:</span>
+                              <span className="font-mono font-semibold text-foreground">
+                                {stat.revives}
+                              </span>
                             </div>
-                            <div className="text-right">
-                              <span className="font-sans text-foreground">Resp/Fin:</span>
-                              <div className="mt-0.5 font-semibold text-foreground/90">
-                                {stat.respawned ? "✅" : "❌"}/{stat.end_game ? "✅" : "❌"}
-                              </div>
+
+                            <div className="flex justify-between items-center">
+                              <span className="text-muted-foreground font-light font-sans">Reaparecido:</span>
+                              <span className="font-semibold text-foreground">
+                                {stat.respawned ? "Sí ✅" : "No ❌"}
+                              </span>
+                            </div>
+
+                            <div className="flex justify-between items-center">
+                              <span className="text-muted-foreground font-light font-sans">Fase Final:</span>
+                              <span className="font-semibold text-foreground">
+                                {stat.end_game ? "Sí ✅" : "No ❌"}
+                              </span>
+                            </div>
+
+                            <div className="flex justify-between items-center col-span-2 border-t border-border/10 pt-2 mt-1">
+                              <span className="text-muted-foreground font-light font-sans">Estado Mental:</span>
+                              <span
+                                className={`rounded px-1.5 py-0.5 font-sans text-[10px] font-semibold border ${mentalColors[stat.mental_state - 1]}`}
+                              >
+                                {mentalLabel}
+                              </span>
                             </div>
                           </div>
                         </div>
