@@ -295,9 +295,10 @@ interface MapModalProps {
     selectedGrid?: string | null;
     onConfirm?: (grid: string) => void;
     readOnly?: boolean;
+    mode?: "deploy" | "circle" | "death" | "second_deploy";
 }
 
-export function MapModal({ isOpen, onClose, selectedGrid: initialSelectedGrid, onConfirm, readOnly = false }: MapModalProps) {
+export function MapModal({ isOpen, onClose, selectedGrid: initialSelectedGrid, onConfirm, readOnly = false, mode = "deploy" }: MapModalProps) {
     const [selectedGrid, setSelectedGrid] = useState<string | null>(initialSelectedGrid || null);
     const [zoom, setZoom] = useState(1);
 
@@ -318,22 +319,47 @@ export function MapModal({ isOpen, onClose, selectedGrid: initialSelectedGrid, o
         onClose();
     };
 
+    const modalConfigs = {
+        deploy: {
+            title: readOnly ? "Ubicación del Despliegue" : "Seleccionar Zona de Despliegue",
+            emptyText: "Sin zona de despliegue registrada",
+            textColor: "text-emerald-400"
+        },
+        circle: {
+            title: readOnly ? "Ubicación del Cierre de Círculo" : "Seleccionar Cierre de Círculo",
+            emptyText: "Sin zona de cierre registrada",
+            textColor: "text-slate-200"
+        },
+        death: {
+            title: readOnly ? "Ubicación de Eliminación (Punto de Muerte)" : "Seleccionar Punto de Eliminación",
+            emptyText: "Sin zona de muerte registrada",
+            textColor: "text-rose-400"
+        },
+        second_deploy: {
+            title: readOnly ? "Ubicación del Segundo Redespliegue" : "Seleccionar Zona de Redespliegue",
+            emptyText: "Sin redespliegue registrado",
+            textColor: "text-amber-400"
+        }
+    };
+
+    const config = modalConfigs[mode] || modalConfigs.deploy;
+
     return (
         <div className="fixed inset-0 z-50 flex flex-col bg-slate-950/95 text-white">
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur">
                 <div>
                     <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white">
-                        {readOnly ? "Ubicación del Despliegue" : "Seleccionar Zona de Despliegue"}
+                        {config.title}
                     </h2>
                     <p className="text-xs text-slate-400 mt-0.5">
                         {selectedGrid ? (
-                            <span className="text-emerald-400 font-semibold">
+                            <span className={`${config.textColor} font-semibold`}>
                                 Cuadrícula: {selectedGrid} &mdash; {nearestPOI}
                             </span>
                         ) : (
                             readOnly
-                                ? "Sin zona de despliegue registrada"
+                                ? config.emptyText
                                 : "Haz clic en una cuadrícula del mapa para seleccionar"
                         )}
                     </p>
@@ -372,6 +398,7 @@ export function MapModal({ isOpen, onClose, selectedGrid: initialSelectedGrid, o
                         selectedGrid={selectedGrid}
                         onSelectGrid={setSelectedGrid}
                         readOnly={readOnly}
+                        mode={mode}
                     />
                 </div>
             </div>

@@ -768,10 +768,11 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
       <MapModal
         isOpen={isMapModalOpen}
         onClose={() => setIsMapModalOpen(false)}
-        selectedZone={selectedPoiForMap}
+        selectedGrid={selectedPoiForMap}
         mode={mapModalMode}
         readOnly={true}
       />
+
     </div>
   );
 }
