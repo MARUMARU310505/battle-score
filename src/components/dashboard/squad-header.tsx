@@ -1,5 +1,5 @@
 import type { ActivePlayer } from "./squad-roster";
-import { OperatorAvatar } from "./squad-sidebar";
+import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 
 interface SquadHeaderProps {
   activePlayers: ActivePlayer[];
@@ -120,7 +120,8 @@ export function SquadHeader({
                   <h3
                     className={`truncate font-bold text-sm ${isMe ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
                   >
-                    {isAbsent ? "Ausente" : player.gamertag} {isMe && "(Tú)"}
+                    {isAbsent ? "Ausente" : cleanGamertag(player.gamertag)}{" "}
+                    {isMe && "(Tú)"}
                   </h3>
                 </div>
                 {/* MVP / Mochila Badge */}

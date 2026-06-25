@@ -1,7 +1,7 @@
 import { actions } from "astro:actions";
 import { UserCheck, UserMinus } from "lucide-react";
 import { useState } from "react";
-import { OperatorAvatar } from "./squad-sidebar";
+import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 
 export interface ActivePlayer {
   active_class: string;
@@ -156,7 +156,7 @@ export function SquadRoster({
                     <h4
                       className={`font-semibold text-sm ${player.user_id === currentUserId ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
                     >
-                      {player.gamertag}{" "}
+                      {cleanGamertag(player.gamertag)}{" "}
                       {player.user_id === currentUserId && "(Tú)"}
                     </h4>
                   </div>

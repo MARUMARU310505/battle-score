@@ -6,7 +6,7 @@ import type { Match, PlayerMatchStats } from "./dashboard-content";
 import { MatchForm } from "./match-form";
 import { SquadHeader } from "./squad-header";
 import { type ActivePlayer, SquadRoster } from "./squad-roster";
-import { OperatorAvatar } from "./squad-sidebar";
+import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 
 interface Session {
   created_at: string;
@@ -613,7 +613,7 @@ export function SessionPanel({
                                                 gamertag={stat.gamertag}
                                               />
                                               <span>
-                                                {stat.gamertag}{" "}
+                                                {cleanGamertag(stat.gamertag)}{" "}
                                                 {stat.user_id ===
                                                   currentUser?.id && "(Tú)"}
                                               </span>
@@ -694,7 +694,7 @@ export function SessionPanel({
                                             <span
                                               className={`font-bold ${stat.user_id === currentUser?.id ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
                                             >
-                                              {stat.gamertag}{" "}
+                                              {cleanGamertag(stat.gamertag)}{" "}
                                               {stat.user_id ===
                                                 currentUser?.id && "(Tú)"}
                                             </span>

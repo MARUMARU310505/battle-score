@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Match, PlayerMatchStats } from "./dashboard-content";
-import { OperatorAvatar } from "./squad-sidebar";
+import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 
 interface HistorySession {
   avg_placement: number;
@@ -436,7 +436,7 @@ function MatchDetailList({
                                     gamertag={stat.gamertag}
                                   />
                                   <span>
-                                    {stat.gamertag}{" "}
+                                    {cleanGamertag(stat.gamertag)}{" "}
                                     {stat.user_id === currentUserId && "(Tú)"}
                                   </span>
                                 </div>
@@ -514,7 +514,7 @@ function MatchDetailList({
                               <span
                                 className={`font-bold ${stat.user_id === currentUserId ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
                               >
-                                {stat.gamertag}{" "}
+                                {cleanGamertag(stat.gamertag)}{" "}
                                 {stat.user_id === currentUserId && "(Tú)"}
                               </span>
                             </div>

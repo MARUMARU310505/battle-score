@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import POIS from "@/data/pois.json";
 import type { ActivePlayer } from "./squad-roster";
-import { OperatorAvatar } from "./squad-sidebar";
+import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 
 interface PlayerStatInput {
   activeClass: string;
@@ -611,7 +611,7 @@ export function MatchForm({
                         <span
                           className={`font-bold text-xs ${isCurrentUser ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
                         >
-                          {stat.gamertag}
+                          {cleanGamertag(stat.gamertag)}
                         </span>
                       </div>
                       {isCurrentUser && (

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { OperatorAvatar } from "./squad-sidebar";
+import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 import { SquadWizard } from "./squad-wizard";
 
 export interface SquadMember {
@@ -305,7 +305,8 @@ export function SquadHub({
                                   <span
                                     className={`truncate ${isMe ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-muted-foreground"}`}
                                   >
-                                    {member.gamertag} {isMe && "(Tú)"}
+                                    {cleanGamertag(member.gamertag)}{" "}
+                                    {isMe && "(Tú)"}
                                   </span>
                                 </div>
                                 <div className="flex shrink-0 items-center gap-1.5">
@@ -492,7 +493,8 @@ export function SquadHub({
                                   Operador #{member.slot_number}
                                 </span>
                                 <p className="mt-0.5 text-[10px] text-muted-foreground">
-                                  Gamertag predeterminado: {member.gamertag}
+                                  Gamertag predeterminado:{" "}
+                                  {cleanGamertag(member.gamertag)}
                                 </p>
                               </div>
                               <span className="shrink-0 rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground uppercase">

@@ -28,6 +28,13 @@ interface SquadSidebarProps {
   squad: Squad;
 }
 
+export function cleanGamertag(gamertag: string): string {
+  if (!gamertag) {
+    return "";
+  }
+  return gamertag.split("||")[0];
+}
+
 export function OperatorAvatar({
   gamertag,
   className = "h-8 w-8",
@@ -36,7 +43,10 @@ export function OperatorAvatar({
   className?: string;
 }) {
   const [error, setError] = useState(false);
-  const initials = gamertag.slice(0, 2).toUpperCase();
+  const parts = gamertag.split("||");
+  const cleanName = parts[0] || "";
+  const seed = parts[1] || cleanName;
+  const initials = cleanName.slice(0, 2).toUpperCase();
 
   if (error) {
     return (
@@ -50,10 +60,12 @@ export function OperatorAvatar({
 
   return (
     <img
-      alt={gamertag}
+      alt={cleanName}
       className={`shrink-0 rounded-full border border-border bg-muted ${className}`}
+      height={32}
       onError={() => setError(true)}
-      src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent(gamertag)}`}
+      src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent(seed)}`}
+      width={32}
     />
   );
 }
@@ -304,7 +316,7 @@ export function SquadSidebar({
                   )}
                   <div className="flex items-center justify-between">
                     <span className="font-mono font-semibold text-[9px] text-primary uppercase">
-                      Clase de {member.gamertag}
+                      Clase de {cleanGamertag(member.gamertag)}
                     </span>
                     <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground">
                       Nivel {member.level}
@@ -415,7 +427,7 @@ export function SquadSidebar({
                       <p
                         className={`truncate font-bold text-xs ${member.user_id === currentUser?.id ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
                       >
-                        {member.gamertag}{" "}
+                        {cleanGamertag(member.gamertag)}{" "}
                         {member.user_id === currentUser?.id && "(Tú)"}
                       </p>
                       <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">

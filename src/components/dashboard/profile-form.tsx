@@ -14,7 +14,15 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ initialProfile }: ProfileFormProps) {
-  const [gamertag, setGamertag] = useState(initialProfile?.gamertag || "");
+  const initialGamertagValue = initialProfile?.gamertag
+    ? initialProfile.gamertag.split("||")[0]
+    : "";
+  const initialSeedValue = initialProfile?.gamertag?.includes("||")
+    ? initialProfile.gamertag.split("||")[1]
+    : initialGamertagValue;
+
+  const [gamertag, setGamertag] = useState(initialGamertagValue);
+  const [avatarSeed, setAvatarSeed] = useState(initialSeedValue);
   const [level, setLevel] = useState<number>(initialProfile?.level || 1);
   const [favoriteClass, setFavoriteClass] = useState(
     initialProfile?.favorite_class || "Asalto"
@@ -22,6 +30,11 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const handleRandomizeAvatar = () => {
+    const randomSeed = Math.random().toString(36).substring(2, 9);
+    setAvatarSeed(randomSeed);
+  };
 
   const isNew = !initialProfile;
 
@@ -42,8 +55,10 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
 
     setLoading(true);
     try {
+      const fullGamertag =
+        gamertag.trim() + "||" + (avatarSeed || gamertag).trim();
       const { error: actionError } = await actions.profile.save({
-        gamertag: gamertag.trim(),
+        gamertag: fullGamertag,
         level,
         favoriteClass,
       });
@@ -85,16 +100,16 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
             </p>
           </div>
 
-          <div className="flex flex-col items-center justify-center space-y-2 py-2">
+          <div className="flex flex-col items-center justify-center space-y-3 py-2">
             <div className="group relative">
               <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-primary to-accent opacity-75 blur-xs transition duration-1000 group-hover:opacity-100 group-hover:duration-200" />
               <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-border bg-card shadow-lg">
-                {gamertag.trim() ? (
+                {(avatarSeed || gamertag).trim() ? (
                   <img
                     alt="Avatar Live Preview"
                     className="h-full w-full rounded-full bg-muted object-cover"
                     height={80}
-                    src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent(gamertag.trim())}`}
+                    src={`https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent((avatarSeed || gamertag).trim())}`}
                     width={80}
                   />
                 ) : (
@@ -104,9 +119,19 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                 )}
               </div>
             </div>
-            <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
-              Vista previa del avatar
-            </span>
+            <div className="flex flex-col items-center gap-2">
+              <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+                Vista previa del avatar
+              </span>
+              <Button
+                className="flex h-8 items-center gap-1.5 border-border/80 bg-background/50 px-3 font-semibold text-xs tracking-wide transition-all duration-200 hover:bg-muted"
+                onClick={handleRandomizeAvatar}
+                type="button"
+                variant="outline"
+              >
+                <span>🎲 Cambiar Avatar</span>
+              </Button>
+            </div>
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
