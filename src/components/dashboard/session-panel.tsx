@@ -4,8 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { Match, PlayerMatchStats } from "./dashboard-content";
 import { MatchForm } from "./match-form";
-import { SquadHeader } from "./squad-header";
-import { type ActivePlayer, SquadRoster } from "./squad-roster";
+import { type ActivePlayer, SquadHeader } from "./squad-header";
 import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 import { SessionLiveStats } from "./session-live-stats";
 
@@ -394,29 +393,18 @@ export function SessionPanel({
         </div>
       )}
 
-      {/* Roster stats header */}
+      {/* Roster stats header with status controls */}
       <SquadHeader
         activePlayers={activePlayers}
         currentUserId={currentUser?.id}
+        isOwner={isOwner}
+        squadId={squad.id}
+        setSquadState={setSquadState}
       />
 
-      {/* Main dashboard columns */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        {/* Left Column: Squad Roster configuration */}
-        <div className="xl:col-span-1">
-          <SquadRoster
-            activePlayers={activePlayers}
-            currentUserId={currentUser?.id}
-            isOwner={isOwner}
-            onChange={setActivePlayers}
-            originalMembers={squad.members}
-            setSquadState={setSquadState}
-            squadId={squad.id}
-          />
-        </div>
-
-        {/* Right Column: Match registration or list */}
-        <div className="space-y-4 xl:col-span-2">
+      {/* Match registration or list (full width) */}
+      <div>
+        <div className="space-y-4">
           {initialSession.is_registering_match ? (
             <div className="space-y-4">
               {isOwner ? (

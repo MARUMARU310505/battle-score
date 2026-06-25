@@ -2,7 +2,7 @@ import { actions } from "astro:actions";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import POIS from "@/data/pois.json";
-import type { ActivePlayer } from "./squad-roster";
+import type { ActivePlayer } from "./squad-header";
 import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 
 interface PlayerStatInput {

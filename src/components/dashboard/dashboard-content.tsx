@@ -6,7 +6,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { MainTabs, type TabType } from "./main-tabs";
 import { SessionPanel } from "./session-panel";
 import { SessionsHistory } from "./sessions-history";
-import type { ActivePlayer } from "./squad-roster";
+import type { ActivePlayer } from "./squad-header";
 import { SquadSidebar } from "./squad-sidebar";
 import { SquadWizard } from "./squad-wizard";
 import { StatsView } from "./stats-view";
