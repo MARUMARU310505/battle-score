@@ -381,8 +381,11 @@ export function SquadSidebar({
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-1">
-                      <p className="truncate font-bold text-foreground text-xs">
-                        {member.gamertag}
+                      <p
+                        className={`truncate font-bold text-xs ${member.user_id === currentUser?.id ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
+                      >
+                        {member.gamertag}{" "}
+                        {member.user_id === currentUser?.id && "(Tú)"}
                       </p>
                       <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                         Nivel {member.level}

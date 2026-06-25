@@ -34,7 +34,7 @@ export function SquadRoster({
   onChange: _onChange,
   originalMembers: _originalMembers,
   isOwner = false,
-  currentUserId: _currentUserId = null,
+  currentUserId = null,
   squadId,
   setSquadState,
 }: SquadRosterProps) {
@@ -145,8 +145,11 @@ export function SquadRoster({
                     Operador #{player.slot_number}
                   </span>
                   <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-foreground text-sm">
-                      {player.gamertag}
+                    <h4
+                      className={`font-semibold text-sm ${player.user_id === currentUserId ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
+                    >
+                      {player.gamertag}{" "}
+                      {player.user_id === currentUserId && "(Tú)"}
                     </h4>
                   </div>
                 </div>

@@ -402,7 +402,10 @@ export function DashboardContent({
           )}
 
           {activeTab === "history" && (
-            <SessionsHistory squadId={squadState.id} />
+            <SessionsHistory
+              currentUserId={currentUser?.id}
+              squadId={squadState.id}
+            />
           )}
 
           {activeTab === "stats" && (

@@ -602,11 +602,13 @@ export function MatchForm({
                   <div className="flex flex-col gap-2 border-border/40 border-b pb-2 sm:flex-row sm:items-center sm:justify-between">
                     {/* Row 1: Player Name, Tú, Class Select */}
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-foreground text-xs">
+                      <span
+                        className={`font-bold text-xs ${isCurrentUser ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
+                      >
                         {stat.gamertag}
                       </span>
                       {isCurrentUser && (
-                        <span className="rounded bg-primary px-1.5 py-0.5 font-semibold text-[8px] text-primary-foreground uppercase">
+                        <span className="rounded bg-emerald-500 px-1.5 py-0.5 font-semibold text-[8px] text-white uppercase dark:bg-emerald-600">
                           Tú
                         </span>
                       )}

@@ -2,13 +2,93 @@ import type { ActivePlayer } from "./squad-roster";
 
 interface SquadHeaderProps {
   activePlayers: ActivePlayer[];
+  currentUserId?: string | null;
 }
 
-export function SquadHeader({ activePlayers }: SquadHeaderProps) {
+export function SquadHeader({
+  activePlayers,
+  currentUserId = null,
+}: SquadHeaderProps) {
+  const activePlaying = activePlayers.filter((p) => p.status !== "ausente");
+  const hasAnyStats = activePlaying.some(
+    (p) => (p.kills || 0) > 0 || (p.downs || 0) > 0 || (p.assists || 0) > 0
+  );
+
+  let mvpSlot: number | null = null;
+  let mochilaSlot: number | null = null;
+
+  if (hasAnyStats && activePlaying.length >= 2) {
+    const getKDR = (p: ActivePlayer) => {
+      const k = p.kills || 0;
+      const d = p.downs || 0;
+      return d > 0 ? k / d : k;
+    };
+
+    const sortedForMvp = [...activePlaying].sort((a, b) => {
+      const kdrA = getKDR(a);
+      const kdrB = getKDR(b);
+      if (kdrB !== kdrA) {
+        return kdrB - kdrA;
+      }
+
+      const killsA = a.kills || 0;
+      const killsB = b.kills || 0;
+      if (killsB !== killsA) {
+        return killsB - killsA;
+      }
+
+      const assistsA = a.assists || 0;
+      const assistsB = b.assists || 0;
+      if (assistsB !== assistsA) {
+        return assistsB - assistsA;
+      }
+
+      const downsA = a.downs || 0;
+      const downsB = b.downs || 0;
+      return downsA - downsB; // Lower downs first
+    });
+
+    const sortedForMochila = [...activePlaying].sort((a, b) => {
+      const kdrA = getKDR(a);
+      const kdrB = getKDR(b);
+      if (kdrA !== kdrB) {
+        return kdrA - kdrB;
+      }
+
+      const killsA = a.kills || 0;
+      const killsB = b.kills || 0;
+      if (killsA !== killsB) {
+        return killsA - killsB;
+      }
+
+      const assistsA = a.assists || 0;
+      const assistsB = b.assists || 0;
+      if (assistsA !== assistsB) {
+        return assistsA - assistsB;
+      }
+
+      const downsA = a.downs || 0;
+      const downsB = b.downs || 0;
+      return downsB - downsA; // Higher downs first
+    });
+
+    const firstMvp = sortedForMvp[0];
+    const firstMochila = sortedForMochila[0];
+    if (
+      firstMvp &&
+      firstMochila &&
+      firstMvp.slot_number !== firstMochila.slot_number
+    ) {
+      mvpSlot = firstMvp.slot_number;
+      mochilaSlot = firstMochila.slot_number;
+    }
+  }
+
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
       {activePlayers.map((player) => {
         const isAbsent = player.status === "ausente";
+        const isMe = !isAbsent && player.user_id === currentUserId;
         const k = player.kills || 0;
         const d = player.downs || 0;
         const a = player.assists || 0;
@@ -29,9 +109,22 @@ export function SquadHeader({ activePlayers }: SquadHeaderProps) {
                 <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
                   Operador #{player.slot_number}
                 </p>
-                <h3 className="mt-0.5 truncate font-bold text-foreground text-sm">
-                  {isAbsent ? "Ausente" : player.gamertag}
+                <h3
+                  className={`mt-0.5 truncate font-bold text-sm ${isMe ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
+                >
+                  {isAbsent ? "Ausente" : player.gamertag} {isMe && "(Tú)"}
                 </h3>
+                {/* MVP / Mochila Badge */}
+                {!isAbsent && player.slot_number === mvpSlot && (
+                  <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 font-bold font-mono text-[9px] text-amber-500 uppercase tracking-wider">
+                    🏆 MVP
+                  </span>
+                )}
+                {!isAbsent && player.slot_number === mochilaSlot && (
+                  <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/15 px-2 py-0.5 font-bold font-mono text-[9px] text-red-500 uppercase tracking-wider">
+                    🎒 Mochila
+                  </span>
+                )}
               </div>
               {!isAbsent && (
                 <span className="shrink-0 rounded-full border border-primary/10 bg-primary/5 px-2 py-0.5 font-medium text-[10px] text-primary">

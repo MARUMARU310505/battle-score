@@ -391,7 +391,10 @@ export function SessionPanel({
       )}
 
       {/* Roster stats header */}
-      <SquadHeader activePlayers={activePlayers} />
+      <SquadHeader
+        activePlayers={activePlayers}
+        currentUserId={currentUser?.id}
+      />
 
       {/* Main dashboard columns */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
@@ -600,8 +603,12 @@ export function SessionPanel({
                                           className="hover:bg-muted/5"
                                           key={stat.id}
                                         >
-                                          <td className="py-2 font-semibold text-foreground">
-                                            {stat.gamertag}
+                                          <td
+                                            className={`py-2 font-semibold ${stat.user_id === currentUser?.id ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
+                                          >
+                                            {stat.gamertag}{" "}
+                                            {stat.user_id === currentUser?.id &&
+                                              "(Tú)"}
                                           </td>
                                           <td className="py-2 text-center">
                                             <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-primary">
@@ -670,8 +677,12 @@ export function SessionPanel({
                                       {/* Header of Player Card */}
                                       <div className="flex items-center justify-between border-border/20 border-b pb-2">
                                         <div className="flex items-center gap-2">
-                                          <span className="font-bold text-foreground">
-                                            {stat.gamertag}
+                                          <span
+                                            className={`font-bold ${stat.user_id === currentUser?.id ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
+                                          >
+                                            {stat.gamertag}{" "}
+                                            {stat.user_id === currentUser?.id &&
+                                              "(Tú)"}
                                           </span>
                                           <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-primary">
                                             {stat.active_class}

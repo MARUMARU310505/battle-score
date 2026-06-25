@@ -287,9 +287,11 @@ export function SquadHub({
                                 }`}
                                 key={member.id}
                               >
-                                <span className="max-w-[120px] truncate text-muted-foreground">
+                                <span
+                                  className={`max-w-[120px] truncate ${isMe ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-muted-foreground"}`}
+                                >
                                   {member.slot_number === 1 ? "👑 " : "👤 "}
-                                  {member.gamertag}
+                                  {member.gamertag} {isMe && "(Tú)"}
                                 </span>
                                 <div className="flex shrink-0 items-center gap-1.5">
                                   <span className="text-[10px] text-muted-foreground/80">
