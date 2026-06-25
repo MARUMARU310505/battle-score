@@ -235,6 +235,8 @@ export function MatchForm({
       if (value === 1) {
         setEliminationCause("Ninguna (Victoria)");
         updatedDraft.eliminationCause = "Ninguna (Victoria)";
+        setDeathZone("");
+        updatedDraft.deathZone = "";
       } else if (
         eliminationCause === "Ninguna" ||
         eliminationCause === "Ninguna (Victoria)" ||
@@ -623,15 +625,17 @@ export function MatchForm({
                 id="match-death"
                 variant="outline"
                 className="w-full justify-start text-left font-normal text-xs bg-background border-rose-950/40 text-foreground hover:bg-rose-500/10 disabled:bg-muted disabled:opacity-50"
-                disabled={!isOwner}
+                disabled={!isOwner || placement === 1}
                 onClick={() => {
                   setMapTarget("death");
                   setIsMapModalOpen(true);
                 }}
               >
-                {deathZone
-                  ? `${deathZone} - ${getNearestPOI(deathZone)}`
-                  : "Seleccionar en Mapa"}
+                {placement === 1
+                  ? "No aplica (Victoria)"
+                  : deathZone
+                    ? `${deathZone} - ${getNearestPOI(deathZone)}`
+                    : "Seleccionar en Mapa"}
               </Button>
             </div>
 
