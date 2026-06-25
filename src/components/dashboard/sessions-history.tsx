@@ -364,25 +364,28 @@ function MatchDetailList({
                   <p className="font-bold text-foreground text-xs">
                     Partida #{index + 1} {match.placement === 1 && "🏆"}
                   </p>
-                  <div className="font-light text-[10px] text-muted-foreground flex flex-wrap items-center gap-x-1 gap-y-0.5 animate-in fade-in duration-200">
-                    <span>Drop:</span>
-                    <span
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedPoiForMap(match.poi);
-                        setMapModalMode("deploy");
-                        setIsMapModalOpen(true);
-                      }}
-                      className="font-medium text-foreground/80 cursor-pointer hover:text-emerald-400 hover:underline transition-colors"
-                    >
-                      {isGridCode(match.poi)
-                        ? `${match.poi} - ${getNearestPOI(match.poi)}`
-                        : match.poi}
+                  <div className="font-light text-[10px] text-muted-foreground flex flex-wrap items-center gap-x-2.5 gap-y-1 animate-in fade-in duration-200">
+                    <span className="inline-flex items-center gap-1">
+                      <span className="text-muted-foreground/70">Drop:</span>
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedPoiForMap(match.poi);
+                          setMapModalMode("deploy");
+                          setIsMapModalOpen(true);
+                        }}
+                        className="font-medium text-foreground/80 cursor-pointer hover:text-emerald-400 hover:underline transition-colors"
+                      >
+                        {isGridCode(match.poi)
+                          ? `${match.poi} - ${getNearestPOI(match.poi)}`
+                          : match.poi}
+                      </span>
                     </span>
 
                     {match.circle_zone && (
-                      <>
-                        <span>• Círculo:</span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="text-muted-foreground/40">•</span>
+                        <span className="text-muted-foreground/70">Círculo:</span>
                         <span
                           onClick={(e) => {
                             e.stopPropagation();
@@ -394,12 +397,13 @@ function MatchDetailList({
                         >
                           {match.circle_zone} - {getNearestPOI(match.circle_zone)}
                         </span>
-                      </>
+                      </span>
                     )}
 
                     {match.death_zone && (
-                      <>
-                        <span>• Muerte:</span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="text-muted-foreground/40">•</span>
+                        <span className="text-muted-foreground/70">Muerte:</span>
                         <span
                           onClick={(e) => {
                             e.stopPropagation();
@@ -411,12 +415,13 @@ function MatchDetailList({
                         >
                           {match.death_zone} - {getNearestPOI(match.death_zone)}
                         </span>
-                      </>
+                      </span>
                     )}
 
                     {match.second_deploy_zone && (
-                      <>
-                        <span>• Redespliegue:</span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="text-muted-foreground/40">•</span>
+                        <span className="text-muted-foreground/70">Redespliegue:</span>
                         <span
                           onClick={(e) => {
                             e.stopPropagation();
@@ -428,10 +433,13 @@ function MatchDetailList({
                         >
                           {match.second_deploy_zone} - {getNearestPOI(match.second_deploy_zone)}
                         </span>
-                      </>
+                      </span>
                     )}
 
-                    <span>• {matchTime}</span>
+                    <span className="inline-flex items-center gap-1">
+                      <span className="text-muted-foreground/40">•</span>
+                      <span>{matchTime}</span>
+                    </span>
                   </div>
                 </div>
               </div>
