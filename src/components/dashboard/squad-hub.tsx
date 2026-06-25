@@ -17,6 +17,7 @@ import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 import { SquadWizard } from "./squad-wizard";
 
 export interface SquadMember {
+  avatar_seed?: string | null;
   favorite_class: string;
   gamertag: string;
   id: string;
@@ -298,6 +299,7 @@ export function SquadHub({
                                     </span>
                                   ) : (
                                     <OperatorAvatar
+                                      avatarSeed={member.avatar_seed}
                                       className="h-4.5 w-4.5"
                                       gamertag={member.gamertag}
                                     />
@@ -454,19 +456,32 @@ export function SquadHub({
                     Reclamar Rol Disponible:
                   </span>
 
-                  {foundSquad.squad_members.filter((m) => m.user_id === null)
-                    .length === 0 ? (
-                    <p className="font-light text-destructive text-xs italic">
-                      Este escuadrón ya no tiene slots libres disponibles.
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {foundSquad.squad_members
-                        .sort((a, b) => a.slot_number - b.slot_number)
-                        .map((member) => {
-                          const isClaimed = member.user_id !== null;
-                          const isSelected =
-                            selectedSlot === member.slot_number;
+                  {(() => {
+                    const slots = Array.from({ length: 4 }, (_, i) => {
+                      const slotNum = i + 1;
+                      const member = foundSquad.squad_members.find((m) => m.slot_number === slotNum);
+                      return {
+                        slot_number: slotNum,
+                        member,
+                        isClaimed: member ? member.user_id !== null : false,
+                      };
+                    });
+
+                    const freeSlots = slots.filter((s) => !s.isClaimed);
+
+                    if (freeSlots.length === 0) {
+                      return (
+                        <p className="font-light text-destructive text-xs italic">
+                          Este escuadrón ya no tiene slots libres disponibles.
+                        </p>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-2">
+                        {slots.map((slotInfo) => {
+                          const isClaimed = slotInfo.isClaimed;
+                          const isSelected = selectedSlot === slotInfo.slot_number;
                           let buttonStyle =
                             "border-border bg-background/50 hover:border-border/80";
                           if (isClaimed) {
@@ -476,35 +491,43 @@ export function SquadHub({
                             buttonStyle = "border-primary bg-primary/5";
                           }
 
+                          const displayGamertag = slotInfo.member 
+                            ? cleanGamertag(slotInfo.member.gamertag) 
+                            : "Disponible";
+
+                          const displayClass = slotInfo.member 
+                            ? slotInfo.member.favorite_class 
+                            : "Asalto";
+
                           return (
                             <button
                               className={`flex w-full cursor-pointer items-center justify-between rounded-md border p-2 text-left text-xs transition-colors ${buttonStyle}`}
                               disabled={isClaimed}
-                              key={member.id}
+                              key={slotInfo.slot_number}
                               onClick={() =>
                                 !isClaimed &&
-                                handleSelectSlot(member.slot_number)
+                                handleSelectSlot(slotInfo.slot_number)
                               }
                               type="button"
                             >
                               <div>
                                 <span className="font-semibold text-foreground">
-                                  {member.slot_number === 1 ? "👑 " : "👤 "}
-                                  Operador #{member.slot_number}
+                                  {slotInfo.slot_number === 1 ? "👑 " : "👤 "}
+                                  Operador #{slotInfo.slot_number}
                                 </span>
                                 <p className="mt-0.5 text-[10px] text-muted-foreground">
-                                  Gamertag predeterminado:{" "}
-                                  {cleanGamertag(member.gamertag)}
+                                  {isClaimed ? `Reclamado por: ${displayGamertag}` : `Slot disponible: ${displayGamertag}`}
                                 </p>
                               </div>
                               <span className="shrink-0 rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground uppercase">
-                                {member.favorite_class}
+                                {displayClass}
                               </span>
                             </button>
                           );
                         })}
-                    </div>
-                  )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {selectedSlot !== null && (

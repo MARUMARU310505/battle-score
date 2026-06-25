@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 interface Member {
+  avatar_seed?: string | null;
   favorite_class: string;
   gamertag: string;
   id: string;
@@ -37,15 +38,17 @@ export function cleanGamertag(gamertag: string): string {
 
 export function OperatorAvatar({
   gamertag,
+  avatarSeed,
   className = "h-8 w-8",
 }: {
   gamertag: string;
+  avatarSeed?: string | null;
   className?: string;
 }) {
   const [error, setError] = useState(false);
   const parts = gamertag.split("||");
   const cleanName = parts[0] || "";
-  const seed = parts[1] || cleanName;
+  const seed = avatarSeed || parts[1] || cleanName;
   const initials = cleanName.slice(0, 2).toUpperCase();
 
   if (error) {
@@ -418,6 +421,7 @@ export function SquadSidebar({
                 )}
                 <div className="flex items-start gap-3">
                   <OperatorAvatar
+                    avatarSeed={member.avatar_seed}
                     className="h-8 w-8"
                     gamertag={member.gamertag}
                   />

@@ -432,6 +432,7 @@ function MatchDetailList({
                               >
                                 <div className="flex items-center gap-1.5">
                                   <OperatorAvatar
+                                    avatarSeed={stat.avatar_seed}
                                     className="h-5 w-5"
                                     gamertag={stat.gamertag}
                                   />
@@ -508,6 +509,7 @@ function MatchDetailList({
                           <div className="flex items-center gap-2">
                             <div className="flex items-center gap-1.5">
                               <OperatorAvatar
+                                avatarSeed={stat.avatar_seed}
                                 className="h-5 w-5"
                                 gamertag={stat.gamertag}
                               />

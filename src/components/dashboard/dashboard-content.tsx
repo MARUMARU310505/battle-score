@@ -50,6 +50,7 @@ export interface PlayerMatchStats {
   respawned: boolean;
   revives: number;
   user_id?: string | null;
+  avatar_seed?: string | null;
 }
 
 export interface Match {
@@ -128,6 +129,7 @@ export function DashboardContent({
           favorite_class: member.favorite_class,
           active_class: member.favorite_class,
           user_id: member.user_id,
+          avatar_seed: member.avatar_seed || null,
           kills,
           downs,
           assists,
@@ -186,6 +188,7 @@ export function DashboardContent({
             favorite_class: member.favorite_class,
             active_class: member.favorite_class,
             user_id: member.user_id,
+            avatar_seed: member.avatar_seed || null,
             kills,
             downs,
             assists,

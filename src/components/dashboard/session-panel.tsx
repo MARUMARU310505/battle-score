@@ -172,6 +172,7 @@ export function SessionPanel({
           userId: p.user_id || null,
           gamertag: p.gamertag,
           activeClass: p.active_class,
+          avatarSeed: p.avatar_seed || null,
         }));
       const { data, error: actionError } =
         await actions.session.startMatchRegistration({
@@ -609,6 +610,7 @@ export function SessionPanel({
                                           >
                                             <div className="flex items-center gap-1.5">
                                               <OperatorAvatar
+                                                avatarSeed={stat.avatar_seed}
                                                 className="h-5 w-5"
                                                 gamertag={stat.gamertag}
                                               />
@@ -688,6 +690,7 @@ export function SessionPanel({
                                         <div className="flex items-center gap-2">
                                           <div className="flex items-center gap-1.5">
                                             <OperatorAvatar
+                                              avatarSeed={stat.avatar_seed}
                                               className="h-5 w-5"
                                               gamertag={stat.gamertag}
                                             />

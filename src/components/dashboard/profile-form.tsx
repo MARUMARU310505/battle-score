@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 interface Profile {
+  avatar_seed?: string | null;
   favorite_class: string;
   gamertag: string;
   level: number;
@@ -17,9 +18,11 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
   const initialGamertagValue = initialProfile?.gamertag
     ? initialProfile.gamertag.split("||")[0]
     : "";
-  const initialSeedValue = initialProfile?.gamertag?.includes("||")
-    ? initialProfile.gamertag.split("||")[1]
-    : initialGamertagValue;
+  const initialSeedValue = initialProfile?.avatar_seed
+    ? initialProfile.avatar_seed
+    : (initialProfile?.gamertag?.includes("||")
+        ? initialProfile.gamertag.split("||")[1]
+        : initialGamertagValue);
 
   const [gamertag, setGamertag] = useState(initialGamertagValue);
   const [avatarSeed, setAvatarSeed] = useState(initialSeedValue);
@@ -55,12 +58,11 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
 
     setLoading(true);
     try {
-      const fullGamertag =
-        gamertag.trim() + "||" + (avatarSeed || gamertag).trim();
       const { error: actionError } = await actions.profile.save({
-        gamertag: fullGamertag,
+        gamertag: gamertag.trim(),
         level,
         favoriteClass,
+        avatarSeed: (avatarSeed || gamertag).trim(),
       });
 
       if (actionError) {

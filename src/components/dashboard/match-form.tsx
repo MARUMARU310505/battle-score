@@ -16,6 +16,7 @@ interface PlayerStatInput {
   respawned: boolean;
   revives: number;
   userId?: string | null;
+  avatarSeed?: string | null;
 }
 
 interface MatchFormProps {
@@ -138,6 +139,7 @@ export function MatchForm({
       respawned: false,
       endGame: false,
       mentalState: 3,
+      avatarSeed: p.avatar_seed || null,
     }));
   });
 
@@ -605,6 +607,7 @@ export function MatchForm({
                     <div className="flex flex-wrap items-center gap-2">
                       <div className="flex items-center gap-1.5">
                         <OperatorAvatar
+                          avatarSeed={stat.avatarSeed}
                           className="h-5 w-5"
                           gamertag={stat.gamertag}
                         />

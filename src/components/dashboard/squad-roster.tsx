@@ -13,6 +13,7 @@ export interface ActivePlayer {
   slot_number: number;
   status: "titular" | "reemplazo" | "ausente";
   user_id?: string | null;
+  avatar_seed?: string | null;
 }
 
 interface SquadRosterProps {

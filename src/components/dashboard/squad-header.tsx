@@ -113,6 +113,7 @@ export function SquadHeader({
                 <div className="mt-0.5 flex items-center gap-2">
                   {!isAbsent && (
                     <OperatorAvatar
+                      avatarSeed={player.avatar_seed}
                       className="h-6 w-6"
                       gamertag={player.gamertag}
                     />
