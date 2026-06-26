@@ -60,15 +60,28 @@ const LoaderSpinner = () => (
 
 const ELIMINATION_CAUSES = [
   "Ninguna (Victoria)",
-  "Encuentro Directo (Gunfight)",
-  "Flanqueo",
-  "Sniper / Larga Distancia",
-  "Tercero en Discordia (Third Party)",
-  "Emboscada",
-  "Falta de Rotación / Gas",
-  "Ataque Aéreo / Rachas",
-  "Falta de Recursos (Placas/Balas)",
-  "Desconexión / AFK",
+  "Despliegue Inicial Erróneo (Mal Drop)",
+  "Rotación Tardía / Atrapados por la Zona",
+  "Flanqueo / Ataque por la Espalda",
+  "Desorganización de Escuadra / Falta de Comms",
+  "Escuadra Dispersa / Falta de Cohesión",
+  "Desventaja de Nivel / Habilidad Enemiga",
+  "Duelo Directo Perdido (Gunfight)",
+  "Eliminados por un Solo Operador",
+  "Superados en Número (Outnumbered)",
+  "Ataque Cruzado / Tercero en Discordia (Sandwich)",
+  "Ataque de Vehículo Blindado Enemigo (Tanque)",
+  "Fuego de Helicóptero Enemigo",
+  "Falta de Blindaje (Sin Placas)",
+  "Agotamiento de Recursos (Sin Munición)",
+  "Sniper / Fuego de Larga Distancia Coordinado",
+  "Ataque Aéreo / Rachas de Bajas Hostiles",
+  "Emboscada al Intentar Reanimar Compañero",
+  "Falta de Cobertura en Terreno Abierto",
+  "Destrucción de Vehículo Propio",
+  "Problemas Técnicos (Bajos FPS/Lag)",
+  "Fatiga o Cansancio del Escuadrón",
+  "Desconexión / Abandono de un Operador",
   "Otro",
 ];
 
@@ -242,8 +255,8 @@ export function MatchForm({
         eliminationCause === "Ninguna (Victoria)" ||
         eliminationCause === "Victoria"
       ) {
-        setEliminationCause("Encuentro Directo (Gunfight)");
-        updatedDraft.eliminationCause = "Encuentro Directo (Gunfight)";
+        setEliminationCause("Duelo Directo Perdido (Gunfight)");
+        updatedDraft.eliminationCause = "Duelo Directo Perdido (Gunfight)";
       }
     }
 
