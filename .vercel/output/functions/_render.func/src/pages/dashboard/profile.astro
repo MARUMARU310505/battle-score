@@ -1,0 +1,32 @@
+---
+import { actions } from "astro:actions";
+import { ProfileForm } from "@/components/dashboard/profile-form";
+import { Nav } from "@/components/landing/nav";
+import BaseLayout from "@/layouts/base-layout.astro";
+
+const { user } = Astro.locals;
+
+// Secondary safety check (middleware already guards this route)
+if (!user) {
+  return Astro.redirect("/");
+}
+
+// Fetch existing profile if any
+const { data: profile } = await Astro.callAction(actions.profile.get, {});
+---
+
+<BaseLayout
+  metadata={{
+    title: "Mi Perfil de Operador — Battle Score",
+    description: "Configura tu perfil de operador global",
+    ignoreTitleTemplate: true,
+  }}
+>
+  <div class="flex flex-1 flex-col">
+    <Nav user={user} client:load />
+
+    <main class="flex flex-1 items-center justify-center p-4 xl:p-8">
+      <ProfileForm initialProfile={profile} client:load />
+    </main>
+  </div>
+</BaseLayout>
