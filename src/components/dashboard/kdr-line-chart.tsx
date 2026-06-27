@@ -37,6 +37,39 @@ const colors = [
   "#eab308", // Yellow
 ];
 
+// Helper function to match gamertags case-insensitively, accent-insensitively, and clean up suffixes/IDs
+export function matchGamertags(gt1: string, gt2: string): boolean {
+  if (!(gt1 && gt2)) {
+    return false;
+  }
+  const clean1 = gt1
+    .split("||")[0]
+    .split("#")[0]
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  const clean2 = gt2
+    .split("||")[0]
+    .split("#")[0]
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  return clean1 === clean2;
+}
+
+// Helper function to match operators by user_id or case/accent-insensitive gamertag
+export function matchOperator(
+  p: { user_id?: string | null; gamertag: string },
+  member: { user_id?: string | null; gamertag: string }
+): boolean {
+  if (p.user_id && member.user_id && p.user_id === member.user_id) {
+    return true;
+  }
+  return matchGamertags(p.gamertag, member.gamertag);
+}
+
 export function KdrLineChart({
   currentUserId,
   matches,
@@ -44,6 +77,7 @@ export function KdrLineChart({
   squad,
 }: KdrLineChartProps) {
   const [chartMode, setChartMode] = useState<"general" | "session">("session");
+  const [showDebug, setShowDebug] = useState(false);
   const [hoveredPoint, setHoveredPoint] = useState<{
     gamertag: string;
     avatarSeed: string | null;
@@ -142,8 +176,8 @@ export function KdrLineChart({
         const match = sortedMatches[idx];
         const xLabel = `Partida ${idx + 1}`;
         for (const member of squadMembers) {
-          const stats = match.player_match_stats?.find(
-            (p) => p.gamertag === member.gamertag
+          const stats = match.player_match_stats?.find((p) =>
+            matchOperator(p, member)
           );
 
           if (stats) {
@@ -209,8 +243,8 @@ export function KdrLineChart({
           for (const sessionMatchesList of Object.values(sortedSessionGroups)) {
             if (sessionMatchesList.length > idx) {
               const match = sessionMatchesList[idx];
-              const stats = match.player_match_stats?.find(
-                (p) => p.gamertag === member.gamertag
+              const stats = match.player_match_stats?.find((p) =>
+                matchOperator(p, member)
               );
               if (stats) {
                 const kills = stats.kills || 0;
@@ -320,6 +354,28 @@ export function KdrLineChart({
 
   const formatStat = (val: number) =>
     Number.isInteger(val) ? val.toString() : val.toFixed(1);
+
+  const dbGamertags = useMemo(() => {
+    const list: { gamertag: string; userId: string | null }[] = [];
+    const seen = new Set<string>();
+    const sourceMatches = chartMode === "session" ? sessionMatches : matches;
+
+    for (const match of sourceMatches) {
+      if (match.player_match_stats) {
+        for (const stats of match.player_match_stats) {
+          const key = `${stats.gamertag}-${stats.user_id}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            list.push({
+              gamertag: stats.gamertag,
+              userId: stats.user_id || null,
+            });
+          }
+        }
+      }
+    }
+    return list;
+  }, [chartMode, sessionMatches, matches]);
 
   const hasData = xLabels.length > 0;
 
@@ -640,6 +696,104 @@ export function KdrLineChart({
           </div>
         )}
       </div>
+
+      {/* Collapsible Debug Panel */}
+      <div className="mt-4 flex justify-end">
+        <button
+          className="font-mono text-[10px] text-muted-foreground/60 uppercase tracking-wider transition-colors hover:text-foreground"
+          onClick={() => setShowDebug(!showDebug)}
+          type="button"
+        >
+          {showDebug ? "Ocultar Depuración" : "Mostrar Depuración"}
+        </button>
+      </div>
+
+      {showDebug && (
+        <div className="mt-4 space-y-3 rounded-lg border border-destructive/10 bg-destructive/5 p-4 font-mono text-[10px] text-muted-foreground/90">
+          <div className="border-border/40 border-b pb-1 font-bold text-foreground">
+            DATOS DE DEPURACIÓN DE LA GRÁFICA:
+          </div>
+          <div>
+            <strong>Miembros del Escuadrón (Configuración):</strong>
+            <ul className="mt-1 list-disc space-y-1 pl-4">
+              {/* biome-ignore lint/suspicious/noExplicitAny: debug members */}
+              {squadMembers.map((m: any) => (
+                <li key={m.gamertag}>
+                  Gamertag:{" "}
+                  <span className="font-semibold text-foreground">
+                    "{m.gamertag}"
+                  </span>{" "}
+                  (Limpio: "
+                  {m.gamertag
+                    .split("||")[0]
+                    .split("#")[0]
+                    .trim()
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")}
+                  ") {m.user_id ? `| User ID: ${m.user_id}` : "| Sin User ID"}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <strong>Gamertags / User IDs registrados en base de datos:</strong>
+            <ul className="mt-1 list-disc space-y-1 pl-4">
+              {dbGamertags.map((dbGt) => (
+                <li key={`${dbGt.gamertag}-${dbGt.userId}`}>
+                  Gamertag:{" "}
+                  <span className="font-semibold text-foreground">
+                    "{dbGt.gamertag}"
+                  </span>{" "}
+                  (Limpio: "
+                  {dbGt.gamertag
+                    .split("||")[0]
+                    .split("#")[0]
+                    .trim()
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")}
+                  "){" "}
+                  {dbGt.userId ? `| User ID: ${dbGt.userId}` : "| Sin User ID"}
+                </li>
+              ))}
+              {dbGamertags.length === 0 && (
+                <li className="text-amber-400">
+                  No se encontraron estadísticas registradas.
+                </li>
+              )}
+            </ul>
+          </div>
+          <div>
+            <strong>
+              Puntos calculados en Modo "
+              {chartMode === "session" ? "Sesión" : "General"}":
+            </strong>
+            <div className="mt-1 max-h-36 space-y-2 overflow-x-auto">
+              {chartData.map((op) => (
+                <div
+                  className="border-border/20 border-t pt-1"
+                  key={op.gamertag}
+                >
+                  <span style={{ color: op.color }}>■</span> {op.gamertag}:{" "}
+                  {op.points.map((pt, i) => {
+                    const ptKey = `${op.gamertag}-dbg-pt-${xLabels[i] || i}`;
+                    return (
+                      <span className="mr-2" key={ptKey}>
+                        [{xLabels[i] || `P${i + 1}`}:{" "}
+                        {pt
+                          ? `KDR ${pt.kdr.toFixed(2)} (${pt.kills.toFixed(1)}/${pt.downs.toFixed(1)}/${pt.assists.toFixed(1)})`
+                          : "Sin datos"}
+                        ]
+                      </span>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

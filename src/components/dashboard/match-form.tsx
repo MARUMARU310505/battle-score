@@ -12,15 +12,15 @@ import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 
 interface PlayerStatInput {
   activeClass: string;
-  assists: number;
+  assists: number | "";
   avatarSeed?: string | null;
-  downs: number;
+  downs: number | "";
   endGame: boolean;
   gamertag: string;
-  kills: number;
+  kills: number | "";
   mentalState: number;
   respawned: boolean;
-  revives: number;
+  revives: number | "";
   userId?: string | null;
 }
 
@@ -333,6 +333,14 @@ export function MatchForm({
     });
   };
 
+  const sanitizeStat = (stat: PlayerStatInput) => ({
+    ...stat,
+    kills: stat.kills === "" ? 0 : stat.kills,
+    downs: stat.downs === "" ? 0 : stat.downs,
+    assists: stat.assists === "" ? 0 : stat.assists,
+    revives: stat.revives === "" ? 0 : stat.revives,
+  });
+
   const handleToggleReady = async (
     gamertag: string,
     currentStat: PlayerStatInput
@@ -342,17 +350,20 @@ export function MatchForm({
     setLoading(true);
     setError(null);
     try {
+      let playerStatsPayload = undefined;
+      if (!isCurrentlyReady) {
+        playerStatsPayload = secondDeployZone
+          ? { ...sanitizeStat(currentStat), respawned: true }
+          : sanitizeStat(currentStat);
+      }
+
       const { data, error: actionError } =
         await actions.session.togglePlayerReady({
           sessionId,
           userId: currentStat.userId || null,
           gamertag,
           isReady: !isCurrentlyReady,
-          playerStats: isCurrentlyReady
-            ? undefined
-            : secondDeployZone
-              ? { ...currentStat, respawned: true }
-              : currentStat,
+          playerStats: playerStatsPayload,
         });
       if (actionError) {
         throw new Error(actionError.message || "Error al actualizar estado.");
@@ -384,9 +395,10 @@ export function MatchForm({
     setIsSavingMatch(true);
 
     try {
+      const sanitizedPlayerStats = playerStats.map((ps) => sanitizeStat(ps));
       const finalPlayerStats = secondDeployZone
-        ? playerStats.map((ps) => ({ ...ps, respawned: true }))
-        : playerStats;
+        ? sanitizedPlayerStats.map((ps) => ({ ...ps, respawned: true }))
+        : sanitizedPlayerStats;
 
       const { error: actionError } = await actions.match.create({
         sessionId,
@@ -853,13 +865,14 @@ export function MatchForm({
                           disabled={!canEditPlayer}
                           id={`kills-${stat.gamertag}`}
                           min="0"
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const val = e.target.value;
                             handleStatChange(
                               originalIdx,
                               "kills",
-                              Number.parseInt(e.target.value, 10) || 0
-                            )
-                          }
+                              val === "" ? "" : Number.parseInt(val, 10) || 0
+                            );
+                          }}
                           type="number"
                           value={stat.kills}
                         />
@@ -877,13 +890,14 @@ export function MatchForm({
                           disabled={!canEditPlayer}
                           id={`downs-${stat.gamertag}`}
                           min="0"
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const val = e.target.value;
                             handleStatChange(
                               originalIdx,
                               "downs",
-                              Number.parseInt(e.target.value, 10) || 0
-                            )
-                          }
+                              val === "" ? "" : Number.parseInt(val, 10) || 0
+                            );
+                          }}
                           type="number"
                           value={stat.downs}
                         />
@@ -901,13 +915,14 @@ export function MatchForm({
                           disabled={!canEditPlayer}
                           id={`assists-${stat.gamertag}`}
                           min="0"
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const val = e.target.value;
                             handleStatChange(
                               originalIdx,
                               "assists",
-                              Number.parseInt(e.target.value, 10) || 0
-                            )
-                          }
+                              val === "" ? "" : Number.parseInt(val, 10) || 0
+                            );
+                          }}
                           type="number"
                           value={stat.assists}
                         />
@@ -925,13 +940,14 @@ export function MatchForm({
                           disabled={!canEditPlayer}
                           id={`revives-${stat.gamertag}`}
                           min="0"
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const val = e.target.value;
                             handleStatChange(
                               originalIdx,
                               "revives",
-                              Number.parseInt(e.target.value, 10) || 0
-                            )
-                          }
+                              val === "" ? "" : Number.parseInt(val, 10) || 0
+                            );
+                          }}
                           type="number"
                           value={stat.revives}
                         />
