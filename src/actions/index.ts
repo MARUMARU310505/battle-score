@@ -1831,6 +1831,8 @@ export const server = {
       accept: "json",
       input: z.object({
         base64Image: z.string(),
+        activeGamertags: z.array(z.string()),
+        squadSize: z.string().optional(),
       }),
       handler: async (input) => {
         const apiKey =
@@ -1842,6 +1844,37 @@ export const server = {
               "GEMINI_API_KEY no está configurada en las variables de entorno",
           });
         }
+
+        const activeList = input.activeGamertags.join(", ");
+        const squadContext = input.squadSize
+          ? `El modo de juego/escuadra es: ${input.squadSize}.`
+          : "";
+
+        const promptText = `Analiza esta imagen del marcador final de una partida de Battlefield 6 Redsec (Battle Royale). ${squadContext}
+Extrae la información estadística de cada operador de la escuadra.
+Los operadores activos en nuestra partida son exactamente estos: [${activeList}].
+Utiliza esta lista de operadores activos para corregir posibles errores de lectura OCR (errores tipográficos en los nombres) que veas en la imagen, mapeando los nombres leídos a los de esta lista.
+Por cada jugador de la lista encontrado en la imagen, identifica:
+- gamertag: Debe coincidir exactamente con uno de los nombres proporcionados: [${activeList}].
+- points: Los puntos obtenidos (XP), indicados al lado de un icono de medalla/estrella (conviértelo a número entero sin comas).
+- kills: Las bajas (icono de calavera).
+- downs: Los derribos (icono de cruz 'X').
+- assists: Las asistencias (icono de puño).
+
+Además, identifica la posición final de la escuadra (squad placement): si dice 'VICTORY' o 'VICTORIA' o '#1' es 1, de lo contrario el número que indique (ej: '#12' es 12).
+Devuelve estrictamente un objeto JSON con este formato sin markdown ni bloques de código:
+{
+  "placement": number | null,
+  "parsedStats": [
+    {
+      "gamertag": string,
+      "kills": number,
+      "downs": number,
+      "assists": number,
+      "points": number
+    }
+  ]
+}`;
 
         try {
           const response = await fetch(
@@ -1856,7 +1889,7 @@ export const server = {
                   {
                     parts: [
                       {
-                        text: 'Analiza esta imagen del marcador final de una partida de Call of Duty: Warzone. Extrae la información estadística de cada operador de la escuadra. Por cada jugador encontrado, identifica: gamertag (nombre de usuario), points (puntos/XP al lado del icono de medalla/estrella, conviértelo a número entero sin comas), kills (bajas, icono de calavera), downs (derribos, icono de cruz \'X\'), assists (asistencias, icono de puño). Además, identifica la posición final (squad placement): si dice \'VICTORY\' o \'VICTORIA\' o \'#1\' es 1, de lo contrario el número que indique (ej: \'#12\' es 12). Devuelve estrictamente un objeto JSON con este formato sin markdown ni bloques de código: { "placement": number | null, "parsedStats": [ { "gamertag": string, "kills": number, "downs": number, "assists": number, "points": number } ] }',
+                        text: promptText,
                       },
                       {
                         inlineData: {
@@ -1889,6 +1922,9 @@ export const server = {
           }
 
           const parsed = JSON.parse(text.trim());
+          console.log("=== GEMINI OCR SCOREBOARD RESULT ===");
+          console.log(JSON.stringify(parsed, null, 2));
+          console.log("====================================");
           return parsed;
         } catch (err) {
           console.error("Error parsing scoreboard with Gemini:", err);

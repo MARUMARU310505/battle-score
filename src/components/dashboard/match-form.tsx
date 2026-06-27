@@ -188,9 +188,25 @@ export function MatchForm({
         const base64Data = base64String.split(",")[1];
 
         // Call serverless action to parse the scoreboard using Gemini
+        const activeGamertags = playerStats.map((ps) => ps.gamertag);
+        const getSquadSizeLabel = (count: number) => {
+          if (count === 4) {
+            return "Cuartetos";
+          }
+          if (count === 3) {
+            return "Tríos";
+          }
+          if (count === 2) {
+            return "Dúos";
+          }
+          return "Solitario";
+        };
+
         const { data, error: parseError } = await actions.match.parseScoreboard(
           {
             base64Image: base64Data,
+            activeGamertags,
+            squadSize: getSquadSizeLabel(activeGamertags.length),
           }
         );
 
