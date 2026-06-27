@@ -1,13 +1,18 @@
 import { actions } from "astro:actions";
 import { Calendar, Play, Power } from "lucide-react";
 import { useState } from "react";
+import {
+  getNearestPOI,
+  getPOIGrid,
+  isGridCode,
+  MapModal,
+} from "@/components/map";
 import { Button } from "@/components/ui/button";
 import type { Match, PlayerMatchStats } from "./dashboard-content";
 import { MatchForm } from "./match-form";
 import { SessionLiveStats } from "./session-live-stats";
 import { type ActivePlayer, SquadHeader } from "./squad-header";
 import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
-import { MapModal, isGridCode, getNearestPOI, getPOIGrid } from "@/components/map";
 
 interface Session {
   created_at: string;
@@ -91,8 +96,12 @@ export function SessionPanel({
   const [isClosing, setIsClosing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
-  const [selectedPoiForMap, setSelectedPoiForMap] = useState<string | null>(null);
-  const [mapModalMode, setMapModalMode] = useState<"deploy" | "circle" | "death" | "second_deploy">("deploy");
+  const [selectedPoiForMap, setSelectedPoiForMap] = useState<string | null>(
+    null
+  );
+  const [mapModalMode, setMapModalMode] = useState<
+    "deploy" | "circle" | "death" | "second_deploy"
+  >("deploy");
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [subTab, setSubTab] = useState<"list" | "stats">("list");
 
@@ -524,7 +533,7 @@ export function SessionPanel({
                         >
                           <div className="flex items-center gap-3">
                             <span
-                              className={`flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-bold ${
+                              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-bold text-xs sm:h-8 sm:w-8 sm:text-sm ${
                                 match.placement === 1
                                   ? "border border-amber-500/30 bg-amber-500/20 text-amber-500"
                                   : match.placement === 2
@@ -539,27 +548,33 @@ export function SessionPanel({
                             >
                               {match.placement}
                             </span>
-                            <div className="flex-1 min-w-0">
+                            <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-x-2">
                                 <span className="font-bold text-foreground text-xs">
                                   {match.placement === 1
                                     ? "¡Victoria! 🏆"
                                     : `Lugar #${match.placement}`}
                                 </span>
-                                <span className="text-[10px] text-muted-foreground/40">•</span>
-                                <span className="text-[10px] text-muted-foreground">{matchDate}</span>
+                                <span className="text-[10px] text-muted-foreground/40">
+                                  •
+                                </span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {matchDate}
+                                </span>
                               </div>
-                              <div className="font-light text-[10px] text-muted-foreground flex flex-wrap items-center gap-x-2.5 gap-y-1 animate-in fade-in duration-200">
+                              <div className="fade-in flex animate-in flex-wrap items-center gap-x-2.5 gap-y-1 font-light text-[10px] text-muted-foreground duration-200">
                                 <span className="inline-flex items-center gap-1">
-                                  <span className="text-muted-foreground/70">Drop:</span>
+                                  <span className="text-muted-foreground/70">
+                                    Drop:
+                                  </span>
                                   <span
+                                    className="cursor-pointer font-medium text-foreground/80 transition-colors hover:text-emerald-400 hover:underline"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setSelectedPoiForMap(match.poi);
                                       setMapModalMode("deploy");
                                       setIsMapModalOpen(true);
                                     }}
-                                    className="font-medium text-foreground/80 cursor-pointer hover:text-emerald-400 hover:underline transition-colors"
                                   >
                                     {isGridCode(match.poi)
                                       ? `${match.poi} - ${getNearestPOI(match.poi)}`
@@ -569,58 +584,74 @@ export function SessionPanel({
 
                                 {match.circle_zone && (
                                   <span className="inline-flex items-center gap-1">
-                                    <span className="text-muted-foreground/40">•</span>
-                                    <span className="text-muted-foreground/70">Círculo:</span>
+                                    <span className="text-muted-foreground/40">
+                                      •
+                                    </span>
+                                    <span className="text-muted-foreground/70">
+                                      Círculo:
+                                    </span>
                                     <span
+                                      className="cursor-pointer font-medium text-foreground/80 transition-colors hover:text-white hover:underline"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setSelectedPoiForMap(match.circle_zone);
                                         setMapModalMode("circle");
                                         setIsMapModalOpen(true);
                                       }}
-                                      className="font-medium text-foreground/80 cursor-pointer hover:text-white hover:underline transition-colors"
                                     >
-                                      {match.circle_zone} - {getNearestPOI(match.circle_zone)}
+                                      {match.circle_zone} -{" "}
+                                      {getNearestPOI(match.circle_zone)}
                                     </span>
                                   </span>
                                 )}
 
                                 {match.death_zone && (
                                   <span className="inline-flex items-center gap-1">
-                                    <span className="text-muted-foreground/40">•</span>
-                                    <span className="text-muted-foreground/70">Muerte:</span>
+                                    <span className="text-muted-foreground/40">
+                                      •
+                                    </span>
+                                    <span className="text-muted-foreground/70">
+                                      Muerte:
+                                    </span>
                                     <span
+                                      className="cursor-pointer font-medium text-foreground/80 transition-colors hover:text-rose-400 hover:underline"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setSelectedPoiForMap(match.death_zone);
                                         setMapModalMode("death");
                                         setIsMapModalOpen(true);
                                       }}
-                                      className="font-medium text-foreground/80 cursor-pointer hover:text-rose-400 hover:underline transition-colors"
                                     >
-                                      {match.death_zone} - {getNearestPOI(match.death_zone)}
+                                      {match.death_zone} -{" "}
+                                      {getNearestPOI(match.death_zone)}
                                     </span>
                                   </span>
                                 )}
 
                                 {match.second_deploy_zone && (
                                   <span className="inline-flex items-center gap-1">
-                                    <span className="text-muted-foreground/40">•</span>
-                                    <span className="text-muted-foreground/70">Redespliegue:</span>
+                                    <span className="text-muted-foreground/40">
+                                      •
+                                    </span>
+                                    <span className="text-muted-foreground/70">
+                                      Redespliegue:
+                                    </span>
                                     <span
+                                      className="cursor-pointer font-medium text-foreground/80 transition-colors hover:text-amber-400 hover:underline"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setSelectedPoiForMap(match.second_deploy_zone);
+                                        setSelectedPoiForMap(
+                                          match.second_deploy_zone
+                                        );
                                         setMapModalMode("second_deploy");
                                         setIsMapModalOpen(true);
                                       }}
-                                      className="font-medium text-foreground/80 cursor-pointer hover:text-amber-400 hover:underline transition-colors"
                                     >
-                                      {match.second_deploy_zone} - {getNearestPOI(match.second_deploy_zone)}
+                                      {match.second_deploy_zone} -{" "}
+                                      {getNearestPOI(match.second_deploy_zone)}
                                     </span>
                                   </span>
                                 )}
-
                               </div>
                             </div>
                           </div>
@@ -869,13 +900,19 @@ export function SessionPanel({
       </div>
       <MapModal
         isOpen={isMapModalOpen}
+        mode={mapModalMode}
         onClose={() => {
           setIsMapModalOpen(false);
           setSelectedPoiForMap(null);
         }}
-        selectedGrid={selectedPoiForMap && isGridCode(selectedPoiForMap) ? selectedPoiForMap : (selectedPoiForMap ? getPOIGrid(selectedPoiForMap) : null)}
         readOnly={true}
-        mode={mapModalMode}
+        selectedGrid={
+          selectedPoiForMap && isGridCode(selectedPoiForMap)
+            ? selectedPoiForMap
+            : selectedPoiForMap
+              ? getPOIGrid(selectedPoiForMap)
+              : null
+        }
       />
     </div>
   );

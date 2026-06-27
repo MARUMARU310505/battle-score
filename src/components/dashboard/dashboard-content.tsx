@@ -7,6 +7,7 @@ import {
   useNotification,
 } from "@/components/ui/notification";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
+import { InsightsView } from "./insights-view";
 import { MainTabs, type TabType } from "./main-tabs";
 import { SessionPanel } from "./session-panel";
 import { SessionsHistory } from "./sessions-history";
@@ -14,9 +15,9 @@ import type { ActivePlayer } from "./squad-header";
 import { SquadSidebar } from "./squad-sidebar";
 import { SquadWizard } from "./squad-wizard";
 import { StatsView } from "./stats-view";
-import { InsightsView } from "./insights-view";
 
 interface Member {
+  avatar_seed?: string | null;
   favorite_class: string;
   gamertag: string;
   id: string;
@@ -478,8 +479,8 @@ export function DashboardContent({
 
             {activeTab === "insights" && (
               <InsightsView
-                matches={historicalMatches}
                 activeSession={session}
+                matches={historicalMatches}
                 sessionMatches={matches}
                 squad={squadState}
               />

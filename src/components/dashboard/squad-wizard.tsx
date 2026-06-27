@@ -176,21 +176,23 @@ export function SquadWizard({
       slot_number: m.slot_number,
       user_id: m.user_id,
     })) ||
-    (() => {
-      const baseMember = {
-        gamertag: profile?.gamertag || "",
-        level: profile?.level || 1,
-        favorite_class: profile?.favorite_class || "Asalto",
-        slot_number: 1,
-      };
-      const otherMembers = Array.from({ length: slotCount - 1 }).map((_, i) => ({
-        gamertag: "",
-        level: 1,
-        favorite_class: CLASSES[i % CLASSES.length] || "Asalto",
-        slot_number: i + 2,
-      }));
-      return [baseMember, ...otherMembers];
-    })()
+      (() => {
+        const baseMember = {
+          gamertag: profile?.gamertag || "",
+          level: profile?.level || 1,
+          favorite_class: profile?.favorite_class || "Asalto",
+          slot_number: 1,
+        };
+        const otherMembers = Array.from({ length: slotCount - 1 }).map(
+          (_, i) => ({
+            gamertag: "",
+            level: 1,
+            favorite_class: CLASSES[i % CLASSES.length] || "Asalto",
+            slot_number: i + 2,
+          })
+        );
+        return [baseMember, ...otherMembers];
+      })()
   );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -368,16 +370,29 @@ export function SquadWizard({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-2 block font-medium text-foreground text-sm">Número de integrantes</label>
-              <select className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground text-sm" value={slotCount} onChange={(e) => setSlotCount(Number(e.target.value))}>
+              <label className="mb-2 block font-medium text-foreground text-sm">
+                Número de integrantes
+              </label>
+              <select
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground text-sm"
+                onChange={(e) => setSlotCount(Number(e.target.value))}
+                value={slotCount}
+              >
                 <option value={1}>1 Operador (Solo)</option>
                 <option value={2}>2 Operadores (Dúo)</option>
                 <option value={4}>4 Operadores (Cuarteto)</option>
               </select>
             </div>
             <div>
-              <label className="mb-2 block font-medium text-foreground text-sm">Código de acceso</label>
-              <input className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground text-sm" value={accessCode} onChange={(e) => setAccessCode(e.target.value)} placeholder="Opcional" />
+              <label className="mb-2 block font-medium text-foreground text-sm">
+                Código de acceso
+              </label>
+              <input
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-foreground text-sm"
+                onChange={(e) => setAccessCode(e.target.value)}
+                placeholder="Opcional"
+                value={accessCode}
+              />
             </div>
           </div>
           <div className="flex justify-end gap-3">

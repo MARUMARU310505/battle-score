@@ -43,6 +43,7 @@ export interface Squad {
 }
 
 interface Profile {
+  favorite_class?: string;
   gamertag: string;
   level: number;
 }
@@ -145,7 +146,9 @@ export function SquadHub({
 
       const squadData = data as unknown as Squad;
       if (squadData && squadData.slot_count === 1) {
-        setSearchError("No es posible unirse a un escuadrón individual (1 solo slot).");
+        setSearchError(
+          "No es posible unirse a un escuadrón individual (1 solo slot)."
+        );
         setFoundSquad(null);
       } else {
         setFoundSquad(squadData);
@@ -354,30 +357,32 @@ export function SquadHub({
 
                     <div className="mt-6 space-y-3">
                       {/* Invite code for owner */}
-                      {isOwner && squad.invite_code && squad.slot_count !== 1 && (
-                        <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-muted/50 px-2.5 py-1.5">
-                          <span className="font-mono text-[10px] text-muted-foreground">
-                            Código:{" "}
-                            <strong className="text-foreground tracking-wide">
-                              {squad.invite_code}
-                            </strong>
-                          </span>
-                          <button
-                            className="cursor-pointer p-0.5 text-muted-foreground transition-colors hover:text-foreground"
-                            onClick={() =>
-                              handleCopyCode(squad.invite_code, squad.id)
-                            }
-                            title="Copiar código de invitación"
-                            type="button"
-                          >
-                            {copiedId === squad.id ? (
-                              <Check className="h-3.5 w-3.5 text-green-500" />
-                            ) : (
-                              <Copy className="h-3.5 w-3.5" />
-                            )}
-                          </button>
-                        </div>
-                      )}
+                      {isOwner &&
+                        squad.invite_code &&
+                        squad.slot_count !== 1 && (
+                          <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-muted/50 px-2.5 py-1.5">
+                            <span className="font-mono text-[10px] text-muted-foreground">
+                              Código:{" "}
+                              <strong className="text-foreground tracking-wide">
+                                {squad.invite_code}
+                              </strong>
+                            </span>
+                            <button
+                              className="cursor-pointer p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                              onClick={() =>
+                                handleCopyCode(squad.invite_code, squad.id)
+                              }
+                              title="Copiar código de invitación"
+                              type="button"
+                            >
+                              {copiedId === squad.id ? (
+                                <Check className="h-3.5 w-3.5 text-green-500" />
+                              ) : (
+                                <Copy className="h-3.5 w-3.5" />
+                              )}
+                            </button>
+                          </div>
+                        )}
 
                       {/* Entry buttons */}
                       <div className="flex gap-2">
@@ -479,17 +484,20 @@ export function SquadHub({
                   </span>
 
                   {(() => {
-                    const slots = Array.from({ length: foundSquad.slot_count || 4 }, (_, i) => {
-                      const slotNum = i + 1;
-                      const member = foundSquad.squad_members.find(
-                        (m) => m.slot_number === slotNum
-                      );
-                      return {
-                        slot_number: slotNum,
-                        member,
-                        isClaimed: member ? member.user_id !== null : false,
-                      };
-                    });
+                    const slots = Array.from(
+                      { length: foundSquad.slot_count || 4 },
+                      (_, i) => {
+                        const slotNum = i + 1;
+                        const member = foundSquad.squad_members.find(
+                          (m) => m.slot_number === slotNum
+                        );
+                        return {
+                          slot_number: slotNum,
+                          member,
+                          isClaimed: member ? member.user_id !== null : false,
+                        };
+                      }
+                    );
 
                     const freeSlots = slots.filter((s) => !s.isClaimed);
 
@@ -632,9 +640,9 @@ export function SquadHub({
                             id="hub-access-code"
                             onChange={(e) => setAccessCode(e.target.value)}
                             placeholder="Ingresa la contraseña del escuadrón"
+                            required
                             type="password"
                             value={accessCode}
-                            required
                           />
                         </div>
                       )}

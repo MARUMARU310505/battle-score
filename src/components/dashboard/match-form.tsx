@@ -1,8 +1,12 @@
 import { actions } from "astro:actions";
 import { useEffect, useState } from "react";
+import {
+  getNearestPOI,
+  getPOIGrid,
+  isGridCode,
+  MapModal,
+} from "@/components/map";
 import { Button } from "@/components/ui/button";
-import POIS from "@/data/pois.json";
-import { MapModal, isGridCode, getNearestPOI, getPOIGrid } from "@/components/map";
 import type { ActivePlayer } from "./squad-header";
 import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 
@@ -113,8 +117,12 @@ export function MatchForm({
   const [poi, setPoi] = useState(draft.poi || "Desconocido");
   const [circleZone, setCircleZone] = useState(draft.circleZone || "");
   const [deathZone, setDeathZone] = useState(draft.deathZone || "");
-  const [secondDeployZone, setSecondDeployZone] = useState(draft.secondDeployZone || "");
-  const [mapTarget, setMapTarget] = useState<"poi" | "circle" | "death" | "second_deploy">("poi");
+  const [secondDeployZone, setSecondDeployZone] = useState(
+    draft.secondDeployZone || ""
+  );
+  const [mapTarget, setMapTarget] = useState<
+    "poi" | "circle" | "death" | "second_deploy"
+  >("poi");
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [placement, setPlacement] = useState(draft.placement || 1);
   const [hostility, setHostility] = useState<"Baja" | "Media" | "Alta">(
@@ -487,20 +495,22 @@ export function MatchForm({
                 Punto de Caída (POI)
               </label>
               <Button
-                type="button"
-                id="match-poi"
-                variant="outline"
-                className="w-full justify-start text-left font-normal text-xs bg-background border-border text-foreground hover:bg-accent/50 disabled:bg-muted disabled:opacity-50"
+                className="w-full justify-start border-border bg-background text-left font-normal text-foreground text-xs hover:bg-accent/50 disabled:bg-muted disabled:opacity-50"
                 disabled={!isOwner}
+                id="match-poi"
                 onClick={() => {
                   setMapTarget("poi");
                   setIsMapModalOpen(true);
                 }}
+                type="button"
+                variant="outline"
               >
                 {isGridCode(poi)
                   ? `${poi} - ${getNearestPOI(poi)}`
                   : poi && poi !== "Desconocido"
-                    ? (getPOIGrid(poi) ? `${getPOIGrid(poi)} - ${poi}` : poi)
+                    ? getPOIGrid(poi)
+                      ? `${getPOIGrid(poi)} - ${poi}`
+                      : poi
                     : "Seleccionar en Mapa"}
               </Button>
             </div>
@@ -604,21 +614,21 @@ export function MatchForm({
 
             <div>
               <label
-                className="mb-1 block font-medium text-muted-foreground text-xs font-semibold text-slate-300"
+                className="mb-1 block font-medium font-semibold text-muted-foreground text-slate-300 text-xs"
                 htmlFor="match-circle"
               >
                 Cierre de Círculo
               </label>
               <Button
-                type="button"
-                id="match-circle"
-                variant="outline"
-                className="w-full justify-start text-left font-normal text-xs bg-background border-slate-700 text-foreground hover:bg-accent/50 disabled:bg-muted disabled:opacity-50"
+                className="w-full justify-start border-slate-700 bg-background text-left font-normal text-foreground text-xs hover:bg-accent/50 disabled:bg-muted disabled:opacity-50"
                 disabled={!isOwner}
+                id="match-circle"
                 onClick={() => {
                   setMapTarget("circle");
                   setIsMapModalOpen(true);
                 }}
+                type="button"
+                variant="outline"
               >
                 {circleZone
                   ? `${circleZone} - ${getNearestPOI(circleZone)}`
@@ -628,21 +638,21 @@ export function MatchForm({
 
             <div>
               <label
-                className="mb-1 block font-medium text-muted-foreground text-xs font-semibold text-rose-400"
+                className="mb-1 block font-medium font-semibold text-muted-foreground text-rose-400 text-xs"
                 htmlFor="match-death"
               >
                 Punto de Muerte (Eliminación)
               </label>
               <Button
-                type="button"
-                id="match-death"
-                variant="outline"
-                className="w-full justify-start text-left font-normal text-xs bg-background border-rose-950/40 text-foreground hover:bg-rose-500/10 disabled:bg-muted disabled:opacity-50"
+                className="w-full justify-start border-rose-950/40 bg-background text-left font-normal text-foreground text-xs hover:bg-rose-500/10 disabled:bg-muted disabled:opacity-50"
                 disabled={!isOwner || placement === 1}
+                id="match-death"
                 onClick={() => {
                   setMapTarget("death");
                   setIsMapModalOpen(true);
                 }}
+                type="button"
+                variant="outline"
               >
                 {placement === 1
                   ? "No aplica (Victoria)"
@@ -654,21 +664,21 @@ export function MatchForm({
 
             <div>
               <label
-                className="mb-1 block font-medium text-amber-400 text-xs font-semibold"
+                className="mb-1 block font-medium font-semibold text-amber-400 text-xs"
                 htmlFor="match-second-deploy"
               >
                 Segundo Redespliegue Grupal
               </label>
               <Button
-                type="button"
-                id="match-second-deploy"
-                variant="outline"
-                className="w-full justify-start text-left font-normal text-xs bg-background border-amber-950/40 text-foreground hover:bg-amber-500/10 disabled:bg-muted disabled:opacity-50"
+                className="w-full justify-start border-amber-950/40 bg-background text-left font-normal text-foreground text-xs hover:bg-amber-500/10 disabled:bg-muted disabled:opacity-50"
                 disabled={!isOwner}
+                id="match-second-deploy"
                 onClick={() => {
                   setMapTarget("second_deploy");
                   setIsMapModalOpen(true);
                 }}
+                type="button"
+                variant="outline"
               >
                 {secondDeployZone
                   ? `${secondDeployZone} - ${getNearestPOI(secondDeployZone)}`
@@ -696,8 +706,12 @@ export function MatchForm({
                 const isBCurrentUser =
                   b.stat.userId === currentUserId ||
                   b.stat.gamertag === currentUserGamertag;
-                if (isACurrentUser && !isBCurrentUser) return -1;
-                if (!isACurrentUser && isBCurrentUser) return 1;
+                if (isACurrentUser && !isBCurrentUser) {
+                  return -1;
+                }
+                if (!isACurrentUser && isBCurrentUser) {
+                  return 1;
+                }
                 return 0;
               })
               .map(({ stat, originalIdx }) => {
@@ -772,7 +786,11 @@ export function MatchForm({
                           className="rounded border border-border bg-background px-2 py-0.5 font-mono font-sans text-[10px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
                           disabled={!canEditPlayer}
                           onChange={(e) =>
-                            handleStatChange(originalIdx, "activeClass", e.target.value)
+                            handleStatChange(
+                              originalIdx,
+                              "activeClass",
+                              e.target.value
+                            )
                           }
                           value={stat.activeClass}
                         >
@@ -806,12 +824,16 @@ export function MatchForm({
                                 : "bg-green-600 text-white hover:bg-green-700"
                             }`}
                             disabled={loading}
-                            onClick={() => handleToggleReady(stat.gamertag, stat)}
+                            onClick={() =>
+                              handleToggleReady(stat.gamertag, stat)
+                            }
                             size="sm"
                             type="button"
                             variant={isPlayerReady ? "outline" : "default"}
                           >
-                            {loadingPlayer === stat.gamertag && <LoaderSpinner />}
+                            {loadingPlayer === stat.gamertag && (
+                              <LoaderSpinner />
+                            )}
                             {isPlayerReady ? "Modificar" : "Marcar Listo"}
                           </Button>
                         )}
@@ -924,7 +946,11 @@ export function MatchForm({
                             className="rounded border-border bg-background text-primary focus:ring-primary disabled:opacity-50"
                             disabled={!canEditPlayer || !!secondDeployZone}
                             onChange={(e) =>
-                              handleStatChange(originalIdx, "respawned", e.target.checked)
+                              handleStatChange(
+                                originalIdx,
+                                "respawned",
+                                e.target.checked
+                              )
                             }
                             type="checkbox"
                           />
@@ -936,7 +962,11 @@ export function MatchForm({
                             className="rounded border-border bg-background text-primary focus:ring-primary disabled:opacity-50"
                             disabled={!canEditPlayer}
                             onChange={(e) =>
-                              handleStatChange(originalIdx, "endGame", e.target.checked)
+                              handleStatChange(
+                                originalIdx,
+                                "endGame",
+                                e.target.checked
+                              )
                             }
                             type="checkbox"
                           />
@@ -982,7 +1012,11 @@ export function MatchForm({
                                 disabled={!canEditPlayer}
                                 key={lvl}
                                 onClick={() =>
-                                  handleStatChange(originalIdx, "mentalState", lvl)
+                                  handleStatChange(
+                                    originalIdx,
+                                    "mentalState",
+                                    lvl
+                                  )
                                 }
                                 title={levelLabels[lvl - 1]}
                                 type="button"
@@ -1035,17 +1069,8 @@ export function MatchForm({
       </form>
       <MapModal
         isOpen={isMapModalOpen}
+        mode={mapTarget === "poi" ? "deploy" : mapTarget}
         onClose={() => setIsMapModalOpen(false)}
-        selectedGrid={
-          mapTarget === "poi"
-            ? (isGridCode(poi) ? poi : getPOIGrid(poi) || null)
-            : mapTarget === "circle"
-              ? circleZone
-              : mapTarget === "death"
-                ? deathZone
-                : secondDeployZone
-        }
-        mode={mapTarget}
         onConfirm={(grid) => {
           if (mapTarget === "poi") {
             setPoi(grid);
@@ -1061,6 +1086,17 @@ export function MatchForm({
             handleGeneralInfoChange("secondDeployZone", grid);
           }
         }}
+        selectedGrid={
+          mapTarget === "poi"
+            ? isGridCode(poi)
+              ? poi
+              : getPOIGrid(poi) || null
+            : mapTarget === "circle"
+              ? circleZone
+              : mapTarget === "death"
+                ? deathZone
+                : secondDeployZone
+        }
       />
     </div>
   );

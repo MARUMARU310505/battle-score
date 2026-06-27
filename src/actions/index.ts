@@ -757,7 +757,7 @@ export const server = {
         // Fetch squad details for slot count and access code
         const { data: squadInfo, error: squadInfoError } = await supabase
           .from("squads")
-          .select(`slot_count, access_code`)
+          .select("slot_count, access_code")
           .eq("id", input.squadId)
           .single();
         if (squadInfoError) {
@@ -767,7 +767,10 @@ export const server = {
           });
         }
         // Verify access code if required
-        if (squadInfo.access_code && input.accessCode !== squadInfo.access_code) {
+        if (
+          squadInfo.access_code &&
+          input.accessCode !== squadInfo.access_code
+        ) {
           throw new ActionError({
             code: "FORBIDDEN",
             message: "Código de acceso incorrecto para este escuadrón",
@@ -1793,7 +1796,7 @@ export const server = {
       input: z.object({
         sessionId: z.string().uuid(),
       }),
-      handler: async (input, context) => {
+      handler: async (input, context: any) => {
         const user = context.locals.user;
         const supabase = context.locals.supabase;
         if (!(user && supabase)) {
