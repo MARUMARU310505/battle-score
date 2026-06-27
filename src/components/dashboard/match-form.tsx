@@ -172,7 +172,7 @@ export function MatchForm({
     }));
   });
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
       return;
@@ -345,18 +345,33 @@ export function MatchForm({
               dbStat.gamertag
             );
 
+            const hasLocalChanges = (local: PlayerStatInput) =>
+              (local.kills !== 0 && local.kills !== "") ||
+              (local.downs !== 0 && local.downs !== "") ||
+              (local.assists !== 0 && local.assists !== "") ||
+              (local.points !== 0 && local.points !== "") ||
+              local.respawned !== false ||
+              local.endGame !== false ||
+              local.mentalState !== 3;
+
             if (isCurrentUser && !isReadyInDb) {
               const localMatch = prev.find(
                 (p) => p.gamertag === dbStat.gamertag
               );
-              return localMatch || dbStat;
+              if (localMatch && hasLocalChanges(localMatch)) {
+                return localMatch;
+              }
+              return dbStat;
             }
 
             if (isOwner && !isReadyInDb) {
               const localMatch = prev.find(
                 (p) => p.gamertag === dbStat.gamertag
               );
-              return localMatch || dbStat;
+              if (localMatch && hasLocalChanges(localMatch)) {
+                return localMatch;
+              }
+              return dbStat;
             }
 
             return dbStat;
