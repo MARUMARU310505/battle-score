@@ -56,8 +56,8 @@ export interface PlayerMatchStats {
   kills: number;
   match_id: string;
   mental_state: number;
-  respawned: boolean;
   points: number;
+  respawned: boolean;
   user_id?: string | null;
 }
 
@@ -473,9 +473,9 @@ export function DashboardContent({
                   <StatsView
                     currentUserId={currentUser?.id}
                     matches={historicalMatches}
-                    squad={squadState}
                     sessionMatches={matches}
                     sessions={historicalSessions}
+                    squad={squadState}
                   />
                 )}
               </div>
