@@ -1199,8 +1199,9 @@ export const server = {
         // 1. Fetch all session IDs for this squad
         const { data: sessions, error: sessionsError } = await supabase
           .from("game_sessions")
-          .select("id")
-          .eq("squad_id", input.squadId);
+          .select("id, name, created_at")
+          .eq("squad_id", input.squadId)
+          .order("created_at", { ascending: true });
 
         if (sessionsError) {
           console.error("Error fetching sessions:", sessionsError);
@@ -1212,7 +1213,7 @@ export const server = {
 
         const sessionIds = sessions?.map((s) => s.id) || [];
         if (sessionIds.length === 0) {
-          return { matches: [] };
+          return { matches: [], sessions: [] };
         }
 
         // 2. Fetch all matches with their player stats
@@ -1233,7 +1234,7 @@ export const server = {
           });
         }
 
-        return { matches: matches || [] };
+        return { matches: matches || [], sessions: sessions || [] };
       },
     }),
   },

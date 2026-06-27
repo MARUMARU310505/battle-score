@@ -11,36 +11,29 @@ import { useMemo, useState } from "react";
 import { getNearestPOI, isGridCode, MapModal } from "@/components/map";
 import type { Match } from "./dashboard-content";
 import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
+import { KdrLineChart } from "./kdr-line-chart";
 
 interface StatsViewProps {
   currentUserId?: string | null;
   matches: Match[];
+  sessionMatches?: Match[];
+  sessions?: any[];
   // biome-ignore lint/suspicious/noExplicitAny: squad structure
   squad: any;
 }
 
-export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
+export function StatsView({
+  matches,
+  squad,
+  currentUserId,
+  sessionMatches = [],
+  sessions = [],
+}: StatsViewProps) {
   const [selectedPoiForMap, setSelectedPoiForMap] = useState<string>("");
   const [mapModalMode, setMapModalMode] = useState<
     "deploy" | "circle" | "death" | "second_deploy"
   >("deploy");
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
-
-  if (!matches || matches.length === 0) {
-    return (
-      <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-border border-dashed bg-background/50 p-16 text-center">
-        <span className="mb-4 text-4xl">📈</span>
-        <h4 className="font-semibold text-foreground text-sm">
-          Aún no hay estadísticas acumuladas
-        </h4>
-        <p className="mt-2 max-w-sm font-light text-muted-foreground text-xs leading-relaxed">
-          Las estadísticas históricas y análisis tácticos del escuadrón se
-          generarán automáticamente conforme jueguen y registren partidas en sus
-          sesiones.
-        </p>
-      </div>
-    );
-  }
 
   // 1. Calculate General Metrics
   const summary = useMemo(() => {
@@ -348,6 +341,21 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
     }
     return "🔴 Tilt / Frustrado";
   };
+  if (!matches || matches.length === 0) {
+    return (
+      <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-border border-dashed bg-background/50 p-16 text-center">
+        <span className="mb-4 text-4xl">📈</span>
+        <h4 className="font-semibold text-foreground text-sm">
+          Aún no hay estadísticas acumuladas
+        </h4>
+        <p className="mt-2 max-w-sm font-light text-muted-foreground text-xs leading-relaxed">
+          Las estadísticas históricas y análisis tácticos del escuadrón se
+          generarán automáticamente conforme jueguen y registren partidas en sus
+          sesiones.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="fade-in-50 animate-in space-y-6 duration-300">
@@ -410,6 +418,14 @@ export function StatsView({ matches, squad, currentUserId }: StatsViewProps) {
           </p>
         </div>
       </div>
+
+      <KdrLineChart
+        currentUserId={currentUserId}
+        matches={matches}
+        sessionMatches={sessionMatches}
+        sessions={sessions}
+        squad={squad}
+      />
 
       {/* Drop Zone: Winner vs Death Route */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

@@ -103,6 +103,7 @@ export function DashboardContent({
   const [session, setSession] = useState(activeSession);
   const [matches, setMatches] = useState(sessionMatches);
   const [historicalMatches, setHistoricalMatches] = useState<Match[]>([]);
+  const [historicalSessions, setHistoricalSessions] = useState<any[]>([]);
   const [loadingStats, setLoadingStats] = useState(false);
 
   const [activePlayers, setActivePlayers] = useState<ActivePlayer[]>(() => {
@@ -237,6 +238,7 @@ export function DashboardContent({
           console.error("Error loading historical stats:", error);
         } else if (data) {
           setHistoricalMatches(data.matches as Match[]);
+          setHistoricalSessions(data.sessions || []);
         }
       } catch (err) {
         console.error("Failed to load historical stats:", err);
@@ -472,6 +474,8 @@ export function DashboardContent({
                     currentUserId={currentUser?.id}
                     matches={historicalMatches}
                     squad={squadState}
+                    sessionMatches={matches}
+                    sessions={historicalSessions}
                   />
                 )}
               </div>
