@@ -1827,5 +1827,78 @@ export const server = {
         return matches;
       },
     }),
+    parseScoreboard: defineAction({
+      accept: "json",
+      input: z.object({
+        base64Image: z.string(),
+      }),
+      handler: async (input) => {
+        const apiKey =
+          process.env.GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY;
+        if (!apiKey) {
+          throw new ActionError({
+            code: "BAD_REQUEST",
+            message:
+              "GEMINI_API_KEY no está configurada en las variables de entorno",
+          });
+        }
+
+        try {
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      {
+                        text: 'Analiza esta imagen del marcador final de una partida de Call of Duty: Warzone. Extrae la información estadística de cada operador de la escuadra. Por cada jugador encontrado, identifica: gamertag (nombre de usuario), points (puntos/XP al lado del icono de medalla/estrella, conviértelo a número entero sin comas), kills (bajas, icono de calavera), downs (derribos, icono de cruz \'X\'), assists (asistencias, icono de puño). Además, identifica la posición final (squad placement): si dice \'VICTORY\' o \'VICTORIA\' o \'#1\' es 1, de lo contrario el número que indique (ej: \'#12\' es 12). Devuelve estrictamente un objeto JSON con este formato sin markdown ni bloques de código: { "placement": number | null, "parsedStats": [ { "gamertag": string, "kills": number, "downs": number, "assists": number, "points": number } ] }',
+                      },
+                      {
+                        inlineData: {
+                          mimeType: "image/jpeg",
+                          data: input.base64Image,
+                        },
+                      },
+                    ],
+                  },
+                ],
+                generationConfig: {
+                  responseMimeType: "application/json",
+                },
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            const errBody = await response.text();
+            console.error("Gemini API error response:", errBody);
+            throw new Error(
+              `Gemini API respondió con código ${response.status}`
+            );
+          }
+
+          const resData = await response.json();
+          const text = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!text) {
+            throw new Error("No se recibió respuesta del modelo Gemini");
+          }
+
+          const parsed = JSON.parse(text.trim());
+          return parsed;
+        } catch (err) {
+          console.error("Error parsing scoreboard with Gemini:", err);
+          const errMsg = err instanceof Error ? err.message : String(err);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Error al procesar la imagen: ${errMsg}`,
+          });
+        }
+      },
+    }),
   },
 };

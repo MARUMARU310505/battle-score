@@ -1,4 +1,5 @@
 import { actions } from "astro:actions";
+import { Camera } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   getNearestPOI,
@@ -19,8 +20,8 @@ interface PlayerStatInput {
   gamertag: string;
   kills: number | "";
   mentalState: number;
-  respawned: boolean;
   points: number | "";
+  respawned: boolean;
   userId?: string | null;
 }
 
@@ -134,6 +135,7 @@ export function MatchForm({
   const [eliminationCause, setEliminationCause] = useState(
     draft.eliminationCause || "Ninguna"
   );
+  const [parsingImage, setParsingImage] = useState(false);
 
   const currentUserGamertag =
     activePlayers.find((p) => p.user_id === currentUserId)?.gamertag || null;
@@ -169,6 +171,128 @@ export function MatchForm({
       avatarSeed: p.avatar_seed || null,
     }));
   });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setParsingImage(true);
+    setError(null);
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        const base64String = reader.result as string;
+        const base64Data = base64String.split(",")[1];
+
+        // Call serverless action to parse the scoreboard using Gemini
+        const { data, error: parseError } = await actions.match.parseScoreboard(
+          {
+            base64Image: base64Data,
+          }
+        );
+
+        if (parseError) {
+          throw parseError;
+        }
+
+        if (data && Array.isArray(data.parsedStats)) {
+          const matchGamertag = (g1: string, g2: string) => {
+            const clean = (s: string) =>
+              s
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "") // remove accents
+                .replace(/[^a-z0-9]/g, ""); // remove spec chars
+            return clean(g1) === clean(g2);
+          };
+
+          const newPlayerStats = playerStats.map((ps) => {
+            const parsed = data.parsedStats.find((p: any) =>
+              matchGamertag(p.gamertag, ps.gamertag)
+            );
+
+            if (parsed) {
+              return {
+                ...ps,
+                kills:
+                  typeof parsed.kills === "number" ? parsed.kills : ps.kills,
+                downs:
+                  typeof parsed.downs === "number" ? parsed.downs : ps.downs,
+                assists:
+                  typeof parsed.assists === "number"
+                    ? parsed.assists
+                    : ps.assists,
+                points:
+                  typeof parsed.points === "number" ? parsed.points : ps.points,
+              };
+            }
+            return ps;
+          });
+
+          setPlayerStats(newPlayerStats);
+
+          let updatedPlacement = placement;
+          let updatedCause = eliminationCause;
+
+          if (typeof data.placement === "number" && data.placement >= 1) {
+            updatedPlacement = data.placement;
+            setPlacement(data.placement);
+            if (data.placement === 1) {
+              updatedCause = "Ninguna (Victoria)";
+              setEliminationCause("Ninguna (Victoria)");
+            }
+          }
+
+          // Trigger auto-save draft to Supabase so other members see it immediately
+          const updatedDraft = {
+            poi,
+            placement: updatedPlacement,
+            hostility,
+            loot,
+            eliminationCause: updatedCause,
+            playerStats: newPlayerStats.map((ps) => ({
+              userId: ps.userId || null,
+              gamertag: ps.gamertag,
+              activeClass: ps.activeClass,
+              downs: ps.downs === "" ? 0 : ps.downs,
+              kills: ps.kills === "" ? 0 : ps.kills,
+              assists: ps.assists === "" ? 0 : ps.assists,
+              points: ps.points === "" ? 0 : ps.points,
+              respawned: ps.respawned,
+              endGame: ps.endGame,
+              mentalState: ps.mentalState,
+              avatarSeed: ps.avatarSeed || null,
+            })),
+          };
+
+          const { data: updatedSession, error: draftError } =
+            await actions.session.updateMatchRegistrationDraft({
+              sessionId,
+              draft: updatedDraft,
+            });
+
+          if (draftError) {
+            console.error("Error auto-saving draft:", draftError);
+          } else if (updatedSession && setSession) {
+            setSession(updatedSession);
+          }
+        }
+      } catch (err) {
+        console.error("Error parsing scoreboard:", err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Error al procesar la imagen del marcador."
+        );
+      } finally {
+        setParsingImage(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Sync state from database updates (realtime)
   useEffect(() => {
@@ -350,7 +474,7 @@ export function MatchForm({
     setLoading(true);
     setError(null);
     try {
-      let playerStatsPayload = undefined;
+      let playerStatsPayload;
       if (!isCurrentlyReady) {
         playerStatsPayload = secondDeployZone
           ? { ...sanitizeStat(currentStat), respawned: true }
@@ -471,14 +595,46 @@ export function MatchForm({
           </div>
         </div>
       )}
-      <div className="mb-6 border-border/40 border-b pb-4">
-        <h3 className="font-bold text-foreground text-sm tracking-tight">
-          Registrar Partida
-        </h3>
-        <p className="font-light text-muted-foreground text-xs">
-          Completa los datos de la partida y las estadísticas de los operadores
-          en una sola vista
-        </p>
+      <div className="mb-6 flex flex-col justify-between gap-4 border-border/40 border-b pb-4 sm:flex-row sm:items-center">
+        <div>
+          <h3 className="font-bold text-foreground text-sm tracking-tight">
+            Registrar Partida
+          </h3>
+          <p className="font-light text-muted-foreground text-xs">
+            Completa los datos de la partida y las estadísticas de los
+            operadores en una sola vista
+          </p>
+        </div>
+        {isOwner && (
+          <div className="flex items-center gap-2">
+            <input
+              accept="image/*"
+              className="hidden"
+              disabled={parsingImage}
+              id="scoreboard-image-upload"
+              onChange={handleImageUpload}
+              type="file"
+            />
+            <label
+              className={`flex cursor-pointer items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 font-semibold text-primary text-xs transition-all hover:bg-primary/10 active:scale-95 ${
+                parsingImage ? "pointer-events-none opacity-50" : ""
+              }`}
+              htmlFor="scoreboard-image-upload"
+            >
+              {parsingImage ? (
+                <>
+                  <LoaderSpinner />
+                  <span>Procesando...</span>
+                </>
+              ) : (
+                <>
+                  <Camera className="h-3.5 w-3.5" />
+                  <span>Cargar Marcador</span>
+                </>
+              )}
+            </label>
+          </div>
+        )}
       </div>
 
       {error && (
