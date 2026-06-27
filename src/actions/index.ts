@@ -822,7 +822,7 @@ export const server = {
           });
         }
 
-        if (existingMember && existingMember.user_id) {
+        if (existingMember?.user_id) {
           throw new ActionError({
             code: "CONFLICT",
             message: "Este slot ya ha sido reclamado por otro jugador",
@@ -1396,7 +1396,7 @@ export const server = {
             downs: 0,
             kills: 0,
             assists: 0,
-            revives: 0,
+            points: 0,
             respawned: false,
             endGame: false,
             mentalState: 3,
@@ -1719,7 +1719,7 @@ export const server = {
             downs: z.number().min(0),
             kills: z.number().min(0),
             assists: z.number().min(0),
-            revives: z.number().min(0),
+            points: z.number().min(0),
             respawned: z.boolean(),
             endGame: z.boolean(),
             mentalState: z.number().min(1).max(5),
@@ -1769,7 +1769,7 @@ export const server = {
           downs: ps.downs,
           kills: ps.kills,
           assists: ps.assists,
-          revives: ps.revives,
+          points: ps.points,
           respawned: ps.respawned,
           end_game: ps.endGame,
           mental_state: ps.mentalState,

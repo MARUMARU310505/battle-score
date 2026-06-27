@@ -696,7 +696,7 @@ export function SessionPanel({
                                       K / D / A
                                     </th>
                                     <th className="py-2 text-center">
-                                      Downs / Rev
+                                      Downs / Puntos
                                     </th>
                                     <th className="py-2 text-center">
                                       Desp / Final
@@ -755,7 +755,7 @@ export function SessionPanel({
                                             </span>
                                           </td>
                                           <td className="py-2 text-center font-mono">
-                                            {stat.downs} / {stat.revives}
+                                            {stat.downs} / {stat.points}
                                           </td>
                                           <td className="py-2 text-center">
                                             {stat.respawned ? "✅" : "❌"} /{" "}
@@ -846,10 +846,10 @@ export function SessionPanel({
 
                                         <div className="flex items-center justify-between">
                                           <span className="font-light text-muted-foreground">
-                                            Reanimaciones:
+                                            Puntos (XP):
                                           </span>
                                           <span className="font-mono font-semibold text-foreground">
-                                            {stat.revives}
+                                            {stat.points}
                                           </span>
                                         </div>
 

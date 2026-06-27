@@ -20,7 +20,7 @@ interface PlayerStatInput {
   kills: number | "";
   mentalState: number;
   respawned: boolean;
-  revives: number | "";
+  points: number | "";
   userId?: string | null;
 }
 
@@ -162,7 +162,7 @@ export function MatchForm({
       downs: 0,
       kills: 0,
       assists: 0,
-      revives: 0,
+      points: 0,
       respawned: false,
       endGame: false,
       mentalState: 3,
@@ -338,7 +338,7 @@ export function MatchForm({
     kills: stat.kills === "" ? 0 : stat.kills,
     downs: stat.downs === "" ? 0 : stat.downs,
     assists: stat.assists === "" ? 0 : stat.assists,
-    revives: stat.revives === "" ? 0 : stat.revives,
+    points: stat.points === "" ? 0 : stat.points,
   });
 
   const handleToggleReady = async (
@@ -931,25 +931,25 @@ export function MatchForm({
                       <div>
                         <label
                           className="mb-0.5 block text-[10px] text-muted-foreground"
-                          htmlFor={`revives-${stat.gamertag}`}
+                          htmlFor={`points-${stat.gamertag}`}
                         >
-                          Revivir (R)
+                          Puntos (XP)
                         </label>
                         <input
                           className="w-full rounded border border-border bg-background px-2 py-1 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
                           disabled={!canEditPlayer}
-                          id={`revives-${stat.gamertag}`}
+                          id={`points-${stat.gamertag}`}
                           min="0"
                           onChange={(e) => {
                             const val = e.target.value;
                             handleStatChange(
                               originalIdx,
-                              "revives",
+                              "points",
                               val === "" ? "" : Number.parseInt(val, 10) || 0
                             );
                           }}
                           type="number"
-                          value={stat.revives}
+                          value={stat.points}
                         />
                       </div>
                     </div>

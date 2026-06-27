@@ -499,7 +499,7 @@ function MatchDetailList({
                         <th className="py-2">Operador</th>
                         <th className="py-2 text-center">Clase</th>
                         <th className="py-2 text-center">K / D / A</th>
-                        <th className="py-2 text-center">Downs / Rev</th>
+                        <th className="py-2 text-center">Downs / Puntos</th>
                         <th className="py-2 text-center">Desp / Final</th>
                         <th className="py-2 text-center">Mente</th>
                       </tr>
@@ -548,7 +548,7 @@ function MatchDetailList({
                                 </span>
                               </td>
                               <td className="py-2 text-center font-mono">
-                                {stat.downs} / {stat.revives}
+                                {stat.downs} / {stat.points}
                               </td>
                               <td className="py-2 text-center">
                                 {stat.respawned ? "✅" : "❌"} /{" "}
@@ -636,10 +636,10 @@ function MatchDetailList({
 
                           <div className="flex items-center justify-between">
                             <span className="font-light text-muted-foreground">
-                              Reanimaciones:
+                              Puntos (XP):
                             </span>
                             <span className="font-mono font-semibold text-foreground">
-                              {stat.revives}
+                              {stat.points}
                             </span>
                           </div>
 

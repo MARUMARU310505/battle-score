@@ -33,7 +33,7 @@ export function SessionLiveStats({
   let totalKills = 0;
   let totalDowns = 0;
   let totalAssists = 0;
-  let totalRevives = 0;
+  let totalPoints = 0;
   const totalMatches = sessionMatches.length;
   let totalPlacements = 0;
   let totalWins = 0;
@@ -48,7 +48,7 @@ export function SessionLiveStats({
         totalKills += p.kills || 0;
         totalDowns += p.downs || 0;
         totalAssists += p.assists || 0;
-        totalRevives += p.revives || 0;
+        totalPoints += p.points || 0;
       }
     }
   }
@@ -199,7 +199,7 @@ export function SessionLiveStats({
             let kills = 0;
             let downs = 0;
             let assists = 0;
-            let revives = 0;
+            let points = 0;
 
             for (const m of sessionMatches) {
               const stat = m.player_match_stats?.find(
@@ -209,7 +209,7 @@ export function SessionLiveStats({
                 kills += stat.kills || 0;
                 downs += stat.downs || 0;
                 assists += stat.assists || 0;
-                revives += stat.revives || 0;
+                points += stat.points || 0;
               }
             }
 

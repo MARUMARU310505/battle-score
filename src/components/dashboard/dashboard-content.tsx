@@ -57,7 +57,7 @@ export interface PlayerMatchStats {
   match_id: string;
   mental_state: number;
   respawned: boolean;
-  revives: number;
+  points: number;
   user_id?: string | null;
 }
 

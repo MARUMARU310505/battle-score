@@ -19,7 +19,7 @@ interface PlayerMatchStats {
   downs: number;
   kills: number;
   mental_state: number;
-  revives: number;
+  points: number;
 }
 
 interface Match {

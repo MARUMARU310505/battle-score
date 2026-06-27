@@ -1,7 +1,6 @@
 import {
   BarChart3,
   Compass,
-  Heart,
   ShieldAlert,
   Sparkles,
   TrendingUp,
@@ -10,8 +9,9 @@ import {
 import { useMemo, useState } from "react";
 import { getNearestPOI, isGridCode, MapModal } from "@/components/map";
 import type { Match } from "./dashboard-content";
-import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 import { KdrLineChart } from "./kdr-line-chart";
+import { PointsContributionChart } from "./points-contribution-chart";
+import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 
 interface StatsViewProps {
   currentUserId?: string | null;
@@ -40,7 +40,7 @@ export function StatsView({
     let totalKills = 0;
     let totalDowns = 0;
     let totalAssists = 0;
-    let totalRevives = 0;
+    let totalPoints = 0;
     const totalMatches = matches.length;
     let totalWins = 0;
     let sumPlacement = 0;
@@ -55,7 +55,7 @@ export function StatsView({
           totalKills += p.kills || 0;
           totalDowns += p.downs || 0;
           totalAssists += p.assists || 0;
-          totalRevives += p.revives || 0;
+          totalPoints += p.points || 0;
         }
       }
     }
@@ -68,7 +68,7 @@ export function StatsView({
       totalKills,
       totalDowns,
       totalAssists,
-      totalRevives,
+      totalPoints,
       totalMatches,
       totalWins,
       globalKdr: globalKdr.toFixed(2),
@@ -270,7 +270,7 @@ export function StatsView({
         kills: number;
         downs: number;
         assists: number;
-        revives: number;
+        points: number;
         totalMental: number;
         avatarSeed: string | null;
         userId: string | null;
@@ -287,7 +287,7 @@ export function StatsView({
               kills: 0,
               downs: 0,
               assists: 0,
-              revives: 0,
+              points: 0,
               totalMental: 0,
               avatarSeed: p.avatar_seed || null,
               userId: p.user_id || null,
@@ -297,7 +297,7 @@ export function StatsView({
           players[tag].kills += p.kills || 0;
           players[tag].downs += p.downs || 0;
           players[tag].assists += p.assists || 0;
-          players[tag].revives += p.revives || 0;
+          players[tag].points += p.points || 0;
           players[tag].totalMental += p.mental_state || 3;
           // Keep updating avatar seed if we find it
           if (p.avatar_seed && !players[tag].avatarSeed) {
@@ -321,7 +321,7 @@ export function StatsView({
         kills: stat.kills,
         downs: stat.downs,
         assists: stat.assists,
-        revives: stat.revives,
+        points: stat.points,
         avgMental: (stat.totalMental / stat.count).toFixed(1),
         avatarSeed: stat.avatarSeed,
         userId: stat.userId,
@@ -419,12 +419,24 @@ export function StatsView({
         </div>
       </div>
 
-      <KdrLineChart
-        currentUserId={currentUserId}
-        matches={matches}
-        sessionMatches={sessionMatches}
-        squad={squad}
-      />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <KdrLineChart
+            currentUserId={currentUserId}
+            matches={matches}
+            sessionMatches={sessionMatches}
+            squad={squad}
+          />
+        </div>
+        <div>
+          <PointsContributionChart
+            currentUserId={currentUserId}
+            matches={matches}
+            sessionMatches={sessionMatches}
+            squad={squad}
+          />
+        </div>
+      </div>
 
       {/* Drop Zone: Winner vs Death Route */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -694,11 +706,10 @@ export function StatsView({
                     </div>
                     <div>
                       <p className="flex items-center justify-center gap-0.5 font-mono text-[9px] text-muted-foreground uppercase">
-                        <Heart className="h-2 w-2 fill-red-500 text-red-500" />{" "}
-                        Reanim.
+                        <Sparkles className="h-2 w-2 text-amber-400" /> Puntos
                       </p>
                       <p className="mt-0.5 font-bold font-mono text-emerald-400 text-xs">
-                        {op.revives}
+                        {op.points}
                       </p>
                     </div>
                   </div>
@@ -727,7 +738,7 @@ export function StatsView({
                   <th className="pb-2 text-center font-medium">K/D/A</th>
                   <th className="pb-2 text-center font-medium">KDR</th>
                   <th className="flex items-center justify-center gap-1 pb-2 text-center font-medium">
-                    <Heart className="h-3 w-3 text-red-500" /> Reanim.
+                    <Sparkles className="h-3 w-3 text-amber-400" /> Puntos
                   </th>
                   <th className="pb-2 text-center font-medium">Estado Prom.</th>
                 </tr>
@@ -766,7 +777,7 @@ export function StatsView({
                         {op.kdr}
                       </td>
                       <td className="py-3 text-center font-mono font-semibold text-emerald-400">
-                        {op.revives}
+                        {op.points}
                       </td>
                       <td className="py-3 text-center font-mono text-[10px]">
                         {mentalLabel(Number(op.avgMental))}
