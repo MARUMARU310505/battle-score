@@ -1,6 +1,14 @@
 import { actions } from "astro:actions";
-import { AlertCircle, Award, Loader2, User } from "lucide-react";
-import { useState } from "react";
+import {
+  AlertCircle,
+  Award,
+  Eye,
+  EyeOff,
+  Key,
+  Loader2,
+  User,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 const AVATAR_PRESETS = [
@@ -49,9 +57,19 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
   const [favoriteClass, setFavoriteClass] = useState(
     initialProfile?.favorite_class || "Asalto"
   );
+  const [geminiApiKey, setGeminiApiKey] = useState("");
+  const [showKey, setShowKey] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setGeminiApiKey(
+        localStorage.getItem("battle-score-gemini-api-key") || ""
+      );
+    }
+  }, []);
 
   const isNew = !initialProfile;
 
@@ -81,6 +99,13 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
 
       if (actionError) {
         throw new Error(actionError.message || "Error al guardar el perfil");
+      }
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          "battle-score-gemini-api-key",
+          geminiApiKey.trim()
+        );
       }
 
       setSuccess(true);
@@ -247,6 +272,54 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                 <option value="Recon">Recon</option>
                 <option value="Ingeniero">Ingeniero</option>
               </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label
+                className="font-semibold text-muted-foreground text-xs uppercase tracking-wider"
+                htmlFor="gemini-api-key"
+              >
+                Clave de API de Gemini (Opcional)
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
+                  <Key className="h-4 w-4" />
+                </span>
+                <input
+                  className="flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 pr-10 pl-10 text-sm ring-offset-background transition-all duration-200 file:border-0 file:bg-transparent file:font-medium file:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={loading || success}
+                  id="gemini-api-key"
+                  onChange={(e) => setGeminiApiKey(e.target.value)}
+                  placeholder="AIzaSy..."
+                  type={showKey ? "text" : "password"}
+                  value={geminiApiKey}
+                />
+                <button
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground focus:outline-none"
+                  disabled={loading || success}
+                  onClick={() => setShowKey(!showKey)}
+                  type="button"
+                >
+                  {showKey ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+              <p className="font-light text-[10px] text-muted-foreground leading-normal">
+                Esta clave se guarda localmente en tu navegador de forma privada
+                y se usa para el escaneo de imágenes. Obtén una gratis en{" "}
+                <a
+                  className="font-semibold text-primary hover:underline"
+                  href="https://aistudio.google.com/"
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  Google AI Studio
+                </a>
+                .
+              </p>
             </div>
 
             <Button

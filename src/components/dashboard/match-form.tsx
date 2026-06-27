@@ -223,6 +223,20 @@ export function MatchForm({
       return;
     }
 
+    const geminiApiKey =
+      typeof window === "undefined"
+        ? ""
+        : localStorage.getItem("battle-score-gemini-api-key") || "";
+
+    if (!geminiApiKey) {
+      setError(
+        "Para escanear el marcador con IA, debes configurar tu API Key de Gemini en tu perfil (esquina superior derecha -> botón de usuario)."
+      );
+      // Reset input value to allow uploading again
+      e.target.value = "";
+      return;
+    }
+
     setParsingImage(true);
     setError(null);
 
@@ -249,6 +263,7 @@ export function MatchForm({
         base64Image: base64Data,
         activeGamertags,
         squadSize: getSquadSizeLabel(activeGamertags.length),
+        geminiApiKey,
       });
 
       if (parseError) {

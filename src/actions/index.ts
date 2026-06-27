@@ -1833,15 +1833,18 @@ export const server = {
         base64Image: z.string(),
         activeGamertags: z.array(z.string()),
         squadSize: z.string().optional(),
+        geminiApiKey: z.string().optional(),
       }),
       handler: async (input) => {
         const apiKey =
-          process.env.GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY;
+          input.geminiApiKey ||
+          process.env.GEMINI_API_KEY ||
+          import.meta.env.GEMINI_API_KEY;
         if (!apiKey) {
           throw new ActionError({
             code: "BAD_REQUEST",
             message:
-              "GEMINI_API_KEY no está configurada en las variables de entorno",
+              "GEMINI_API_KEY no está configurada. Por favor, configura tu API Key de Gemini en tu perfil.",
           });
         }
 

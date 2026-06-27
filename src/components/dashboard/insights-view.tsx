@@ -2,7 +2,12 @@ import {
   AlertTriangle,
   Award,
   Brain,
+  Check,
+  Coffee,
+  Copy,
+  FileDown,
   Info,
+  RefreshCw,
   ShieldAlert,
   Sparkles,
   TrendingUp,
@@ -72,23 +77,41 @@ export function InsightsView({
     "deploy" | "circle" | "death" | "second_deploy"
   >("deploy");
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [tookBreak, setTookBreak] = useState(false);
+  const [copiedBriefing, setCopiedBriefing] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // If no matches registered, return empty state
-  if (!matches || matches.length === 0) {
-    return (
-      <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-border border-dashed bg-background/50 p-16 text-center">
-        <span className="mb-4 text-4xl">💡</span>
-        <h4 className="font-semibold text-foreground text-sm">
-          Analizador Táctico Desactivado
-        </h4>
-        <p className="mt-2 max-w-sm font-light text-muted-foreground text-xs leading-relaxed">
-          Registra al menos una partida para que el Coach Táctico analice
-          vuestro historial y genere briefing operativo, alertas de fatiga y
-          recomendaciones de roles.
-        </p>
-      </div>
-    );
-  }
+  const handleCopyBriefing = () => {
+    let text = `=== INFORME DE INTELIGENCIA TÁCTICA: ${squad?.name || "Escuadrón"} ===\n\n`;
+    text += `📡 BRIEFING OPERATIVO:\n- ${briefing.title}\n  ${briefing.text}\n\n`;
+    if (fatigueAlert) {
+      text += `🔋 ESTADO FÍSICO Y FATIGA:\n- ${tookBreak ? "Recuperado (Descanso Reciente)" : fatigueAlert.title}\n  ${tookBreak ? "Se ha tomado una pausa para resetear reflejos y concentración." : fatigueAlert.text}\n\n`;
+    }
+    if (dropAnalysis.dropGanador) {
+      const dropPoiName = isGridCode(dropAnalysis.dropGanador.name)
+        ? `${dropAnalysis.dropGanador.name} - ${getNearestPOI(dropAnalysis.dropGanador.name)}`
+        : dropAnalysis.dropGanador.name;
+      text += `🟢 DROP RECOMENDADO: ${dropPoiName} (Puesto prom: #${dropAnalysis.dropGanador.avgPlacement.toFixed(1)})\n`;
+    }
+    if (dropAnalysis.rutaMuerte) {
+      const deathPoiName = isGridCode(dropAnalysis.rutaMuerte.name)
+        ? `${dropAnalysis.rutaMuerte.name} - ${getNearestPOI(dropAnalysis.rutaMuerte.name)}`
+        : dropAnalysis.rutaMuerte.name;
+      text += `🔴 EVITAR ZONA: ${deathPoiName} (Puesto prom: #${dropAnalysis.rutaMuerte.avgPlacement.toFixed(1)})\n`;
+    }
+    navigator.clipboard.writeText(text);
+    setCopiedBriefing(true);
+    setTimeout(() => setCopiedBriefing(false), 2000);
+  };
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 1000);
+  };
+
+  // Core hooks are defined first. Empty state is checked before rendering.
 
   // 1. Briefing Pre-Partida Activo (Últimas 3 partidas)
   const briefing = useMemo(() => {
@@ -379,8 +402,91 @@ export function InsightsView({
     };
   }, [matches]);
 
+  // If no matches registered, return empty state
+  if (!matches || matches.length === 0) {
+    return (
+      <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-border border-dashed bg-background/50 p-16 text-center">
+        <span className="mb-4 text-4xl">💡</span>
+        <h4 className="font-semibold text-foreground text-sm">
+          Analizador Táctico Desactivado
+        </h4>
+        <p className="mt-2 max-w-sm font-light text-muted-foreground text-xs leading-relaxed">
+          Registra al menos una partida para que el Coach Táctico analice
+          vuestro historial y genere briefing operativo, alertas de fatiga y
+          recomendaciones de roles.
+        </p>
+      </div>
+    );
+  }
+
+  if (isRefreshing) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center rounded-xl border border-border bg-card/30 p-12 text-center text-muted-foreground backdrop-blur-md">
+        <RefreshCw className="mb-4 h-8 w-8 animate-spin text-primary" />
+        <h4 className="animate-pulse font-mono font-semibold text-foreground text-sm uppercase tracking-wider">
+          Sincronizando Tácticas e Intel...
+        </h4>
+        <p className="mt-1.5 max-w-xs font-light text-muted-foreground text-xs leading-relaxed">
+          Procesando el historial del escuadrón y recalculando indicadores
+          operativos en tiempo real.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="fade-in-50 animate-in space-y-6 duration-300">
+      {/* Tactical Intel Header Toolbar */}
+      <div className="flex flex-col justify-between gap-4 border-border/40 border-b pb-5 sm:flex-row sm:items-center">
+        <div>
+          <h2 className="flex items-center gap-2 font-bold font-mono text-foreground text-sm uppercase tracking-widest">
+            <Brain className="h-4 w-4 text-primary" />
+            Centro de Inteligencia Operativa (CIO)
+          </h2>
+          <p className="font-light text-muted-foreground text-xs">
+            Análisis heurístico en tiempo real del desempeño de la escuadra y
+            recomendaciones operativas.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 font-medium text-foreground text-xs shadow-xs transition-all hover:bg-muted active:scale-95 disabled:opacity-50"
+            disabled={isRefreshing}
+            onClick={handleRefresh}
+          >
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin text-primary" : "text-muted-foreground"}`}
+            />
+            <span>{isRefreshing ? "Calibrando..." : "Sincronizar"}</span>
+          </button>
+
+          <button
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 font-medium text-foreground text-xs shadow-xs transition-all hover:bg-muted active:scale-95"
+            onClick={handleCopyBriefing}
+          >
+            {copiedBriefing ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-emerald-400" />
+                <span className="text-emerald-400">¡Copiado!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>Copiar Informe</span>
+              </>
+            )}
+          </button>
+
+          <button
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 font-medium text-foreground text-xs shadow-xs transition-all hover:bg-muted active:scale-95"
+            onClick={() => window.print()}
+          >
+            <FileDown className="h-3.5 w-3.5 text-muted-foreground" />
+            <span>Imprimir Intel</span>
+          </button>
+        </div>
+      </div>
+
       {/* Grid: Briefing Pre-partida y Coach de Fatiga */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Briefing panel */}
@@ -425,34 +531,70 @@ export function InsightsView({
         {/* Fatigue Coach panel */}
         {fatigueAlert && (
           <div
-            className={`relative overflow-hidden rounded-lg border p-5 ${
-              fatigueAlert.isFatigued || fatigueAlert.isTilted
-                ? "border-amber-500/20 bg-amber-500/5"
-                : "border-border bg-card"
+            className={`relative overflow-hidden rounded-lg border p-5 transition-all duration-300 ${
+              tookBreak
+                ? "border-emerald-500/20 bg-emerald-500/5"
+                : fatigueAlert.isFatigued || fatigueAlert.isTilted
+                  ? "border-amber-500/20 bg-amber-500/5 shadow-xs"
+                  : "border-border bg-card"
             }`}
           >
-            <div className="flex items-start gap-3.5">
-              <div
-                className={`rounded-full p-2.5 ${
-                  fatigueAlert.isFatigued || fatigueAlert.isTilted
-                    ? "animate-pulse bg-amber-500/10 text-amber-400"
-                    : "bg-emerald-500/10 text-emerald-400"
-                }`}
-              >
-                {fatigueAlert.isFatigued || fatigueAlert.isTilted ? (
-                  <AlertTriangle className="h-5 w-5" />
-                ) : (
-                  <Brain className="h-5 w-5" />
-                )}
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+              <div className="flex items-start gap-3.5">
+                <div
+                  className={`rounded-full p-2.5 transition-colors ${
+                    tookBreak
+                      ? "bg-emerald-500/10 text-emerald-400"
+                      : fatigueAlert.isFatigued || fatigueAlert.isTilted
+                        ? "animate-pulse bg-amber-500/10 text-amber-400"
+                        : "bg-emerald-500/10 text-emerald-400"
+                  }`}
+                >
+                  {tookBreak ? (
+                    <Coffee className="h-5 w-5" />
+                  ) : fatigueAlert.isFatigued || fatigueAlert.isTilted ? (
+                    <AlertTriangle className="h-5 w-5" />
+                  ) : (
+                    <Brain className="h-5 w-5" />
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-bold font-mono text-foreground text-xs uppercase tracking-wider">
+                    {tookBreak
+                      ? "🔋 Estado Físico del Escuadrón: Recuperado"
+                      : fatigueAlert.title}
+                  </h4>
+                  <p className="font-light text-muted-foreground text-xs leading-relaxed">
+                    {tookBreak
+                      ? "Se ha registrado un descanso reciente en esta sesión. Los niveles de estrés táctico y fatiga visual se han restablecido correctamente. ¡Buen trabajo!"
+                      : fatigueAlert.text}
+                  </p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <h4 className="font-bold font-mono text-foreground text-xs uppercase tracking-wider">
-                  {fatigueAlert.title}
-                </h4>
-                <p className="font-light text-muted-foreground text-xs leading-relaxed">
-                  {fatigueAlert.text}
-                </p>
-              </div>
+
+              {/* Action buttons inside the card */}
+              {(fatigueAlert.isFatigued ||
+                fatigueAlert.isTilted ||
+                tookBreak) && (
+                <div className="self-end sm:self-start">
+                  {tookBreak ? (
+                    <button
+                      className="cursor-pointer rounded border border-border bg-card px-2.5 py-1 text-[10px] text-muted-foreground transition-all hover:bg-muted active:scale-95"
+                      onClick={() => setTookBreak(false)}
+                    >
+                      Restaurar Alerta
+                    </button>
+                  ) : (
+                    <button
+                      className="inline-flex cursor-pointer items-center gap-1 rounded bg-amber-500 px-3 py-1 font-semibold text-[11px] text-background shadow-sm transition-all hover:bg-amber-400 active:scale-95"
+                      onClick={() => setTookBreak(true)}
+                    >
+                      <Coffee className="h-3 w-3 animate-bounce" />
+                      <span>Registrar Descanso</span>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
