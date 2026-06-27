@@ -7,8 +7,6 @@ interface KdrLineChartProps {
   currentUserId?: string | null;
   matches: Match[];
   sessionMatches: Match[];
-  // biome-ignore lint/suspicious/noExplicitAny: sessions array
-  sessions: any[];
   // biome-ignore lint/suspicious/noExplicitAny: squad info
   squad: any;
 }
@@ -42,7 +40,6 @@ const colors = [
 export function KdrLineChart({
   currentUserId,
   matches,
-  sessions,
   sessionMatches,
   squad,
 }: KdrLineChartProps) {
@@ -167,42 +164,77 @@ export function KdrLineChart({
         }
       }
     } else {
-      // 2. General Mode (All historical sessions, Session by Session)
-      // Sessions are already sorted ascending chronologically
-      listXLabels = sessions.map((s) => s.name || "Sesión");
+      // 2. General Mode (Historical average per Match sequence across all sessions)
+      // Group historical matches by session_id
+      const sessionsGroup: Record<string, Match[]> = {};
+      for (const m of matches) {
+        const sId = m.session_id;
+        if (!sessionsGroup[sId]) {
+          sessionsGroup[sId] = [];
+        }
+        sessionsGroup[sId].push(m);
+      }
 
-      for (const sessionItem of sessions) {
-        const xLabel = sessionItem.name || "Sesión";
-        const sessionMatchesList = matches.filter(
-          (m) => m.session_id === sessionItem.id
+      // Find max matches in any session
+      let maxSessionMatches = 0;
+      for (const sessionMatchesList of Object.values(sessionsGroup)) {
+        if (sessionMatchesList.length > maxSessionMatches) {
+          maxSessionMatches = sessionMatchesList.length;
+        }
+      }
+
+      // Cap at 10 matches
+      const totalSteps = Math.min(10, maxSessionMatches);
+      listXLabels = Array.from({ length: totalSteps }, (_, i) => `P${i + 1}`);
+
+      // Sort matches in each session group chronologically
+      const sortedSessionGroups: Record<string, Match[]> = {};
+      for (const [sId, sessionMatchesList] of Object.entries(sessionsGroup)) {
+        sortedSessionGroups[sId] = [...sessionMatchesList].sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
+      }
+
+      for (let idx = 0; idx < totalSteps; idx++) {
+        const xLabel = `Partida ${idx + 1} (Promedio)`;
 
         for (const member of squadMembers) {
+          const kdrValues: number[] = [];
           let totalKills = 0;
           let totalDowns = 0;
           let totalAssists = 0;
-          let hasStats = false;
+          let count = 0;
 
-          for (const match of sessionMatchesList) {
-            const stats = match.player_match_stats?.find(
-              (p) => p.gamertag === member.gamertag
-            );
-            if (stats) {
-              totalKills += stats.kills || 0;
-              totalDowns += stats.downs || 0;
-              totalAssists += stats.assists || 0;
-              hasStats = true;
+          for (const sessionMatchesList of Object.values(sortedSessionGroups)) {
+            if (sessionMatchesList.length > idx) {
+              const match = sessionMatchesList[idx];
+              const stats = match.player_match_stats?.find(
+                (p) => p.gamertag === member.gamertag
+              );
+              if (stats) {
+                const kills = stats.kills || 0;
+                const downs = stats.downs || 0;
+                const assists = stats.assists || 0;
+                const kdr = downs > 0 ? kills / downs : kills;
+                kdrValues.push(kdr);
+                totalKills += kills;
+                totalDowns += downs;
+                totalAssists += assists;
+                count++;
+              }
             }
           }
 
-          if (hasStats) {
-            const kdr = totalDowns > 0 ? totalKills / totalDowns : totalKills;
+          if (kdrValues.length > 0) {
+            const avgKdr =
+              kdrValues.reduce((sum, val) => sum + val, 0) / kdrValues.length;
             opData[member.gamertag].push({
               xLabel,
-              kdr,
-              kills: totalKills,
-              downs: totalDowns,
-              assists: totalAssists,
+              kdr: avgKdr,
+              kills: totalKills / count,
+              downs: totalDowns / count,
+              assists: totalAssists / count,
             });
           } else {
             opData[member.gamertag].push(null);
@@ -234,14 +266,7 @@ export function KdrLineChart({
       xLabels: listXLabels,
       maxKdr: Math.ceil(maxVal * 1.15 * 10) / 10, // round up nicely with margin
     };
-  }, [
-    chartMode,
-    sessionMatches,
-    sessions,
-    matches,
-    squadMembers,
-    operatorMeta,
-  ]);
+  }, [chartMode, sessionMatches, matches, squadMembers, operatorMeta]);
 
   // SVG Coordinates layout properties
   const svgWidth = 600;
@@ -292,6 +317,9 @@ export function KdrLineChart({
       return { ...op, coords };
     });
   }, [chartData, xLabels, chartWidth, chartHeight, maxKdr]);
+
+  const formatStat = (val: number) =>
+    Number.isInteger(val) ? val.toString() : val.toFixed(1);
 
   const hasData = xLabels.length > 0;
 
@@ -592,8 +620,9 @@ export function KdrLineChart({
                   <div className="flex items-center justify-between text-muted-foreground">
                     <span>K/D/A:</span>
                     <span className="font-semibold text-foreground">
-                      {hoveredPoint.kills}/{hoveredPoint.downs}/
-                      {hoveredPoint.assists}
+                      {formatStat(hoveredPoint.kills)}/
+                      {formatStat(hoveredPoint.downs)}/
+                      {formatStat(hoveredPoint.assists)}
                     </span>
                   </div>
                 </div>

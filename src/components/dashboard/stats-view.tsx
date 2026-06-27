@@ -423,7 +423,6 @@ export function StatsView({
         currentUserId={currentUserId}
         matches={matches}
         sessionMatches={sessionMatches}
-        sessions={sessions}
         squad={squad}
       />
 
