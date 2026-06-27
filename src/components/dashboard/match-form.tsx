@@ -686,304 +686,317 @@ export function MatchForm({
               (solo puedes modificar tu propio slot)
             </span>
           </h4>
-          <div className="max-h-[50vh] space-y-4 overflow-y-auto pr-1">
-            {playerStats.map((stat, idx) => {
-              const isCurrentUser =
-                stat.userId === currentUserId ||
-                stat.gamertag === currentUserGamertag;
-              const isPlayerReady = session.ready_players?.includes(
-                stat.gamertag
-              );
-              const canEditPlayer =
-                (isOwner || isCurrentUser) && !isPlayerReady;
+          <div className="space-y-4 pr-1">
+            {[...playerStats]
+              .map((stat, originalIdx) => ({ stat, originalIdx }))
+              .sort((a, b) => {
+                const isACurrentUser =
+                  a.stat.userId === currentUserId ||
+                  a.stat.gamertag === currentUserGamertag;
+                const isBCurrentUser =
+                  b.stat.userId === currentUserId ||
+                  b.stat.gamertag === currentUserGamertag;
+                if (isACurrentUser && !isBCurrentUser) return -1;
+                if (!isACurrentUser && isBCurrentUser) return 1;
+                return 0;
+              })
+              .map(({ stat, originalIdx }) => {
+                const isCurrentUser =
+                  stat.userId === currentUserId ||
+                  stat.gamertag === currentUserGamertag;
+                const isPlayerReady = session.ready_players?.includes(
+                  stat.gamertag
+                );
+                const canEditPlayer =
+                  (isOwner || isCurrentUser) && !isPlayerReady;
 
-              return (
-                <div
-                  className={`relative space-y-3 overflow-hidden rounded-lg border p-4 transition-colors duration-200 ${
-                    isPlayerReady
-                      ? "border-green-500/20 bg-green-500/5 opacity-90"
-                      : canEditPlayer
-                        ? "border-primary/20 bg-primary/5"
-                        : "border-border/60 bg-background/30 opacity-70"
-                  }`}
-                  key={stat.gamertag}
-                >
-                  {loadingPlayer === stat.gamertag && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px]">
-                      <svg
-                        aria-label="Cargando"
-                        className="h-6 w-6 animate-spin text-primary"
-                        fill="none"
-                        role="img"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <title>Cargando</title>
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          fill="currentColor"
-                        />
-                      </svg>
-                    </div>
-                  )}
-                  <div className="flex flex-col gap-2 border-border/40 border-b pb-2 sm:flex-row sm:items-center sm:justify-between">
-                    {/* Row 1: Player Name, Tú, Class Select */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <OperatorAvatar
-                          avatarSeed={stat.avatarSeed}
-                          className="h-5 w-5"
-                          gamertag={stat.gamertag}
-                        />
-                        <span
-                          className={`font-bold text-xs ${isCurrentUser ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
+                return (
+                  <div
+                    className={`relative space-y-3 overflow-hidden rounded-lg border p-4 transition-colors duration-200 ${
+                      isPlayerReady
+                        ? "border-green-500/20 bg-green-500/5 opacity-90"
+                        : canEditPlayer
+                          ? "border-primary/20 bg-primary/5"
+                          : "border-border/60 bg-background/30 opacity-70"
+                    }`}
+                    key={stat.gamertag}
+                  >
+                    {loadingPlayer === stat.gamertag && (
+                      <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px]">
+                        <svg
+                          aria-label="Cargando"
+                          className="h-6 w-6 animate-spin text-primary"
+                          fill="none"
+                          role="img"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
                         >
-                          {cleanGamertag(stat.gamertag)}
-                        </span>
+                          <title>Cargando</title>
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            fill="currentColor"
+                          />
+                        </svg>
                       </div>
-                      {isCurrentUser && (
-                        <span className="rounded bg-emerald-500 px-1.5 py-0.5 font-semibold text-[8px] text-white uppercase dark:bg-emerald-600">
-                          Tú
-                        </span>
-                      )}
-                      <select
-                        className="rounded border border-border bg-background px-2 py-0.5 font-mono font-sans text-[10px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
-                        disabled={!canEditPlayer}
-                        onChange={(e) =>
-                          handleStatChange(idx, "activeClass", e.target.value)
-                        }
-                        value={stat.activeClass}
-                      >
-                        {["Asalto", "Soporte", "Recon", "Ingeniero"].map(
-                          (cls) => (
-                            <option key={cls} value={cls}>
-                              {cls}
-                            </option>
-                          )
+                    )}
+                    <div className="flex flex-col gap-2 border-border/40 border-b pb-2 sm:flex-row sm:items-center sm:justify-between">
+                      {/* Row 1: Player Name, Tú, Class Select */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <OperatorAvatar
+                            avatarSeed={stat.avatarSeed}
+                            className="h-5 w-5"
+                            gamertag={stat.gamertag}
+                          />
+                          <span
+                            className={`font-bold text-xs ${isCurrentUser ? "font-extrabold text-emerald-500 dark:text-emerald-400" : "text-foreground"}`}
+                          >
+                            {cleanGamertag(stat.gamertag)}
+                          </span>
+                        </div>
+                        {isCurrentUser && (
+                          <span className="rounded bg-emerald-500 px-1.5 py-0.5 font-semibold text-[8px] text-white uppercase dark:bg-emerald-600">
+                            Tú
+                          </span>
                         )}
-                      </select>
-                    </div>
-
-                    {/* Row 2: Status & Action Button */}
-                    <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                      {isPlayerReady ? (
-                        <span className="rounded-full border border-green-500/20 bg-green-500/10 px-2 py-0.5 font-semibold text-[9px] text-green-500">
-                          Listo 🎯
-                        </span>
-                      ) : (
-                        <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 font-semibold text-[9px] text-amber-500">
-                          Llenando...
-                        </span>
-                      )}
-
-                      {(isOwner || isCurrentUser) && (
-                        <Button
-                          className={`flex h-6 items-center gap-1 px-2 font-medium text-[10px] transition-all ${
-                            isPlayerReady
-                              ? "border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
-                              : "bg-green-600 text-white hover:bg-green-700"
-                          }`}
-                          disabled={loading}
-                          onClick={() => handleToggleReady(stat.gamertag, stat)}
-                          size="sm"
-                          type="button"
-                          variant={isPlayerReady ? "outline" : "default"}
-                        >
-                          {loadingPlayer === stat.gamertag && <LoaderSpinner />}
-                          {isPlayerReady ? "Modificar" : "Marcar Listo"}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-                    <div>
-                      <label
-                        className="mb-0.5 block text-[10px] text-muted-foreground"
-                        htmlFor={`kills-${stat.gamertag}`}
-                      >
-                        Kills (K)
-                      </label>
-                      <input
-                        className="w-full rounded border border-border bg-background px-2 py-1 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
-                        disabled={!canEditPlayer}
-                        id={`kills-${stat.gamertag}`}
-                        min="0"
-                        onChange={(e) =>
-                          handleStatChange(
-                            idx,
-                            "kills",
-                            Number.parseInt(e.target.value, 10) || 0
-                          )
-                        }
-                        type="number"
-                        value={stat.kills}
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        className="mb-0.5 block text-[10px] text-muted-foreground"
-                        htmlFor={`downs-${stat.gamertag}`}
-                      >
-                        Downs (D)
-                      </label>
-                      <input
-                        className="w-full rounded border border-border bg-background px-2 py-1 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
-                        disabled={!canEditPlayer}
-                        id={`downs-${stat.gamertag}`}
-                        min="0"
-                        onChange={(e) =>
-                          handleStatChange(
-                            idx,
-                            "downs",
-                            Number.parseInt(e.target.value, 10) || 0
-                          )
-                        }
-                        type="number"
-                        value={stat.downs}
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        className="mb-0.5 block text-[10px] text-muted-foreground"
-                        htmlFor={`assists-${stat.gamertag}`}
-                      >
-                        Asistencias (A)
-                      </label>
-                      <input
-                        className="w-full rounded border border-border bg-background px-2 py-1 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
-                        disabled={!canEditPlayer}
-                        id={`assists-${stat.gamertag}`}
-                        min="0"
-                        onChange={(e) =>
-                          handleStatChange(
-                            idx,
-                            "assists",
-                            Number.parseInt(e.target.value, 10) || 0
-                          )
-                        }
-                        type="number"
-                        value={stat.assists}
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        className="mb-0.5 block text-[10px] text-muted-foreground"
-                        htmlFor={`revives-${stat.gamertag}`}
-                      >
-                        Revivir (R)
-                      </label>
-                      <input
-                        className="w-full rounded border border-border bg-background px-2 py-1 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
-                        disabled={!canEditPlayer}
-                        id={`revives-${stat.gamertag}`}
-                        min="0"
-                        onChange={(e) =>
-                          handleStatChange(
-                            idx,
-                            "revives",
-                            Number.parseInt(e.target.value, 10) || 0
-                          )
-                        }
-                        type="number"
-                        value={stat.revives}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3 xl:grid-cols-2 xl:items-end">
-                    <div className="flex flex-wrap gap-4 py-1">
-                      <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-muted-foreground">
-                        <input
-                          checked={secondDeployZone ? true : stat.respawned}
-                          className="rounded border-border bg-background text-primary focus:ring-primary disabled:opacity-50"
-                          disabled={!canEditPlayer || !!secondDeployZone}
-                          onChange={(e) =>
-                            handleStatChange(idx, "respawned", e.target.checked)
-                          }
-                          type="checkbox"
-                        />
-                        ¿Redesplegado?
-                      </label>
-                      <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-muted-foreground">
-                        <input
-                          checked={stat.endGame}
-                          className="rounded border-border bg-background text-primary focus:ring-primary disabled:opacity-50"
+                        <select
+                          className="rounded border border-border bg-background px-2 py-0.5 font-mono font-sans text-[10px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
                           disabled={!canEditPlayer}
                           onChange={(e) =>
-                            handleStatChange(idx, "endGame", e.target.checked)
+                            handleStatChange(originalIdx, "activeClass", e.target.value)
                           }
-                          type="checkbox"
-                        />
-                        ¿End Game / Final?
-                      </label>
+                          value={stat.activeClass}
+                        >
+                          {["Asalto", "Soporte", "Recon", "Ingeniero"].map(
+                            (cls) => (
+                              <option key={cls} value={cls}>
+                                {cls}
+                              </option>
+                            )
+                          )}
+                        </select>
+                      </div>
+
+                      {/* Row 2: Status & Action Button */}
+                      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                        {isPlayerReady ? (
+                          <span className="rounded-full border border-green-500/20 bg-green-500/10 px-2 py-0.5 font-semibold text-[9px] text-green-500">
+                            Listo 🎯
+                          </span>
+                        ) : (
+                          <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 font-semibold text-[9px] text-amber-500">
+                            Llenando...
+                          </span>
+                        )}
+
+                        {(isOwner || isCurrentUser) && (
+                          <Button
+                            className={`flex h-6 items-center gap-1 px-2 font-medium text-[10px] transition-all ${
+                              isPlayerReady
+                                ? "border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+                                : "bg-green-600 text-white hover:bg-green-700"
+                            }`}
+                            disabled={loading}
+                            onClick={() => handleToggleReady(stat.gamertag, stat)}
+                            size="sm"
+                            type="button"
+                            variant={isPlayerReady ? "outline" : "default"}
+                          >
+                            {loadingPlayer === stat.gamertag && <LoaderSpinner />}
+                            {isPlayerReady ? "Modificar" : "Marcar Listo"}
+                          </Button>
+                        )}
+                      </div>
                     </div>
 
-                    <div>
-                      <label
-                        className="mb-1.5 block text-[10px] text-muted-foreground"
-                        htmlFor={`mental-${stat.gamertag}`}
-                      >
-                        Estado Mental (Fatiga)
-                      </label>
-                      <div
-                        className="flex gap-1.5"
-                        id={`mental-${stat.gamertag}`}
-                      >
-                        {[1, 2, 3, 4, 5].map((lvl) => {
-                          const levelLabels = [
-                            "Fatigado",
-                            "Cansado",
-                            "Normal",
-                            "Enfocado",
-                            "Excelente",
-                          ];
-                          const colors = [
-                            "bg-red-500/10 text-red-500 border-red-500/30",
-                            "bg-amber-500/10 text-amber-500 border-amber-500/30",
-                            "bg-blue-500/10 text-blue-500 border-blue-500/30",
-                            "bg-emerald-500/10 text-emerald-500 border-emerald-500/30",
-                            "bg-green-500/10 text-green-500 border-green-500/30",
-                          ];
-                          const activeColor =
-                            "bg-primary text-primary-foreground border-primary";
-                          const isActive = stat.mentalState === lvl;
+                    <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+                      <div>
+                        <label
+                          className="mb-0.5 block text-[10px] text-muted-foreground"
+                          htmlFor={`kills-${stat.gamertag}`}
+                        >
+                          Kills (K)
+                        </label>
+                        <input
+                          className="w-full rounded border border-border bg-background px-2 py-1 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
+                          disabled={!canEditPlayer}
+                          id={`kills-${stat.gamertag}`}
+                          min="0"
+                          onChange={(e) =>
+                            handleStatChange(
+                              originalIdx,
+                              "kills",
+                              Number.parseInt(e.target.value, 10) || 0
+                            )
+                          }
+                          type="number"
+                          value={stat.kills}
+                        />
+                      </div>
 
-                          return (
-                            <button
-                              className={`flex-1 cursor-pointer rounded border py-1 text-center font-mono text-[9px] transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
-                                isActive ? activeColor : colors[lvl - 1]
-                              }`}
-                              disabled={!canEditPlayer}
-                              key={lvl}
-                              onClick={() =>
-                                handleStatChange(idx, "mentalState", lvl)
-                              }
-                              title={levelLabels[lvl - 1]}
-                              type="button"
-                            >
-                              {lvl}
-                            </button>
-                          );
-                        })}
+                      <div>
+                        <label
+                          className="mb-0.5 block text-[10px] text-muted-foreground"
+                          htmlFor={`downs-${stat.gamertag}`}
+                        >
+                          Downs (D)
+                        </label>
+                        <input
+                          className="w-full rounded border border-border bg-background px-2 py-1 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
+                          disabled={!canEditPlayer}
+                          id={`downs-${stat.gamertag}`}
+                          min="0"
+                          onChange={(e) =>
+                            handleStatChange(
+                              originalIdx,
+                              "downs",
+                              Number.parseInt(e.target.value, 10) || 0
+                            )
+                          }
+                          type="number"
+                          value={stat.downs}
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          className="mb-0.5 block text-[10px] text-muted-foreground"
+                          htmlFor={`assists-${stat.gamertag}`}
+                        >
+                          Asistencias (A)
+                        </label>
+                        <input
+                          className="w-full rounded border border-border bg-background px-2 py-1 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
+                          disabled={!canEditPlayer}
+                          id={`assists-${stat.gamertag}`}
+                          min="0"
+                          onChange={(e) =>
+                            handleStatChange(
+                              originalIdx,
+                              "assists",
+                              Number.parseInt(e.target.value, 10) || 0
+                            )
+                          }
+                          type="number"
+                          value={stat.assists}
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          className="mb-0.5 block text-[10px] text-muted-foreground"
+                          htmlFor={`revives-${stat.gamertag}`}
+                        >
+                          Revivir (R)
+                        </label>
+                        <input
+                          className="w-full rounded border border-border bg-background px-2 py-1 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-muted disabled:opacity-50"
+                          disabled={!canEditPlayer}
+                          id={`revives-${stat.gamertag}`}
+                          min="0"
+                          onChange={(e) =>
+                            handleStatChange(
+                              originalIdx,
+                              "revives",
+                              Number.parseInt(e.target.value, 10) || 0
+                            )
+                          }
+                          type="number"
+                          value={stat.revives}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 xl:grid-cols-2 xl:items-end">
+                      <div className="flex flex-wrap gap-4 py-1">
+                        <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-muted-foreground">
+                          <input
+                            checked={secondDeployZone ? true : stat.respawned}
+                            className="rounded border-border bg-background text-primary focus:ring-primary disabled:opacity-50"
+                            disabled={!canEditPlayer || !!secondDeployZone}
+                            onChange={(e) =>
+                              handleStatChange(originalIdx, "respawned", e.target.checked)
+                            }
+                            type="checkbox"
+                          />
+                          ¿Redesplegado?
+                        </label>
+                        <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-muted-foreground">
+                          <input
+                            checked={stat.endGame}
+                            className="rounded border-border bg-background text-primary focus:ring-primary disabled:opacity-50"
+                            disabled={!canEditPlayer}
+                            onChange={(e) =>
+                              handleStatChange(originalIdx, "endGame", e.target.checked)
+                            }
+                            type="checkbox"
+                          />
+                          ¿End Game / Final?
+                        </label>
+                      </div>
+
+                      <div>
+                        <label
+                          className="mb-1.5 block text-[10px] text-muted-foreground"
+                          htmlFor={`mental-${stat.gamertag}`}
+                        >
+                          Estado Mental (Fatiga)
+                        </label>
+                        <div
+                          className="flex gap-1.5"
+                          id={`mental-${stat.gamertag}`}
+                        >
+                          {[1, 2, 3, 4, 5].map((lvl) => {
+                            const levelLabels = [
+                              "Fatigado",
+                              "Cansado",
+                              "Normal",
+                              "Enfocado",
+                              "Excelente",
+                            ];
+                            const colors = [
+                              "bg-red-500/10 text-red-500 border-red-500/30",
+                              "bg-amber-500/10 text-amber-500 border-amber-500/30",
+                              "bg-blue-500/10 text-blue-500 border-blue-500/30",
+                              "bg-emerald-500/10 text-emerald-500 border-emerald-500/30",
+                              "bg-green-500/10 text-green-500 border-green-500/30",
+                            ];
+                            const activeColor =
+                              "bg-primary text-primary-foreground border-primary";
+                            const isActive = stat.mentalState === lvl;
+
+                            return (
+                              <button
+                                className={`flex-1 cursor-pointer rounded border py-1 text-center font-mono text-[9px] transition-all disabled:cursor-not-allowed disabled:opacity-50 ${
+                                  isActive ? activeColor : colors[lvl - 1]
+                                }`}
+                                disabled={!canEditPlayer}
+                                key={lvl}
+                                onClick={() =>
+                                  handleStatChange(originalIdx, "mentalState", lvl)
+                                }
+                                title={levelLabels[lvl - 1]}
+                                type="button"
+                              >
+                                {lvl}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </div>
 

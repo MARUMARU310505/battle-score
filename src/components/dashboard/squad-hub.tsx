@@ -32,11 +32,13 @@ export interface SquadMember {
 }
 
 export interface Squad {
+  access_code?: string | null;
   created_at: string;
   id: string;
   invite_code: string;
   name: string;
   owner_id: string;
+  slot_count?: number;
   squad_members: SquadMember[];
 }
 
@@ -90,6 +92,7 @@ export function SquadHub({
   profile,
 }: SquadHubProps) {
   const [inviteCode, setInviteCode] = useState("");
+  const [accessCode, setAccessCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [enteringSquadId, setEnteringSquadId] = useState<string | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -129,6 +132,7 @@ export function SquadHub({
     setSearchError(null);
     setFoundSquad(null);
     setSelectedSlot(null);
+    setAccessCode("");
 
     try {
       const { data, error } = await actions.squad.getSquadByCode({
@@ -139,7 +143,13 @@ export function SquadHub({
         throw error;
       }
 
-      setFoundSquad(data as unknown as Squad);
+      const squadData = data as unknown as Squad;
+      if (squadData && squadData.slot_count === 1) {
+        setSearchError("No es posible unirse a un escuadrón individual (1 solo slot).");
+        setFoundSquad(null);
+      } else {
+        setFoundSquad(squadData);
+      }
     } catch (err) {
       console.error(err);
       setSearchError(
@@ -163,6 +173,7 @@ export function SquadHub({
         squadId: foundSquad.id,
         slotNumber: selectedSlot,
         favoriteClass: operatorClass,
+        accessCode: foundSquad.access_code ? accessCode.trim() : undefined,
       });
 
       if (error) {
@@ -343,7 +354,7 @@ export function SquadHub({
 
                     <div className="mt-6 space-y-3">
                       {/* Invite code for owner */}
-                      {isOwner && squad.invite_code && (
+                      {isOwner && squad.invite_code && squad.slot_count !== 1 && (
                         <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-muted/50 px-2.5 py-1.5">
                           <span className="font-mono text-[10px] text-muted-foreground">
                             Código:{" "}
@@ -468,7 +479,7 @@ export function SquadHub({
                   </span>
 
                   {(() => {
-                    const slots = Array.from({ length: 4 }, (_, i) => {
+                    const slots = Array.from({ length: foundSquad.slot_count || 4 }, (_, i) => {
                       const slotNum = i + 1;
                       const member = foundSquad.squad_members.find(
                         (m) => m.slot_number === slotNum
@@ -607,6 +618,26 @@ export function SquadHub({
                           <option value="Ingeniero">Ingeniero</option>
                         </select>
                       </div>
+
+                      {foundSquad.access_code && (
+                        <div className="xl:col-span-2">
+                          <label
+                            className="mb-1 block font-medium text-[10px] text-muted-foreground"
+                            htmlFor="hub-access-code"
+                          >
+                            Contraseña / Código de Acceso
+                          </label>
+                          <input
+                            className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                            id="hub-access-code"
+                            onChange={(e) => setAccessCode(e.target.value)}
+                            placeholder="Ingresa la contraseña del escuadrón"
+                            type="password"
+                            value={accessCode}
+                            required
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <Button

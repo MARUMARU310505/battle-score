@@ -33,6 +33,7 @@ interface Squad {
   members: Member[];
   name: string;
   owner_id?: string;
+  slot_count?: number;
 }
 
 interface Session {
@@ -492,47 +493,49 @@ export function DashboardContent({
 
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                   {/* Invite Code card */}
-                  <div className="space-y-4 rounded-lg border border-border bg-background p-5">
-                    <div>
-                      <h4 className="font-semibold text-foreground text-sm">
-                        Código de Invitación
-                      </h4>
-                      <p className="mt-1 font-light text-muted-foreground text-xs leading-relaxed">
-                        Comparte este código con tus compañeros de equipo para
-                        que puedan unirse a la escuadra y reclamar sus
-                        operadores.
-                      </p>
-                    </div>
+                  {squadState.slot_count !== 1 && (
+                    <div className="space-y-4 rounded-lg border border-border bg-background p-5">
+                      <div>
+                        <h4 className="font-semibold text-foreground text-sm">
+                          Código de Invitación
+                        </h4>
+                        <p className="mt-1 font-light text-muted-foreground text-xs leading-relaxed">
+                          Comparte este código con tus compañeros de equipo para
+                          que puedan unirse a la escuadra y reclamar sus
+                          operadores.
+                        </p>
+                      </div>
 
-                    <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-muted/40 px-3.5 py-2.5">
-                      <span className="font-bold font-mono text-foreground text-lg tracking-wider">
-                        {squadState.invite_code || "BS-PENDIENTE"}
-                      </span>
+                      <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-muted/40 px-3.5 py-2.5">
+                        <span className="font-bold font-mono text-foreground text-lg tracking-wider">
+                          {squadState.invite_code || "BS-PENDIENTE"}
+                        </span>
 
-                      {squadState.invite_code && (
-                        <Button
-                          className="flex h-auto items-center gap-1.5 px-3 py-1.5 text-xs"
-                          onClick={() =>
-                            handleCopyCode(squadState.invite_code || "")
-                          }
-                          size="sm"
-                          variant="outline"
-                        >
-                          {copiedCode ? (
-                            <>
-                              <Check className="h-3.5 w-3.5 text-green-500" />
-                              <span>Copiado</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-3.5 w-3.5" />
-                              <span>Copiar</span>
-                            </>
-                          )}
-                        </Button>
-                      )}
+                        {squadState.invite_code && (
+                          <Button
+                            className="flex h-auto items-center gap-1.5 px-3 py-1.5 text-xs"
+                            onClick={() =>
+                              handleCopyCode(squadState.invite_code || "")
+                            }
+                            size="sm"
+                            variant="outline"
+                          >
+                            {copiedCode ? (
+                              <>
+                                <Check className="h-3.5 w-3.5 text-green-500" />
+                                <span>Copiado</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-3.5 w-3.5" />
+                                <span>Copiar</span>
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Squad Info card */}
                   <form

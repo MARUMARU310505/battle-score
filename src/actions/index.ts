@@ -563,6 +563,7 @@ export const server = {
             owner_id,
             invite_code,
             created_at,
+            slot_count,
             squad_members (
               id,
               gamertag,
@@ -608,6 +609,7 @@ export const server = {
           owner_id: string;
           invite_code: string;
           created_at: string;
+          slot_count?: number | null;
           squad_members: {
             id: string;
             gamertag: string;
@@ -627,6 +629,7 @@ export const server = {
               owner_id,
               invite_code,
               created_at,
+              slot_count,
               squad_members (
                 id,
                 gamertag,

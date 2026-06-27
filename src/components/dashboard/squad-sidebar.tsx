@@ -1,5 +1,6 @@
 import { actions } from "astro:actions";
 import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNotification } from "@/components/ui/notification";
 
@@ -19,6 +20,7 @@ interface Squad {
   members: Member[];
   name: string;
   owner_id?: string;
+  slot_count?: number;
 }
 
 interface SquadSidebarProps {
@@ -90,6 +92,7 @@ export function SquadSidebar({
 }: SquadSidebarProps) {
   const isOwner = squad.owner_id === currentUser?.id;
   const myMember = squad.members.find((m) => m.user_id === currentUser?.id);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const [editingSlot, setEditingSlot] = useState<number | null>(null);
   const [editClass, setEditClass] = useState("Asalto");
@@ -209,12 +212,26 @@ export function SquadSidebar({
       <div className="space-y-6">
         {/* Squad Selector */}
         <div className="space-y-1.5">
-          <label
-            className="font-mono font-semibold text-[10px] text-muted-foreground uppercase tracking-wider"
-            htmlFor="squad-switcher"
-          >
-            Escuadrón Activo
-          </label>
+          <div className="flex items-center justify-between">
+            <label
+              className="font-mono font-semibold text-[10px] text-muted-foreground uppercase tracking-wider"
+              htmlFor="squad-switcher"
+            >
+              Escuadrón Activo
+            </label>
+            <button
+              className="flex cursor-pointer items-center gap-1 font-medium text-muted-foreground hover:text-foreground text-xs xl:hidden"
+              onClick={() => setIsExpanded(!isExpanded)}
+              type="button"
+            >
+              <span>{isExpanded ? "Ocultar Miembros" : "Ver Miembros"}</span>
+              {isExpanded ? (
+                <ChevronUp className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronDown className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </div>
           <select
             className="w-full cursor-pointer rounded-md border border-border bg-background px-2.5 py-1.5 font-bold text-foreground text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
             id="squad-switcher"
@@ -241,7 +258,7 @@ export function SquadSidebar({
         </div>
 
         {/* Member list */}
-        <div className="space-y-3">
+        <div className={`space-y-3 ${isExpanded ? "block" : "hidden xl:block"}`}>
           {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: legacy mapping */}
           {Array.from({ length: squad.slot_count || 4 }, (_, i) => i + 1).map((slotNumber) => {
             const member = squad.members.find(
@@ -486,7 +503,7 @@ export function SquadSidebar({
 
       {/* Footer Actions */}
       {!isOwner && myMember && (
-        <div className="mt-6 space-y-2 border-border border-t pt-4">
+        <div className={`mt-6 space-y-2 border-border border-t pt-4 ${isExpanded ? "block" : "hidden xl:block"}`}>
           <Button
             className="w-full text-destructive hover:bg-destructive/10"
             onClick={handleLeaveSquad}
