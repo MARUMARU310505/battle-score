@@ -1,5 +1,21 @@
 import { BarChart3, Calendar, TrendingUp, Users } from "lucide-react";
 import { useMemo, useState } from "react";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { type ChartConfig, ChartContainer } from "@/components/ui/chart";
 import type { Match } from "./dashboard-content";
 import { cleanGamertag, OperatorAvatar } from "./squad-sidebar";
 
@@ -27,7 +43,7 @@ interface OperatorData {
   userId: string | null;
 }
 
-// Color palette for lines (declared globally to keep reference constant)
+// Color palette for lines
 const colors = [
   "#10b981", // Emerald/Green (User default)
   "#3b82f6", // Blue
@@ -70,6 +86,85 @@ export function matchOperator(
   return matchGamertags(p.gamertag, member.gamertag);
 }
 
+interface CustomTooltipContentProps {
+  active?: boolean;
+  chartData: OperatorData[];
+  chartMode: "general" | "session";
+  label?: string;
+  // biome-ignore lint/suspicious/noExplicitAny: recharts payload
+  payload?: any[];
+  xLabels: string[];
+}
+
+function CustomTooltipContent({
+  active,
+  payload,
+  label,
+  chartData,
+  xLabels,
+  chartMode,
+}: CustomTooltipContentProps) {
+  if (!(active && payload?.length && label)) {
+    return null;
+  }
+
+  const pointIdx = xLabels.indexOf(label);
+  if (pointIdx === -1) {
+    return null;
+  }
+
+  const fullLabel =
+    chartMode === "session"
+      ? `Partida ${pointIdx + 1}`
+      : `Partida ${pointIdx + 1} (Promedio)`;
+
+  const formatStat = (val: number) =>
+    Number.isInteger(val) ? val.toString() : val.toFixed(1);
+
+  return (
+    <div className="min-w-[12rem] space-y-1.5 rounded-lg border border-border bg-background/95 p-3 font-mono text-[10px] shadow-xl backdrop-blur-md">
+      <div className="border-border/40 border-b pb-1.5 font-bold text-foreground">
+        {fullLabel}
+      </div>
+      <div className="space-y-1">
+        {payload.map((entry) => {
+          const opName = entry.name;
+          const kdrVal = entry.value;
+          if (typeof opName !== "string" || typeof kdrVal !== "number") {
+            return null;
+          }
+          const op = chartData.find((o) => o.gamertag === opName);
+          const pt = op?.points[pointIdx];
+
+          return (
+            <div
+              className="flex items-center justify-between gap-4"
+              key={opName}
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs" style={{ color: entry.stroke }}>
+                  ■
+                </span>
+                <span className="max-w-[80px] truncate text-muted-foreground">
+                  {cleanGamertag(opName)}
+                </span>
+              </div>
+              <div className="text-right font-semibold text-foreground">
+                KDR:{" "}
+                <span className="font-extrabold text-primary">
+                  {kdrVal.toFixed(2)}
+                </span>
+                {pt &&
+                  ` (${formatStat(pt.kills)}/${formatStat(pt.downs)}/${formatStat(pt.assists)})`}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function KdrLineChart({
   currentUserId,
   matches,
@@ -78,19 +173,7 @@ export function KdrLineChart({
 }: KdrLineChartProps) {
   const [chartMode, setChartMode] = useState<"general" | "session">("session");
   const [showDebug, setShowDebug] = useState(false);
-  const [hoveredPoint, setHoveredPoint] = useState<{
-    gamertag: string;
-    avatarSeed: string | null;
-    xLabel: string;
-    kdr: number;
-    kills: number;
-    downs: number;
-    assists: number;
-    x: number;
-    y: number;
-  } | null>(null);
 
-  // Initialize selected operators state (all active by default)
   const squadMembers = useMemo(() => squad?.members || [], [squad]);
 
   const [selectedOperators, setSelectedOperators] = useState<
@@ -109,7 +192,6 @@ export function KdrLineChart({
       }
     > = {};
 
-    // Find current user's profile/member to put at index 0/highlight
     const sortedMembers = [...squadMembers].sort((a, b) => {
       const isAMe = a.user_id === currentUserId;
       const isBMe = b.user_id === currentUserId;
@@ -135,7 +217,6 @@ export function KdrLineChart({
     return meta;
   }, [squadMembers, currentUserId]);
 
-  // Handle lazy initialization of selected operators
   const activeOperators = useMemo(() => {
     const active: Record<string, boolean> = {};
     for (const member of squadMembers) {
@@ -163,8 +244,6 @@ export function KdrLineChart({
     }
 
     if (chartMode === "session") {
-      // 1. Session Mode (Active session, Match by Match)
-      // Sort matches chronologically
       const sortedMatches = [...sessionMatches].sort(
         (a, b) =>
           new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -198,8 +277,6 @@ export function KdrLineChart({
         }
       }
     } else {
-      // 2. General Mode (Historical average per Match sequence across all sessions)
-      // Group historical matches by session_id
       const sessionsGroup: Record<string, Match[]> = {};
       for (const m of matches) {
         const sId = m.session_id;
@@ -209,7 +286,6 @@ export function KdrLineChart({
         sessionsGroup[sId].push(m);
       }
 
-      // Find max matches in any session
       let maxSessionMatches = 0;
       for (const sessionMatchesList of Object.values(sessionsGroup)) {
         if (sessionMatchesList.length > maxSessionMatches) {
@@ -217,11 +293,9 @@ export function KdrLineChart({
         }
       }
 
-      // Cap at 10 matches
       const totalSteps = Math.min(10, maxSessionMatches);
       listXLabels = Array.from({ length: totalSteps }, (_, i) => `P${i + 1}`);
 
-      // Sort matches in each session group chronologically
       const sortedSessionGroups: Record<string, Match[]> = {};
       for (const [sId, sessionMatchesList] of Object.entries(sessionsGroup)) {
         sortedSessionGroups[sId] = [...sessionMatchesList].sort(
@@ -277,7 +351,6 @@ export function KdrLineChart({
       }
     }
 
-    // Determine max KDR value to scale Y axis (min height of 2.0 KDR)
     let maxVal = 2.0;
     for (const points of Object.values(opData)) {
       for (const p of points) {
@@ -298,62 +371,9 @@ export function KdrLineChart({
     return {
       chartData: finalOperators,
       xLabels: listXLabels,
-      maxKdr: Math.ceil(maxVal * 1.15 * 10) / 10, // round up nicely with margin
+      maxKdr: Math.ceil(maxVal * 1.15 * 10) / 10,
     };
   }, [chartMode, sessionMatches, matches, squadMembers, operatorMeta]);
-
-  // SVG Coordinates layout properties
-  const svgWidth = 600;
-  const svgHeight = 260;
-  const paddingLeft = 45;
-  const paddingRight = 20;
-  const paddingTop = 20;
-  const paddingBottom = 35;
-
-  const chartWidth = svgWidth - paddingLeft - paddingRight;
-  const chartHeight = svgHeight - paddingTop - paddingBottom;
-
-  // Generate grid lines
-  const gridLines = useMemo(() => {
-    const lines: { label: string; y: number }[] = [];
-    let step = 2.0;
-    if (maxKdr <= 2.5) {
-      step = 0.5;
-    } else if (maxKdr <= 5) {
-      step = 1.0;
-    }
-    for (let val = 0; val <= maxKdr; val += step) {
-      const y = paddingTop + (1 - val / maxKdr) * chartHeight;
-      lines.push({ label: val.toFixed(1), y });
-    }
-    return lines;
-  }, [maxKdr, chartHeight]);
-
-  // Compute actual coordinates of SVG points
-  const pointsWithCoords = useMemo(() => {
-    const totalPointsCount = xLabels.length;
-    if (totalPointsCount === 0) {
-      return [];
-    }
-
-    return chartData.map((op) => {
-      const coords = op.points.map((pt, idx) => {
-        if (pt === null) {
-          return null;
-        }
-        const x =
-          totalPointsCount > 1
-            ? paddingLeft + (idx / (totalPointsCount - 1)) * chartWidth
-            : paddingLeft + chartWidth / 2;
-        const y = paddingTop + (1 - pt.kdr / maxKdr) * chartHeight;
-        return { ...pt, x, y };
-      });
-      return { ...op, coords };
-    });
-  }, [chartData, xLabels, chartWidth, chartHeight, maxKdr]);
-
-  const formatStat = (val: number) =>
-    Number.isInteger(val) ? val.toString() : val.toFixed(1);
 
   const dbGamertags = useMemo(() => {
     const list: { gamertag: string; userId: string | null }[] = [];
@@ -377,20 +397,54 @@ export function KdrLineChart({
     return list;
   }, [chartMode, sessionMatches, matches]);
 
+  // Construct chart data compatible with Recharts
+  const rechartsData = useMemo(() => {
+    const dataList: Record<string, string | number | null | undefined>[] = [];
+    for (let i = 0; i < xLabels.length; i++) {
+      const row: Record<string, string | number | null | undefined> = {
+        name: xLabels[i],
+        fullLabel:
+          chartMode === "session"
+            ? `Partida ${i + 1}`
+            : `Partida ${i + 1} (Promedio)`,
+      };
+      for (const op of chartData) {
+        const pt = op.points[i];
+        if (pt) {
+          row[op.gamertag] = pt.kdr;
+        }
+      }
+      dataList.push(row);
+    }
+    return dataList;
+  }, [xLabels, chartData, chartMode]);
+
+  // Construct ChartConfig for shadcn-style ChartContainer
+  const chartConfig = useMemo(() => {
+    const config: ChartConfig = {};
+    for (const op of chartData) {
+      config[op.gamertag] = {
+        label: cleanGamertag(op.gamertag),
+        color: op.color,
+      };
+    }
+    return config;
+  }, [chartData]);
+
   const hasData = xLabels.length > 0;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-5">
-      <div className="flex flex-col gap-4 border-border/40 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+    <Card className="p-5">
+      <CardHeader className="flex flex-col gap-4 space-y-0 border-border/40 border-b p-0 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="flex items-center gap-2 font-bold text-foreground text-sm uppercase tracking-wider">
+          <CardTitle className="flex items-center gap-2 font-bold text-foreground text-sm uppercase tracking-wider">
             <TrendingUp className="h-4 w-4 text-primary" /> Curva de KDR
             Histórica
-          </h3>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
+          </CardTitle>
+          <CardDescription className="mt-0.5 text-[11px] text-muted-foreground">
             Visualiza el progreso de KDR por operador en la sesión o a nivel
             general.
-          </p>
+          </CardDescription>
         </div>
 
         {/* View Toggle */}
@@ -418,284 +472,133 @@ export function KdrLineChart({
             <Calendar className="h-3 w-3" /> Historial General
           </button>
         </div>
-      </div>
+      </CardHeader>
 
-      {/* Operator Filter Badges */}
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <span className="mr-1 flex items-center gap-1 font-mono text-[10px] text-muted-foreground uppercase">
-          <Users className="h-3 w-3" /> Filtro:
-        </span>
-        {squadMembers.map((member) => {
-          const isSelected = activeOperators[member.gamertag];
-          const meta = operatorMeta[member.gamertag];
-          const color = meta?.color || colors[0];
-          const isMe = meta?.isMe;
+      <CardContent className="p-0 pt-4">
+        {/* Operator Filter Badges */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="mr-1 flex items-center gap-1 font-mono text-[10px] text-muted-foreground uppercase">
+            <Users className="h-3 w-3" /> Filtro:
+          </span>
+          {squadMembers.map((member) => {
+            const isSelected = activeOperators[member.gamertag];
+            const meta = operatorMeta[member.gamertag];
+            const color = meta?.color || colors[0];
+            const isMe = meta?.isMe;
 
-          return (
-            <button
-              className={`flex select-none items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs transition-all ${
-                isSelected
-                  ? "border-border bg-muted/20 text-foreground"
-                  : "border-transparent bg-transparent text-muted-foreground/60 line-through"
-              }`}
-              key={member.gamertag}
-              onClick={() => toggleOperator(member.gamertag)}
-              style={{
-                borderLeftColor: isSelected ? color : "transparent",
-                borderLeftWidth: isSelected ? "3px" : "1px",
-              }}
-              type="button"
-            >
-              <OperatorAvatar
-                avatarSeed={member.avatar_seed}
-                className="h-3.5 w-3.5"
-                gamertag={member.gamertag}
-              />
-              <span className={isMe ? "font-bold text-emerald-400" : ""}>
-                {cleanGamertag(member.gamertag)}
-              </span>
-              {isMe && <span className="text-[8px] opacity-75">(Tú)</span>}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Line Chart Area */}
-      <div className="relative mt-6">
-        {hasData ? (
-          <div className="w-full overflow-hidden">
-            <svg
-              aria-label="Gráfica de evolución de KDR"
-              className="h-auto w-full"
-              role="img"
-              viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <title>Gráfica de evolución de KDR</title>
-              {/* Grid Background Lines */}
-              {gridLines.map((line) => (
-                <g key={line.label}>
-                  <line
-                    className="stroke-border/20"
-                    strokeDasharray="3 3"
-                    strokeWidth="1"
-                    x1={paddingLeft}
-                    x2={svgWidth - paddingRight}
-                    y1={line.y}
-                    y2={line.y}
-                  />
-                  <text
-                    alignmentBaseline="middle"
-                    className="fill-muted-foreground/80 font-mono text-[9px]"
-                    textAnchor="end"
-                    x={paddingLeft - 8}
-                    y={line.y}
-                  >
-                    {line.label}
-                  </text>
-                </g>
-              ))}
-
-              {/* X Axis Labels */}
-              {xLabels.map((lbl, idx) => {
-                const totalPointsCount = xLabels.length;
-                const x =
-                  totalPointsCount > 1
-                    ? paddingLeft + (idx / (totalPointsCount - 1)) * chartWidth
-                    : paddingLeft + chartWidth / 2;
-                return (
-                  <text
-                    className="fill-muted-foreground/80 font-mono text-[9px]"
-                    key={lbl}
-                    textAnchor="middle"
-                    x={x}
-                    y={svgHeight - paddingBottom + 16}
-                  >
-                    {lbl}
-                  </text>
-                );
-              })}
-
-              {/* Draw Data Lines */}
-              {pointsWithCoords.map((op) => {
-                const isSelected = activeOperators[op.gamertag];
-                if (!isSelected) {
-                  return null;
-                }
-
-                const isMe = operatorMeta[op.gamertag]?.isMe;
-
-                // Build line path definition d
-                let pathD = "";
-                let isFirstPoint = true;
-
-                for (const coord of op.coords) {
-                  if (coord === null) {
-                    continue;
-                  }
-                  if (isFirstPoint) {
-                    pathD += `M ${coord.x} ${coord.y}`;
-                    isFirstPoint = false;
-                  } else {
-                    pathD += ` L ${coord.x} ${coord.y}`;
-                  }
-                }
-
-                if (pathD === "") {
-                  return null;
-                }
-
-                return (
-                  <g key={op.gamertag}>
-                    {/* Glow effect line for 'Tú' */}
-                    {isMe && (
-                      <path
-                        className="opacity-15 blur-[3px]"
-                        d={pathD}
-                        fill="none"
-                        stroke={op.color}
-                        strokeWidth="5"
-                      />
-                    )}
-                    <path
-                      className="transition-all duration-300"
-                      d={pathD}
-                      fill="none"
-                      stroke={op.color}
-                      strokeWidth={isMe ? "2.5" : "1.5"}
-                    />
-                  </g>
-                );
-              })}
-
-              {/* Draw Interactive Dots on top */}
-              {pointsWithCoords.map((op) => {
-                const isSelected = activeOperators[op.gamertag];
-                if (!isSelected) {
-                  return null;
-                }
-
-                const isMe = operatorMeta[op.gamertag]?.isMe;
-
-                return (
-                  <g key={`dots-${op.gamertag}`}>
-                    {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: SVG dots map */}
-                    {op.coords.map((coord) => {
-                      if (coord === null) {
-                        return null;
-                      }
-                      const isHovered =
-                        hoveredPoint &&
-                        hoveredPoint.gamertag === op.gamertag &&
-                        hoveredPoint.xLabel === coord.xLabel;
-
-                      let rVal = isMe ? "3.5" : "2.5";
-                      if (isHovered) {
-                        rVal = isMe ? "5.5" : "4.5";
-                      }
-
-                      return (
-                        <g key={`dot-${op.gamertag}-${coord.xLabel}`}>
-                          {/* Bigger trigger target area */}
-                          {/* biome-ignore lint/a11y/noStaticElementInteractions: hover trigger */}
-                          <circle
-                            className="cursor-pointer fill-transparent"
-                            cx={coord.x}
-                            cy={coord.y}
-                            onMouseEnter={() =>
-                              setHoveredPoint({
-                                gamertag: op.gamertag,
-                                avatarSeed: op.avatarSeed,
-                                xLabel: coord.xLabel,
-                                kdr: coord.kdr,
-                                kills: coord.kills,
-                                downs: coord.downs,
-                                assists: coord.assists,
-                                x: coord.x,
-                                y: coord.y,
-                              })
-                            }
-                            onMouseLeave={() => setHoveredPoint(null)}
-                            r="12"
-                          />
-                          {/* Inner visible dot */}
-                          <circle
-                            className="transition-all duration-200"
-                            cx={coord.x}
-                            cy={coord.y}
-                            fill={isHovered ? "#fff" : op.color}
-                            r={rVal}
-                            stroke={op.color}
-                            strokeWidth={isHovered ? "2.5" : "0"}
-                          />
-                        </g>
-                      );
-                    })}
-                  </g>
-                );
-              })}
-            </svg>
-
-            {/* Hover Tooltip Overlay (styled premium dark glassmorphism) */}
-            {hoveredPoint && (
-              <div
-                className="pointer-events-none absolute z-20 flex w-48 flex-col rounded-lg border border-border/80 bg-background/95 p-3 shadow-lg backdrop-blur-md transition-all duration-150 ease-out"
+            return (
+              <button
+                className={`flex select-none items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs transition-all ${
+                  isSelected
+                    ? "border-border bg-muted/20 text-foreground"
+                    : "border-transparent bg-transparent text-muted-foreground/60 line-through"
+                }`}
+                key={member.gamertag}
+                onClick={() => toggleOperator(member.gamertag)}
                 style={{
-                  left: `${(hoveredPoint.x / svgWidth) * 100}%`,
-                  top: `${(hoveredPoint.y / svgHeight) * 100 - 32}%`,
-                  transform: "translate(-50%, -100%)",
+                  borderLeftColor: isSelected ? color : "transparent",
+                  borderLeftWidth: isSelected ? "3px" : "1px",
+                }}
+                type="button"
+              >
+                <OperatorAvatar
+                  avatarSeed={member.avatar_seed}
+                  className="h-3.5 w-3.5"
+                  gamertag={member.gamertag}
+                />
+                <span className={isMe ? "font-bold text-emerald-400" : ""}>
+                  {cleanGamertag(member.gamertag)}
+                </span>
+                {isMe && <span className="text-[8px] opacity-75">(Tú)</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Line Chart Area */}
+        <div className="relative mt-6 h-64 w-full">
+          {hasData ? (
+            <ChartContainer className="h-full w-full" config={chartConfig}>
+              <LineChart
+                data={rechartsData}
+                margin={{
+                  top: 15,
+                  left: -20,
+                  right: 10,
+                  bottom: 5,
                 }}
               >
-                {/* Operator Header */}
-                <div className="flex items-center gap-1.5 border-border/40 border-b pb-1.5">
-                  <OperatorAvatar
-                    avatarSeed={hoveredPoint.avatarSeed}
-                    className="h-4 w-4"
-                    gamertag={hoveredPoint.gamertag}
-                  />
-                  <span className="truncate font-bold text-[10px] text-foreground tracking-tight">
-                    {cleanGamertag(hoveredPoint.gamertag)}
-                  </span>
-                </div>
-                {/* Stats list */}
-                <div className="mt-1.5 space-y-1 font-mono text-[9px]">
-                  <div className="flex items-center justify-between text-muted-foreground">
-                    <span>
-                      {chartMode === "session" ? "Partida:" : "Sesión:"}
-                    </span>
-                    <span className="font-bold text-foreground">
-                      {hoveredPoint.xLabel}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between border-border/10 border-t pt-1 text-muted-foreground">
-                    <span>KDR obtenido:</span>
-                    <span className="font-extrabold text-primary text-xs">
-                      {hoveredPoint.kdr.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-muted-foreground">
-                    <span>K/D/A:</span>
-                    <span className="font-semibold text-foreground">
-                      {formatStat(hoveredPoint.kills)}/
-                      {formatStat(hoveredPoint.downs)}/
-                      {formatStat(hoveredPoint.assists)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex h-56 flex-col items-center justify-center rounded-lg border border-border/40 border-dashed bg-background/30 text-center">
-            <span className="mb-2 text-2xl">📉</span>
-            <p className="font-medium text-muted-foreground text-xs">
-              {chartMode === "session"
-                ? "Registra partidas en tu sesión actual para generar la gráfica."
-                : "No se encontraron sesiones previas para este escuadrón."}
-            </p>
-          </div>
-        )}
-      </div>
+                <CartesianGrid
+                  className="stroke-border/20"
+                  strokeDasharray="3 3"
+                  vertical={false}
+                />
+                <XAxis
+                  axisLine={false}
+                  className="fill-muted-foreground font-mono text-[9px]"
+                  dataKey="name"
+                  tickLine={false}
+                  tickMargin={8}
+                />
+                <YAxis
+                  axisLine={false}
+                  className="fill-muted-foreground font-mono text-[9px]"
+                  domain={[0, maxKdr]}
+                  tickFormatter={(val) => val.toFixed(1)}
+                  tickLine={false}
+                  tickMargin={8}
+                />
+                <Tooltip
+                  content={
+                    <CustomTooltipContent
+                      chartData={chartData}
+                      chartMode={chartMode}
+                      xLabels={xLabels}
+                    />
+                  }
+                />
+                {chartData.map((op) => {
+                  const isSelected = activeOperators[op.gamertag];
+                  if (!isSelected) {
+                    return null;
+                  }
+
+                  const isMe = operatorMeta[op.gamertag]?.isMe;
+
+                  return (
+                    <Line
+                      activeDot={{
+                        r: isMe ? 6 : 4.5,
+                        strokeWidth: 0,
+                        fill: "#fff",
+                      }}
+                      dataKey={op.gamertag}
+                      dot={{
+                        r: isMe ? 4 : 2,
+                        strokeWidth: 0,
+                        fill: op.color,
+                      }}
+                      key={op.gamertag}
+                      stroke={op.color}
+                      strokeWidth={isMe ? 3 : 1.5}
+                      type="linear" // PUNTEAGUDO (linear)
+                    />
+                  );
+                })}
+              </LineChart>
+            </ChartContainer>
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center rounded-lg border border-border/40 border-dashed bg-background/30 text-center">
+              <span className="mb-2 text-2xl">📉</span>
+              <p className="font-medium text-muted-foreground text-xs">
+                {chartMode === "session"
+                  ? "Registra partidas en tu sesión actual para generar la gráfica."
+                  : "No se encontraron sesiones previas para este escuadrón."}
+              </p>
+            </div>
+          )}
+        </div>
+      </CardContent>
 
       {/* Collapsible Debug Panel */}
       <div className="mt-4 flex justify-end">
@@ -794,6 +697,6 @@ export function KdrLineChart({
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }
