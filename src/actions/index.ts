@@ -1854,12 +1854,19 @@ export const server = {
 Extrae la información estadística de cada operador de la escuadra.
 Los operadores activos en nuestra partida son exactamente estos: [${activeList}].
 Utiliza esta lista de operadores activos para corregir posibles errores de lectura OCR (errores tipográficos en los nombres) que veas en la imagen, mapeando los nombres leídos a los de esta lista.
+
+En la tarjeta de estadísticas de cada jugador, los cuatro valores numéricos están alineados horizontalmente debajo del nombre del jugador de izquierda a derecha en este orden:
+1. PUNTOS / XP (representado por una estrella/medalla): Es un número grande, usualmente de 4 o 5 dígitos (entre 1,000 y 30,000, ej: '10,445' o '9,735'). Elimina cualquier punto '.' o coma ',' y quédate únicamente con el número entero completo. ¡IMPORTANTE! Asegúrate de no truncar dígitos finales (por ejemplo, '10,445' no debe ser '104' ni '10', debe ser '10445').
+2. BAJAS / KILLS (representado por una calavera): Es un número entero de 1 o 2 dígitos.
+3. DERRIBOS / DOWNS (representado por una cruz 'X'): Es un número entero de 1 o 2 dígitos.
+4. ASISTENCIAS / ASSISTS (representado por un puño cerrado): Es un número entero de 1 o 2 dígitos.
+
 Por cada jugador de la lista encontrado en la imagen, identifica:
 - gamertag: Debe coincidir exactamente con uno de los nombres proporcionados: [${activeList}].
-- points: Los puntos obtenidos (XP), indicados al lado de un icono de medalla/estrella (conviértelo a número entero sin comas).
-- kills: Las bajas (icono de calavera).
-- downs: Los derribos (icono de cruz 'X').
-- assists: Las asistencias (icono de puño).
+- points: Los puntos/XP totales obtenidos como número entero.
+- kills: Las bajas (número entero).
+- downs: Los derribos (número entero).
+- assists: Las asistencias (número entero).
 
 Además, identifica la posición final de la escuadra (squad placement): si dice 'VICTORY' o 'VICTORIA' o '#1' es 1, de lo contrario el número que indique (ej: '#12' es 12).
 Devuelve estrictamente un objeto JSON con este formato sin markdown ni bloques de código:
