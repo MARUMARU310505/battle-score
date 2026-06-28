@@ -106,6 +106,22 @@ export function DashboardContent({
   const [historicalSessions, setHistoricalSessions] = useState<any[]>([]);
   const [loadingStats, setLoadingStats] = useState(false);
 
+  const filteredMatches = useMemo(() => {
+    return matches.filter(
+      (m) =>
+        m.poi !== "__ai_live_analysis__" &&
+        m.poi !== "__ai_global_analysis__"
+    );
+  }, [matches]);
+
+  const liveAnalysisMatch = useMemo(() => {
+    return matches.find((m) => m.poi === "__ai_live_analysis__") || null;
+  }, [matches]);
+
+  const globalAnalysisMatch = useMemo(() => {
+    return matches.find((m) => m.poi === "__ai_global_analysis__") || null;
+  }, [matches]);
+
   const [activePlayers, setActivePlayers] = useState<ActivePlayer[]>(() => {
     if (!squad) {
       return [];
@@ -412,7 +428,7 @@ export function DashboardContent({
                 currentUser={currentUser}
                 initialSession={session}
                 isOwner={isOwner}
-                sessionMatches={matches}
+                sessionMatches={filteredMatches}
                 setActivePlayers={setActivePlayers}
                 setSession={setSession}
                 setSquadState={setSquadState}
@@ -473,7 +489,7 @@ export function DashboardContent({
                   <StatsView
                     currentUserId={currentUser?.id}
                     matches={historicalMatches}
-                    sessionMatches={matches}
+                    sessionMatches={filteredMatches}
                     sessions={historicalSessions}
                     squad={squadState}
                   />
@@ -485,8 +501,11 @@ export function DashboardContent({
               <InsightsView
                 activeSession={session}
                 matches={historicalMatches}
-                sessionMatches={matches}
+                sessionMatches={filteredMatches}
                 squad={squadState}
+                isOwner={isOwner}
+                liveAnalysisMatch={liveAnalysisMatch}
+                globalAnalysisMatch={globalAnalysisMatch}
               />
             )}
 

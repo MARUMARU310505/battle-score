@@ -19,6 +19,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { getNearestPOI, isGridCode, MapModal } from "@/components/map";
 import { cleanGamertag } from "./squad-sidebar";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
 
 interface PlayerMatchStats {
   active_class: string;
@@ -67,6 +68,9 @@ interface InsightsViewProps {
   matches: Match[];
   sessionMatches: Match[];
   squad: Squad | null;
+  isOwner: boolean;
+  liveAnalysisMatch: Match | null;
+  globalAnalysisMatch: Match | null;
 }
 
 const parseJson = (text: string | null) => {
@@ -91,7 +95,11 @@ export function InsightsView({
   activeSession,
   sessionMatches,
   squad,
+  isOwner,
+  liveAnalysisMatch,
+  globalAnalysisMatch,
 }: InsightsViewProps) {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [selectedPoiForMap, setSelectedPoiForMap] = useState<string>("");
   const [mapModalMode, setMapModalMode] = useState<
     "deploy" | "circle" | "death" | "second_deploy"
@@ -147,30 +155,57 @@ export function InsightsView({
   const [copiedLive, setCopiedLive] = useState(false);
   const [copiedGlobal, setCopiedGlobal] = useState(false);
 
-  // Load saved analysis on mount
+  // Load saved analysis and sync with live/global analysis from database props
+  useEffect(() => {
+    if (liveAnalysisMatch) {
+      setLiveAnalysis(liveAnalysisMatch.elimination_cause);
+    } else if (typeof window !== "undefined") {
+      setLiveAnalysis(localStorage.getItem("battle-score-last-live-analysis"));
+    }
+  }, [liveAnalysisMatch]);
+
+  useEffect(() => {
+    if (globalAnalysisMatch) {
+      setGlobalAnalysis(globalAnalysisMatch.elimination_cause);
+    } else if (typeof window !== "undefined") {
+      setGlobalAnalysis(localStorage.getItem("battle-score-last-global-analysis"));
+    }
+  }, [globalAnalysisMatch]);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setLiveAnalysis(localStorage.getItem("battle-score-last-live-analysis"));
-      setGlobalAnalysis(
-        localStorage.getItem("battle-score-last-global-analysis")
-      );
       setTookBreakState(
         localStorage.getItem("battle-score-took-break") === "true"
       );
     }
   }, []);
 
-  const handleClearLive = () => {
+  const handleClearLive = async () => {
     setLiveAnalysis(null);
     if (typeof window !== "undefined") {
       localStorage.removeItem("battle-score-last-live-analysis");
     }
+    if (activeSession) {
+      await supabase
+        .from("matches")
+        .delete()
+        .eq("session_id", activeSession.id)
+        .eq("poi", "__ai_live_analysis__");
+    }
   };
 
-  const handleClearGlobal = () => {
+  const handleClearGlobal = async () => {
     setGlobalAnalysis(null);
     if (typeof window !== "undefined") {
       localStorage.removeItem("battle-score-last-global-analysis");
+    }
+    const sessionId = activeSession?.id || (matches.length > 0 ? matches[0].session_id : null);
+    if (sessionId) {
+      await supabase
+        .from("matches")
+        .delete()
+        .eq("session_id", sessionId)
+        .eq("poi", "__ai_global_analysis__");
     }
   };
 
@@ -262,6 +297,31 @@ Devuelve estrictamente un objeto JSON con este formato de llaves y valores:
       setLiveAnalysis(outputText);
       if (typeof window !== "undefined") {
         localStorage.setItem("battle-score-last-live-analysis", outputText);
+      }
+
+      if (activeSession) {
+        // Delete previous live analysis if any
+        await supabase
+          .from("matches")
+          .delete()
+          .eq("session_id", activeSession.id)
+          .eq("poi", "__ai_live_analysis__");
+
+        // Insert new live analysis match
+        const { error: insertError } = await supabase
+          .from("matches")
+          .insert({
+            session_id: activeSession.id,
+            poi: "__ai_live_analysis__",
+            placement: 1,
+            hostility: "Media",
+            loot: "Normal",
+            elimination_cause: outputText,
+          });
+
+        if (insertError) {
+          throw new Error(`Error al guardar en Supabase: ${insertError.message}`);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -447,6 +507,32 @@ Devuelve estrictamente un objeto JSON con este formato de llaves y valores:
       setGlobalAnalysis(outputText);
       if (typeof window !== "undefined") {
         localStorage.setItem("battle-score-last-global-analysis", outputText);
+      }
+
+      const sessionId = activeSession?.id || (matches.length > 0 ? matches[0].session_id : null);
+      if (sessionId) {
+        // Delete previous global analysis if any
+        await supabase
+          .from("matches")
+          .delete()
+          .eq("session_id", sessionId)
+          .eq("poi", "__ai_global_analysis__");
+
+        // Insert new global analysis match
+        const { error: insertError } = await supabase
+          .from("matches")
+          .insert({
+            session_id: sessionId,
+            poi: "__ai_global_analysis__",
+            placement: 1,
+            hostility: "Media",
+            loot: "Normal",
+            elimination_cause: outputText,
+          });
+
+        if (insertError) {
+          throw new Error(`Error al guardar en Supabase: ${insertError.message}`);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -841,58 +927,74 @@ Devuelve estrictamente un objeto JSON con este formato de llaves y valores:
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-primary/10 p-2 text-primary">
-              <Bot className="h-5 w-5 animate-pulse" />
+              <Bot className={`h-5 w-5 ${isOwner ? "animate-pulse" : ""}`} />
             </div>
             <div>
-              <h3 className="font-bold font-mono text-foreground text-xs uppercase tracking-wider">
+              <h3 className="font-mono font-bold text-foreground text-xs uppercase tracking-wider">
                 Analizador Táctico con Inteligencia Artificial
               </h3>
               <p className="font-light text-[10px] text-muted-foreground">
-                Usa tu Gemini API Key configurada para diagnosticar la sesión o
-                tu historial global.
+                {isOwner 
+                  ? "Usa tu Gemini API Key configurada para diagnosticar la sesión o tu historial global."
+                  : "El análisis de IA es generado y sincronizado en tiempo real por el líder de la escuadra."}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2.5">
-            {activeSession && sessionMatches.length > 0 && (
+          {isOwner && (
+            <div className="flex flex-wrap gap-2.5">
+              {activeSession && sessionMatches.length > 0 && (
+                <button
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 font-semibold text-emerald-400 text-xs transition-all hover:bg-emerald-500/20 active:scale-95 disabled:opacity-50"
+                  disabled={loadingLive || loadingGlobal}
+                  onClick={handleLiveAnalysis}
+                >
+                  <RefreshCw
+                    className={`h-3.5 w-3.5 ${loadingLive ? "animate-spin" : ""}`}
+                  />
+                  <span>
+                    {loadingLive ? "Analizando..." : "Analizar Sesión en Vivo"}
+                  </span>
+                </button>
+              )}
+
               <button
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 font-semibold text-emerald-400 text-xs transition-all hover:bg-emerald-500/20 active:scale-95 disabled:opacity-50"
-                disabled={loadingLive || loadingGlobal}
-                onClick={handleLiveAnalysis}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3.5 py-2 font-semibold text-blue-400 text-xs transition-all hover:bg-blue-500/20 active:scale-95 disabled:opacity-50"
+                disabled={loadingLive || loadingGlobal || matches.length === 0}
+                onClick={handleGlobalAnalysis}
               >
                 <RefreshCw
-                  className={`h-3.5 w-3.5 ${loadingLive ? "animate-spin" : ""}`}
+                  className={`h-3.5 w-3.5 ${loadingGlobal ? "animate-spin" : ""}`}
                 />
                 <span>
-                  {loadingLive ? "Analizando..." : "Analizar Sesión en Vivo"}
+                  {loadingGlobal
+                    ? "Generando Dossier..."
+                    : "Generar Dossier Global"}
                 </span>
               </button>
-            )}
-
-            <button
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-blue-500/30 bg-blue-500/10 px-3.5 py-2 font-semibold text-blue-400 text-xs transition-all hover:bg-blue-500/20 active:scale-95 disabled:opacity-50"
-              disabled={loadingLive || loadingGlobal || matches.length === 0}
-              onClick={handleGlobalAnalysis}
-            >
-              <RefreshCw
-                className={`h-3.5 w-3.5 ${loadingGlobal ? "animate-spin" : ""}`}
-              />
-              <span>
-                {loadingGlobal
-                  ? "Generando Dossier..."
-                  : "Generar Dossier Global"}
-              </span>
-            </button>
-          </div>
+            </div>
+          )}
         </div>
 
-        {aiError && (
+        {isOwner && aiError && (
           <div className="mt-3 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-destructive text-xs">
             {aiError}
           </div>
         )}
       </div>
+
+      {/* Empty State for Non-Owners */}
+      {!isOwner && !liveAnalysis && !globalAnalysis && (
+        <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-border border-dashed bg-background/50 p-16 text-center">
+          <span className="mb-4 text-4xl">📡</span>
+          <h4 className="font-semibold text-foreground text-sm uppercase font-mono tracking-wider">
+            Enlace de Inteligencia Táctica Desconectado
+          </h4>
+          <p className="mt-2 max-w-sm font-light text-muted-foreground text-xs leading-relaxed">
+            El líder de la escuadra aún no ha generado informes tácticos por IA para esta sesión. Una vez generados, aparecerán aquí automáticamente en tiempo real.
+          </p>
+        </div>
+      )}
 
       {/* AI Analysis Terminal Outputs */}
       {(loadingLive || liveAnalysis) && (
@@ -918,12 +1020,14 @@ Devuelve estrictamente un objeto JSON con este formato de llaves y valores:
                   >
                     {copiedLive ? "¡Copiado!" : "Copiar"}
                   </button>
-                  <button
-                    className="cursor-pointer rounded-sm border border-border bg-card px-2 py-0.5 text-[10px] text-muted-foreground transition-all hover:bg-muted"
-                    onClick={handleClearLive}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                  </button>
+                  {isOwner && (
+                    <button
+                      className="cursor-pointer rounded-sm border border-border bg-card px-2 py-0.5 text-[10px] text-muted-foreground transition-all hover:bg-muted"
+                      onClick={handleClearLive}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                    </button>
+                  )}
                 </>
               )}
             </div>
@@ -1038,12 +1142,14 @@ Devuelve estrictamente un objeto JSON con este formato de llaves y valores:
                   >
                     {copiedGlobal ? "¡Copiado!" : "Copiar"}
                   </button>
-                  <button
-                    className="cursor-pointer rounded-sm border border-border bg-card px-2 py-0.5 text-[10px] text-muted-foreground transition-all hover:bg-muted"
-                    onClick={handleClearGlobal}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                  </button>
+                  {isOwner && (
+                    <button
+                      className="cursor-pointer rounded-sm border border-border bg-card px-2 py-0.5 text-[10px] text-muted-foreground transition-all hover:bg-muted"
+                      onClick={handleClearGlobal}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                    </button>
+                  )}
                 </>
               )}
             </div>
@@ -1279,7 +1385,7 @@ Devuelve estrictamente un objeto JSON con este formato de llaves y valores:
               </div>
 
               {/* Action buttons inside the card */}
-              {(fatigueAlert.gameCount > 0 || tookBreak) && (
+              {isOwner && (fatigueAlert.gameCount > 0 || tookBreak) && (
                 <div className="self-end sm:self-start">
                   {tookBreak ? (
                     <button
