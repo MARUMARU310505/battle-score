@@ -70,9 +70,15 @@ interface InsightsViewProps {
 }
 
 const parseJson = (text: string | null) => {
-  if (!text) return null;
+  if (!text) {
+    return null;
+  }
   try {
-    const cleaned = text.trim().replace(/^```json\s*/i, "").replace(/```$/, "").trim();
+    const cleaned = text
+      .trim()
+      .replace(/^```json\s*/i, "")
+      .replace(/```$/, "")
+      .trim();
     return JSON.parse(cleaned);
   } catch (e) {
     console.error("Error parsing AI response:", e);
@@ -91,8 +97,15 @@ export function InsightsView({
     "deploy" | "circle" | "death" | "second_deploy"
   >("deploy");
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
-  const [tookBreak, setTookBreak] = useState(false);
+  const [tookBreak, setTookBreakState] = useState(false);
   const [copiedBriefing, setCopiedBriefing] = useState(false);
+
+  const setTookBreak = (val: boolean) => {
+    setTookBreakState(val);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("battle-score-took-break", String(val));
+    }
+  };
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleCopyBriefing = () => {
@@ -140,6 +153,9 @@ export function InsightsView({
       setLiveAnalysis(localStorage.getItem("battle-score-last-live-analysis"));
       setGlobalAnalysis(
         localStorage.getItem("battle-score-last-global-analysis")
+      );
+      setTookBreakState(
+        localStorage.getItem("battle-score-took-break") === "true"
       );
     }
   }, []);
@@ -499,7 +515,7 @@ Devuelve estrictamente un objeto JSON con este formato de llaves y valores:
     }
 
     const gameCount = sessionMatches.length;
-    const isFatigued = gameCount >= 5;
+    const isFatigued = gameCount >= 3;
 
     // Check mental state (tilt) of last match
     let isTilted = false;
@@ -537,7 +553,7 @@ Devuelve estrictamente un objeto JSON con este formato de llaves y valores:
           : "⚠️ ADVERTENCIA DE FATIGA MENTAL",
         text: isTilted
           ? `El estado mental promedio del equipo descendió a ${avgMental.toFixed(1)}/5 tras la última ronda. La frustración y pérdida de paciencia incrementan los errores de posicionamiento. Se sugiere pausa obligatoria de 10-15 minutos.`
-          : `Llevan ${gameCount} partidas consecutivas en esta sesión. Los reflejos motores y la coordinación decaen drásticamente a partir de la 5ª ronda. Tomen 10 minutos para resetear la concentración.`,
+          : `Llevan ${gameCount} partidas consecutivas en esta sesión. Los reflejos motores y la coordinación decaen drásticamente a partir de la 3ª ronda. Tomen 10 minutos para resetear la concentración.`,
       };
     }
 
@@ -925,59 +941,77 @@ Devuelve estrictamente un objeto JSON con este formato de llaves y valores:
                 </p>
               </div>
             </div>
-          ) : (() => {
-            const data = parseJson(liveAnalysis);
-            if (!data) {
+          ) : (
+            (() => {
+              const data = parseJson(liveAnalysis);
+              if (!data) {
+                return (
+                  <div className="py-4 text-red-400 text-xs">
+                    [ ERROR: No se pudo parsear el informe táctico. Intenta de
+                    nuevo. ]
+                  </div>
+                );
+              }
+
+              const stateColors = {
+                EFICIENTE: "border-green-500/30 bg-green-500/10 text-green-400",
+                ESTABLE: "border-blue-500/30 bg-blue-500/10 text-blue-400",
+                ALERTA_FATIGA:
+                  "border-yellow-500/30 bg-yellow-500/10 text-yellow-400",
+                ALERTA_TILT: "border-red-500/30 bg-red-500/10 text-red-400",
+              };
+
+              const stateColor =
+                stateColors[
+                  data.estado_operativo as keyof typeof stateColors
+                ] || stateColors.ESTABLE;
+
               return (
-                <div className="py-4 text-xs text-red-400">
-                  [ ERROR: No se pudo parsear el informe táctico. Intenta de nuevo. ]
+                <div className="space-y-5 text-emerald-400/90 text-xs leading-relaxed">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-[10px] text-emerald-500/50 uppercase tracking-widest">
+                      Estado Operativo:
+                    </span>
+                    <span
+                      className={`rounded-sm border px-2 py-0.5 font-bold text-[10px] ${stateColor}`}
+                    >
+                      {data.estado_operativo}
+                    </span>
+                  </div>
+
+                  <div className="rounded-lg border border-emerald-500/10 bg-emerald-500/5 p-4">
+                    <div className="mb-1 font-bold text-[10px] text-emerald-500/60 uppercase">
+                      Diagnóstico Táctico:
+                    </div>
+                    <p className="font-light">{data.diagnostico_corto}</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <div className="font-bold text-[10px] text-emerald-500/60 uppercase">
+                        Ajustes Requeridos:
+                      </div>
+                      <ul className="list-inside list-disc space-y-1.5 font-light">
+                        {Array.isArray(data.ajustes_tacticos) &&
+                          data.ajustes_tacticos.map(
+                            (item: string, i: number) => <li key={i}>{item}</li>
+                          )}
+                      </ul>
+                    </div>
+
+                    <div className="flex flex-col justify-center space-y-1.5 rounded-lg border border-emerald-500/15 bg-emerald-500/5 p-3.5">
+                      <div className="font-bold text-[10px] text-emerald-500/60 uppercase">
+                        Objetivo de Ronda:
+                      </div>
+                      <p className="font-bold font-mono text-emerald-300 text-sm tracking-wide">
+                        ⚡ {data.objetivo_inmediato}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               );
-            }
-
-            const stateColors = {
-              EFICIENTE: "border-green-500/30 bg-green-500/10 text-green-400",
-              ESTABLE: "border-blue-500/30 bg-blue-500/10 text-blue-400",
-              ALERTA_FATIGA: "border-yellow-500/30 bg-yellow-500/10 text-yellow-400",
-              ALERTA_TILT: "border-red-500/30 bg-red-500/10 text-red-400",
-            };
-
-            const stateColor = stateColors[data.estado_operativo as keyof typeof stateColors] || stateColors.ESTABLE;
-
-            return (
-              <div className="space-y-5 text-xs text-emerald-400/90 leading-relaxed">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-[10px] text-emerald-500/50 uppercase tracking-widest">Estado Operativo:</span>
-                  <span className={`rounded-sm border px-2 py-0.5 font-bold text-[10px] ${stateColor}`}>
-                    {data.estado_operativo}
-                  </span>
-                </div>
-
-                <div className="rounded-lg border border-emerald-500/10 bg-emerald-500/5 p-4">
-                  <div className="mb-1 text-[10px] font-bold text-emerald-500/60 uppercase">Diagnóstico Táctico:</div>
-                  <p className="font-light">{data.diagnostico_corto}</p>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <div className="text-[10px] font-bold text-emerald-500/60 uppercase">Ajustes Requeridos:</div>
-                    <ul className="list-inside list-disc space-y-1.5 font-light">
-                      {Array.isArray(data.ajustes_tacticos) && data.ajustes_tacticos.map((item: string, i: number) => (
-                        <li key={i}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="flex flex-col justify-center space-y-1.5 rounded-lg border border-emerald-500/15 bg-emerald-500/5 p-3.5">
-                    <div className="text-[10px] font-bold text-emerald-500/60 uppercase">Objetivo de Ronda:</div>
-                    <p className="font-mono text-emerald-300 text-sm font-bold tracking-wide">
-                      ⚡ {data.objetivo_inmediato}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
+            })()
+          )}
         </div>
       )}
 
@@ -1028,92 +1062,134 @@ Devuelve estrictamente un objeto JSON con este formato de llaves y valores:
                 </p>
               </div>
             </div>
-          ) : (() => {
-            const data = parseJson(globalAnalysis);
-            if (!data) {
+          ) : (
+            (() => {
+              const data = parseJson(globalAnalysis);
+              if (!data) {
+                return (
+                  <div className="py-4 text-red-400 text-xs">
+                    [ ERROR: No se pudo parsear el dossier táctico. Intenta de
+                    nuevo. ]
+                  </div>
+                );
+              }
+
               return (
-                <div className="py-4 text-xs text-red-400">
-                  [ ERROR: No se pudo parsear el dossier táctico. Intenta de nuevo. ]
-                </div>
-              );
-            }
-
-            return (
-              <div className="space-y-5 text-xs text-blue-400/90 leading-relaxed">
-                <div className="rounded-lg border border-blue-500/10 bg-blue-500/5 p-4">
-                  <div className="mb-1 text-[10px] font-bold text-blue-500/60 uppercase">Evaluación Estratégica Global:</div>
-                  <p className="font-light">{data.diagnostico_global}</p>
-                </div>
-
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  <div className="space-y-2 rounded-lg border border-blue-500/10 bg-blue-500/5 p-3.5">
-                    <div className="text-[10px] font-bold text-green-400/80 uppercase">✚ Fortalezas Operativas:</div>
-                    <ul className="list-inside list-disc space-y-1 font-light text-green-400/90">
-                      {Array.isArray(data.fortalezas) && data.fortalezas.map((item: string, i: number) => (
-                        <li key={i}>{item}</li>
-                      ))}
-                    </ul>
+                <div className="space-y-5 text-blue-400/90 text-xs leading-relaxed">
+                  <div className="rounded-lg border border-blue-500/10 bg-blue-500/5 p-4">
+                    <div className="mb-1 font-bold text-[10px] text-blue-500/60 uppercase">
+                      Evaluación Estratégica Global:
+                    </div>
+                    <p className="font-light">{data.diagnostico_global}</p>
                   </div>
 
-                  <div className="space-y-2 rounded-lg border border-blue-500/10 bg-blue-500/5 p-3.5">
-                    <div className="text-[10px] font-bold text-red-400/80 uppercase">🗙 Vulnerabilidades Críticas:</div>
-                    <ul className="list-inside list-disc space-y-1 font-light text-red-400/90">
-                      {Array.isArray(data.vulnerabilidades) && data.vulnerabilidades.map((item: string, i: number) => (
-                        <li key={i}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <div className="space-y-2 rounded-lg border border-blue-500/10 bg-blue-500/5 p-3.5">
+                      <div className="font-bold text-[10px] text-green-400/80 uppercase">
+                        ✚ Fortalezas Operativas:
+                      </div>
+                      <ul className="list-inside list-disc space-y-1 font-light text-green-400/90">
+                        {Array.isArray(data.fortalezas) &&
+                          data.fortalezas.map((item: string, i: number) => (
+                            <li key={i}>{item}</li>
+                          ))}
+                      </ul>
+                    </div>
 
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <div className="text-[10px] font-bold text-blue-500/60 uppercase">🗺️ Zonas de Despliegue:</div>
-                    <div className="space-y-2 font-light">
-                      <div className="rounded border border-emerald-500/10 bg-emerald-500/5 p-2.5">
-                        <span className="text-[10px] font-bold text-emerald-400 uppercase">Lanzamiento Óptimo:</span>
-                        <p className="mt-1 text-emerald-400/90">{data.recomendacion_caida?.optimo}</p>
+                    <div className="space-y-2 rounded-lg border border-blue-500/10 bg-blue-500/5 p-3.5">
+                      <div className="font-bold text-[10px] text-red-400/80 uppercase">
+                        🗙 Vulnerabilidades Críticas:
                       </div>
-                      <div className="rounded border border-red-500/10 bg-red-500/5 p-2.5">
-                        <span className="text-[10px] font-bold text-red-400 uppercase">Zona de Exclusión:</span>
-                        <p className="mt-1 text-red-400/90">{data.recomendacion_caida?.excluir}</p>
-                      </div>
+                      <ul className="list-inside list-disc space-y-1 font-light text-red-400/90">
+                        {Array.isArray(data.vulnerabilidades) &&
+                          data.vulnerabilidades.map(
+                            (item: string, i: number) => <li key={i}>{item}</li>
+                          )}
+                      </ul>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="text-[10px] font-bold text-blue-500/60 uppercase">📋 Protocolo Directivo:</div>
-                    <ol className="list-inside list-decimal space-y-1.5 font-light">
-                      {Array.isArray(data.protocolo) && data.protocolo.map((item: string, i: number) => (
-                        <li key={i}>{item}</li>
-                      ))}
-                    </ol>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="text-[10px] font-bold text-blue-500/60 uppercase">👥 Diagnóstico de Operadores:</div>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {Array.isArray(data.perfiles_operadores) && data.perfiles_operadores.map((player: any, i: number) => (
-                      <div key={i} className="rounded-lg border border-blue-500/15 bg-blue-500/5 p-3 space-y-1">
-                        <div className="text-xs font-bold text-blue-300">{player.gamertag}</div>
-                        <div className="flex justify-between text-[10px]">
-                          <span className="text-blue-500/70">Rol Ideal:</span>
-                          <span className="font-semibold text-blue-400">{player.rol_optimo}</span>
-                        </div>
-                        <div className="flex justify-between text-[10px]">
-                          <span className="text-blue-500/70">Rendimiento:</span>
-                          <span className="font-semibold text-blue-400">{player.metricas_clave}</span>
-                        </div>
-                        <p className="mt-1 border-t border-blue-500/10 pt-1 text-[10px] text-blue-400/70 font-light">
-                          ➔ {player.directriz}
-                        </p>
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <div className="font-bold text-[10px] text-blue-500/60 uppercase">
+                        🗺️ Zonas de Despliegue:
                       </div>
-                    ))}
+                      <div className="space-y-2 font-light">
+                        <div className="rounded border border-emerald-500/10 bg-emerald-500/5 p-2.5">
+                          <span className="font-bold text-[10px] text-emerald-400 uppercase">
+                            Lanzamiento Óptimo:
+                          </span>
+                          <p className="mt-1 text-emerald-400/90">
+                            {data.recomendacion_caida?.optimo}
+                          </p>
+                        </div>
+                        <div className="rounded border border-red-500/10 bg-red-500/5 p-2.5">
+                          <span className="font-bold text-[10px] text-red-400 uppercase">
+                            Zona de Exclusión:
+                          </span>
+                          <p className="mt-1 text-red-400/90">
+                            {data.recomendacion_caida?.excluir}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="font-bold text-[10px] text-blue-500/60 uppercase">
+                        📋 Protocolo Directivo:
+                      </div>
+                      <ol className="list-inside list-decimal space-y-1.5 font-light">
+                        {Array.isArray(data.protocolo) &&
+                          data.protocolo.map((item: string, i: number) => (
+                            <li key={i}>{item}</li>
+                          ))}
+                      </ol>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="font-bold text-[10px] text-blue-500/60 uppercase">
+                      👥 Diagnóstico de Operadores:
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {Array.isArray(data.perfiles_operadores) &&
+                        data.perfiles_operadores.map(
+                          (player: any, i: number) => (
+                            <div
+                              className="space-y-1 rounded-lg border border-blue-500/15 bg-blue-500/5 p-3"
+                              key={i}
+                            >
+                              <div className="font-bold text-blue-300 text-xs">
+                                {player.gamertag}
+                              </div>
+                              <div className="flex justify-between text-[10px]">
+                                <span className="text-blue-500/70">
+                                  Rol Ideal:
+                                </span>
+                                <span className="font-semibold text-blue-400">
+                                  {player.rol_optimo}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-[10px]">
+                                <span className="text-blue-500/70">
+                                  Rendimiento:
+                                </span>
+                                <span className="font-semibold text-blue-400">
+                                  {player.metricas_clave}
+                                </span>
+                              </div>
+                              <p className="mt-1 border-blue-500/10 border-t pt-1 font-light text-[10px] text-blue-400/70">
+                                ➔ {player.directriz}
+                              </p>
+                            </div>
+                          )
+                        )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })()}
+              );
+            })()
+          )}
         </div>
       )}
 
@@ -1203,9 +1279,7 @@ Devuelve estrictamente un objeto JSON con este formato de llaves y valores:
               </div>
 
               {/* Action buttons inside the card */}
-              {(fatigueAlert.isFatigued ||
-                fatigueAlert.isTilted ||
-                tookBreak) && (
+              {(fatigueAlert.gameCount > 0 || tookBreak) && (
                 <div className="self-end sm:self-start">
                   {tookBreak ? (
                     <button
